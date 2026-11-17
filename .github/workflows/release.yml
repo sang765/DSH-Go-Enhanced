@@ -147,7 +147,9 @@ jobs:
           awk -v h="## $ver " 'index($0, h) == 1 { f = 1; next } /^## / { f = 0 } f' \
             docs/changelog.md > "$RUNNER_TEMP/notes.md"
           test -s "$RUNNER_TEMP/notes.md"
-          python3 -I tooling/release_assets.py --delta-from 0 --notes "$RUNNER_TEMP/notes.md"
+          # No -I: release_assets imports its tooling/ siblings, which isolated
+          # mode hides (the runbook invokes it the same way).
+          python3 tooling/release_assets.py --delta-from 0 --notes "$RUNNER_TEMP/notes.md"
           ls -la dist/
 
       - name: Upload to the release, then verify a download
