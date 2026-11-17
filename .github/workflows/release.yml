@@ -132,8 +132,13 @@ jobs:
           apksigner=$(ls -1d "$ANDROID_HOME"/build-tools/*/apksigner | sort -V | tail -n 1)
           certs=$("$apksigner" verify -v --min-sdk-version 21 --print-certs "$apk")
           echo "$certs"
-          echo "$certs" | sed -n '/SHA-256 digest/p' >> "$GITHUB_STEP_SUMMARY"
-          echo "$certs" | grep -q 'CN=Android Debug' && { echo 'the APK is debug-signed'; exit 1; }
+          echo "$certs" | sed -n '/certificate SHA-256 digest/p' >> "$GITHUB_STEP_SUMMARY"
+          # An unmatched anti-pattern: under bash -e a trailing `grep && exit`
+          # list fails the step when grep does NOT match, i.e. on a good APK.
+          if echo "$certs" | grep -q 'CN=Android Debug'; then
+            echo 'the APK is debug-signed'
+            exit 1
+          fi
 
       # The runbook's release body is docs/changelog.md's section for this version.
       - name: Release assets (rename, SHA256SUMS, update.json)
