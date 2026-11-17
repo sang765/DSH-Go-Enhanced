@@ -1,0 +1,139 @@
+# Build the arm64 release APK on CI and attach it to an existing release.
+# The fork has no build machine; the signing key comes from the repo's
+# KEYSTORE_* secrets, and the commands are exactly the runbook's
+# (docs/release.md): runtime/build-runtime.sh → tooling/build-apk.sh →
+# tooling/release_assets.py. Run the workflow AFTER the release exists
+# (tag + notes); this only uploads its assets.
+name: Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Existing release tag to build and upload to, e.g. v1.2.0'
+        required: true
+        default: 'v1.2.0'
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-${{ inputs.tag || github.ref_name }}
+  cancel-in-progress: false
+
+env:
+  FLUTTER_VERSION: 3.47.7
+  NODE_VERSION: 24.22.1
+  GRADLE_VERSION: 9.3.1
+  TZ: Asia/Shanghai
+
+jobs:
+  apk:
+    name: arm64 release APK and assets
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    env:
+      TAG: ${{ inputs.tag || github.ref_name }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+      - uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0
+        with:
+          java-version: '17'
+      - uses: gradle/actions/setup-gradle@8da46b539cd8fe6ab27ca75128919a18d757604c # v6.4.1
+        with:
+          gradle-version: ${{ env.GRADLE_VERSION }}
+      - uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+
+      # The release must refuse to run if the release (tag + notes) is not there yet.
+      - name: The release must already exist
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release view "$TAG" --repo "$GITHUB_REPOSITORY" > /dev/null \
+            || { echo "release $TAG does not exist — create it (tag + notes) first"; exit 1; }
+
+      # libtawcroot (a release build must carry it) is compiled with the pinned NDK.
+      - name: Ensure the pinned NDK
+        run: |
+          ndk=$(python3 -c "import json;print(json.load(open('runtime/tawcroot/source.json'))['ndkVersion'])")
+          echo "NDK_VERSION=$ndk" >> "$GITHUB_ENV"
+          if [ ! -d "$ANDROID_HOME/ndk/$ndk" ]; then
+            yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "ndk;$ndk" > /dev/null
+          fi
+          test -d "$ANDROID_HOME/ndk/$ndk"
+
+      - name: Build the bundled runtime (arm64)
+        run: runtime/build-runtime.sh arm64-v8a
+
+      - name: Flutter plugins and local.properties
+        working-directory: app
+        run: |
+          flutter pub get --enforce-lockfile
+          printf 'sdk.dir=%s\nflutter.sdk=%s\n' "$ANDROID_HOME" "$FLUTTER_ROOT" > android/local.properties
+
+      # gradlew is not tracked; generate it from setup-gradle's Gradle, as the runbook's
+      # build machines have it locally.
+      - name: Generate gradlew
+        working-directory: app/android
+        run: gradle wrapper --gradle-version "$GRADLE_VERSION"
+
+      - name: Write the signing config from secrets
+        env:
+          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+        run: |
+          test -n "$KEYSTORE_BASE64" && test -n "$KEYSTORE_PASSWORD" && test -n "$KEY_ALIAS" && test -n "$KEY_PASSWORD" \
+            || { echo "KEYSTORE_* secrets are not set on this repo"; exit 1; }
+          printf '%s' "$KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/release.keystore"
+          (umask 077; cat > app/android/key.properties <<EOF
+          storeFile=$RUNNER_TEMP/release.keystore
+          storePassword=$KEYSTORE_PASSWORD
+          keyAlias=$KEY_ALIAS
+          keyPassword=$KEY_PASSWORD
+          EOF
+          )
+          test -s app/android/key.properties
+
+      - name: Build the APK (arm64 release, star prompt on — public release)
+        run: tooling/build-apk.sh -- --dart-define=DSH_STAR_PROMPT=true
+
+      - name: Verify the signature (no debug certs)
+        run: |
+          apk=app/build/app/outputs/flutter-apk/app-arm64-release.apk
+          apksigner=$(ls -1d "$ANDROID_HOME"/build-tools/*/apksigner | sort -V | tail -n 1)
+          certs=$("$apksigner" verify -v --min-sdk-version 21 --print-certs "$apk")
+          echo "$certs"
+          echo "$certs" | sed -n '/SHA-256 digest/p' >> "$GITHUB_STEP_SUMMARY"
+          echo "$certs" | grep -q 'CN=Android Debug' && { echo 'the APK is debug-signed'; exit 1; }
+
+      # The runbook's release body is docs/changelog.md's section for this version.
+      - name: Release assets (rename, SHA256SUMS, update.json)
+        run: |
+          ver=$(sed -n 's/^version:[[:space:]]*\([^+[:space:]]*\).*/\1/p' app/pubspec.yaml)
+          awk -v h="## $ver " 'index($0, h) == 1 { f = 1; next } /^## / { f = 0 } f' \
+            docs/changelog.md > "$RUNNER_TEMP/notes.md"
+          test -s "$RUNNER_TEMP/notes.md"
+          python3 -I tooling/release_assets.py --delta-from 0 --notes "$RUNNER_TEMP/notes.md"
+          ls -la dist/
+
+      - name: Upload to the release, then verify a download
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release upload "$TAG" dist/* --repo "$GITHUB_REPOSITORY" --clobber
+          tmp=$(mktemp -d)
+          gh release download "$TAG" --repo "$GITHUB_REPOSITORY" --pattern '*.apk' --pattern 'SHA256SUMS' --dir "$tmp" --clobber
+          (cd "$tmp" && sha256sum --check --strict SHA256SUMS)
+          echo "verified: $(ls "$tmp")"
