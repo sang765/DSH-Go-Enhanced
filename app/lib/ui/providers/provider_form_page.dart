@@ -39,10 +39,15 @@ const _protocols = [
 
 /// Pops with the provider id once saved.
 class ProviderFormPage extends ConsumerStatefulWidget {
-  const ProviderFormPage({super.key, this.existing});
+  const ProviderFormPage({super.key, this.existing, this.catalogFirst = false});
 
   /// Null to add a new provider.
   final CustomProvider? existing;
+
+  /// Open with the models.dev catalogue sheet first (the providers page's
+  /// 「添加渠道」); picking an entry presets and locks the identity fields.
+  /// Other entry points (the model sheet, onboarding) keep the plain form.
+  final bool catalogFirst;
 
   @override
   ConsumerState<ProviderFormPage> createState() => _ProviderFormPageState();
@@ -158,7 +163,7 @@ class _ProviderFormPageState extends ConsumerState<ProviderFormPage> with FieldP
   void initState() {
     super.initState();
     _clean = _signature();
-    if (widget.existing == null) {
+    if (widget.existing == null && widget.catalogFirst) {
       // A sheet needs a built route to anchor on.
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) _offerCatalog();

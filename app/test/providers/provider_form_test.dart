@@ -25,9 +25,10 @@ import 'support.dart';
 
 /// Opens the form from a plain page so the pop result can be read.
 class _Opener extends StatefulWidget {
-  const _Opener({this.existing});
+  const _Opener({this.existing, this.catalogFirst = false});
 
   final CustomProvider? existing;
+  final bool catalogFirst;
 
   @override
   State<_Opener> createState() => _OpenerState();
@@ -45,8 +46,11 @@ class _OpenerState extends State<_Opener> {
           Text('result: $result'),
           TextButton(
             onPressed: () async {
-              final r = await Navigator.of(context)
-                  .push(MaterialPageRoute<String>(builder: (_) => ProviderFormPage(existing: widget.existing)));
+              final r = await Navigator.of(context).push(
+                MaterialPageRoute<String>(
+                  builder: (_) => ProviderFormPage(existing: widget.existing, catalogFirst: widget.catalogFirst),
+                ),
+              );
               setState(() => result = r);
             },
             child: const Text('open'),
@@ -65,6 +69,7 @@ Future<void> _open(
   double height = 1400,
   FakeProviderBackend? Function()? backendFor,
   UpdateHttp? http,
+  bool catalogFirst = false,
 }) async {
   // Real glyph widths: the capsule's fit depends on them.
   await tester.runAsync(loadGoldenFonts);
@@ -75,7 +80,7 @@ Future<void> _open(
   addTearDown(tester.view.reset);
   await tester.pumpWidget(
     goldenApp(
-      home: _Opener(existing: existing),
+      home: _Opener(existing: existing, catalogFirst: catalogFirst),
       brightness: Brightness.light,
       overrides: [
         if (http != null) modelsDevHttpProvider.overrideWithValue(http),
@@ -559,7 +564,7 @@ void main() {
     testWidgets('a catalogue preset locks name, protocol and Base URL; only key and models stay editable', (tester) async {
       final backend = FakeProviderBackend(discoverResult: discovered);
       final http = _FakeCatalogHttp();
-      await _open(tester, backend, http: http);
+      await _open(tester, backend, http: http, catalogFirst: true);
       // The catalogue sheet is up (opened by the form itself). Pick Example.
       expect(find.byType(ProviderCatalogSheet), findsOneWidget);
       await tester.tap(find.text('Example Cloud'));
@@ -589,7 +594,7 @@ void main() {
 
     testWidgets('the custom entry leaves every field editable', (tester) async {
       final backend = FakeProviderBackend(discoverResult: discovered);
-      await _open(tester, backend, http: _FakeCatalogHttp());
+      await _open(tester, backend, http: _FakeCatalogHttp(), catalogFirst: true);
       await tester.tap(find.text('添加自定义渠道'));
       await settle(tester);
       expect(tester.widget<TextField>(_field('名称')).readOnly, isFalse);

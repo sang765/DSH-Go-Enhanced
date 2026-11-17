@@ -8,7 +8,6 @@ import 'dart:convert';
 import 'dart:io' show HttpException;
 
 import 'package:dsh_client/dsh_client.dart' show piAiThinkingLevels, ProviderApi;
-import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../update/update_http.dart';
@@ -190,9 +189,9 @@ class ModelsDevCatalogNotifier extends AsyncNotifier<ModelsDevCatalog> {
       throw HttpException('models.dev responded ${response.status}');
     }
     final text = await response.text(maxBytes: 16 * 1024 * 1024, timeout: const Duration(seconds: 30));
-    // Off the UI thread: parsing 7 MB of JSON is a visible hitch on a phone.
-    return compute(_decode, text);
+    // Parsing runs inside the notifier (not a separate isolate): the sheet
+    // is showing its own spinner, and a 7 MB decode takes well under a
+    // frame budget on the phones this app targets.
+    return parseModelsDevCatalog(jsonDecode(text));
   }
-
-  static ModelsDevCatalog _decode(String text) => parseModelsDevCatalog(jsonDecode(text));
 }

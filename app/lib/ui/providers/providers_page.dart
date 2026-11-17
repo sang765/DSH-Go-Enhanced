@@ -101,7 +101,7 @@ class ProvidersPage extends ConsumerWidget {
             onAdd: () {
               if (!ref.read(providerListViewProvider).readOnly &&
                   identical(ref.read(customProvidersProvider).value, snapshot)) {
-                _push(context, const ProviderFormPage());
+                _push(context, const ProviderFormPage(catalogFirst: true));
               }
             },
           ),

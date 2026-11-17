@@ -177,6 +177,8 @@ class _ProviderLogo extends StatelessWidget {
     height: 32,
     fit: BoxFit.contain,
     placeholderBuilder: (context) => Monogram(provider.name),
+    // A logo is decoration: a failed fetch draws the monogram, not an error.
+    errorBuilder: (context, _, __) => Monogram(provider.name),
   );
 }
 

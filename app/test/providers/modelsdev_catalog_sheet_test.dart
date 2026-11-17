@@ -12,7 +12,6 @@ import 'package:dsh_app/ui/providers/provider_catalog_sheet.dart';
 import 'package:dsh_app/update/update_http.dart';
 import 'package:dsh_client/dsh_client.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import '../shell/golden_harness.dart' show goldenApp, loadGoldenFonts;
@@ -78,23 +77,21 @@ Future<void> _pumpCatalog(
   tester.view.viewPadding = const FakeViewPadding(top: 64, bottom: 48);
   addTearDown(tester.view.reset);
   await tester.pumpWidget(
-    ProviderScope(
-      overrides: [
-        if (http != null) modelsDevHttpProvider.overrideWithValue(http),
-      ],
-      child: goldenApp(
-        brightness: Brightness.light,
-        home: Scaffold(
-          body: Builder(
-            builder: (context) => Center(
-              child: TextButton(
-                onPressed: () => showProviderCatalogSheet(context),
-                child: const Text('open'),
-              ),
+    goldenApp(
+      brightness: Brightness.light,
+      home: Scaffold(
+        body: Builder(
+          builder: (context) => Center(
+            child: TextButton(
+              onPressed: () => showProviderCatalogSheet(context),
+              child: const Text('open'),
             ),
           ),
         ),
       ),
+      overrides: [
+        if (http != null) modelsDevHttpProvider.overrideWithValue(http),
+      ],
     ),
   );
   await tester.tap(find.text('open'));
@@ -150,23 +147,21 @@ void main() {
     tester.view.physicalSize = const Size(390 * 2, 1400 * 2);
     addTearDown(tester.view.reset);
     await tester.pumpWidget(
-      ProviderScope(
-        overrides: [modelsDevHttpProvider.overrideWithValue(_FakeHttp(body: _catalogJson))],
-        child: goldenApp(
-          brightness: Brightness.light,
-          home: Scaffold(
-            body: Builder(
-              builder: (context) => Center(
-                child: TextButton(
-                  onPressed: () async {
-                    picked = await showProviderCatalogSheet(context);
-                  },
-                  child: const Text('open'),
-                ),
+      goldenApp(
+        brightness: Brightness.light,
+        home: Scaffold(
+          body: Builder(
+            builder: (context) => Center(
+              child: TextButton(
+                onPressed: () async {
+                  picked = await showProviderCatalogSheet(context);
+                },
+                child: const Text('open'),
               ),
             ),
           ),
         ),
+        overrides: [modelsDevHttpProvider.overrideWithValue(_FakeHttp(body: _catalogJson))],
       ),
     );
     await tester.tap(find.text('open'));
