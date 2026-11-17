@@ -11748,10 +11748,12 @@ class L10nEn extends L10n {
   String get phoneHomeImportHint => 'Merge chats, workspace files and memory from the original DSH Go app';
 
   @override
-  String get phoneHomeImportIntro => 'Merges data from the original DSH Go app on this phone: chats, workspace files, long-term memory, plugins and engine settings. App settings and API keys are not part of the export — set them up here by hand.';
+  String get phoneHomeImportIntro =>
+      'Merges data from the original DSH Go app on this phone: chats, workspace files, long-term memory, plugins and engine settings. App settings and API keys are not part of the export — set them up here by hand.';
 
   @override
-  String get phoneHomeImportStep1 => 'Step 1 · In the old DSH Go app, tell its agent or open its terminal and run one of:';
+  String get phoneHomeImportStep1 =>
+      'Step 1 · In the old DSH Go app, tell its agent or open its terminal and run one of:';
 
   @override
   String get phoneHomeImportFull => 'Everything (workspace files included; can be large)';
@@ -11763,7 +11765,8 @@ class L10nEn extends L10n {
   String get phoneHomeImportCopied => 'Command copied';
 
   @override
-  String get phoneHomeImportStep2 => 'Step 2 · Pick the exported .tgz here. The engine stops, the data merges in, then the engine starts again; exported files replace same-path files.';
+  String get phoneHomeImportStep2 =>
+      'Step 2 · Pick the exported .tgz here. The engine stops, the data merges in, then the engine starts again; exported files replace same-path files.';
 
   @override
   String get phoneHomeImportPick => 'Choose export file and import';

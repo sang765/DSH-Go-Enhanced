@@ -165,6 +165,7 @@ class HomeImportRow extends ConsumerWidget {
     return SettingsTile(
       icon: AppIcons.download,
       tinted: false,
+      spot: Spots.engineImport,
       title: l10n.phoneHomeImport,
       subtitle: l10n.phoneHomeImportHint,
       chevron: true,

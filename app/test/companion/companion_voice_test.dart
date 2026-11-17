@@ -28,6 +28,16 @@ import 'phone_keeper_fake.dart';
 
 const _channel = MethodChannel('dsh/companion_voice');
 
+/// The voice settings read races the first frames (a failed CI run once tapped
+/// before the sources list existed); wait for the row instead of a delay.
+Future<void> _awaitRow(WidgetTester tester, String text) async {
+  for (var i = 0; i < 50 && find.text(text).evaluate().isEmpty; i++) {
+    await tester.runAsync(() => Future<void>.delayed(const Duration(milliseconds: 30)));
+    await tester.pump();
+  }
+  expect(find.text(text), findsOneWidget, reason: text);
+}
+
 void main() {
   group('companionSpeakable', () {
     test('whole sentences while streaming, the rest once finished', () {
@@ -209,6 +219,7 @@ void main() {
       await tester.runAsync(() => Future<void>.delayed(const Duration(milliseconds: 50)));
       await tester.pumpAndSettle();
 
+      await _awaitRow(tester, '常用服务');
       await tester.tap(find.text('常用服务'));
       await tester.pumpAndSettle();
       expect(find.text('小米 MiMo'), findsOneWidget);
@@ -292,6 +303,7 @@ void main() {
       await tester.runAsync(() => Future<void>.delayed(const Duration(milliseconds: 50)));
       await tester.pumpAndSettle();
 
+      await _awaitRow(tester, '常用服务');
       await tester.tap(find.text('常用服务'));
       await tester.pumpAndSettle();
       await tester.enterText(
@@ -372,6 +384,7 @@ void main() {
       await tester.runAsync(() => Future<void>.delayed(const Duration(milliseconds: 50)));
       await tester.pumpAndSettle();
 
+      await _awaitRow(tester, 'OpenAI 兼容接口');
       await tester.tap(find.text('OpenAI 兼容接口'));
       await tester.pumpAndSettle();
       Finder field(String hint) => find.byWidgetPredicate((w) => w is TextField && w.decoration?.hintText == hint);
