@@ -8,6 +8,7 @@ import 'dart:convert';
 import 'dart:io' show HttpException;
 
 import 'package:dsh_client/dsh_client.dart' show piAiThinkingLevels, ProviderApi;
+import 'package:flutter/foundation.dart' show Uint8List;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../update/update_http.dart';
@@ -163,6 +164,28 @@ class ModelsDevCatalog {
   final List<ModelsDevProvider> providers;
 
   static final ModelsDevCatalog empty = ModelsDevCatalog(const []);
+}
+
+/// Fetches a provider's logo (a small SVG) as bytes; null when the fetch
+/// fails for any reason — a logo is decoration, the monogram takes over.
+/// Goes through the same [UpdateHttp] seam as the catalogue, so tests feed
+/// it and an offline phone just gets the monogram.
+Future<Uint8List?> fetchProviderLogo(UpdateHttp http, ModelsDevProvider provider) async {
+  try {
+    final response = await http.get(Uri.parse(provider.logoUrl), timeout: const Duration(seconds: 10));
+    if (response.status != 200) {
+      await response.discard();
+      return null;
+    }
+    final bytes = <int>[];
+    await for (final chunk in response.body) {
+      bytes.addAll(chunk);
+      if (bytes.length > 512 * 1024) return null;
+    }
+    return Uint8List.fromList(bytes);
+  } catch (_) {
+    return null;
+  }
 }
 
 /// The HTTP seam, injectable for tests.

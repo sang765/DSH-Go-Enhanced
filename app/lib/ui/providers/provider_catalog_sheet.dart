@@ -3,6 +3,7 @@
 // Picking a catalogue entry pops with it; the form then locks name, protocol
 // and Base URL and only asks for the API key.
 
+import 'package:flutter/foundation.dart' show Uint8List;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -163,23 +164,41 @@ class _CatalogList extends StatelessWidget {
   }
 }
 
-/// A provider's logo, loaded from models.dev's `/logos/<id>.svg`; falls back
-/// to the monogram disc while loading or when there is nothing to show.
-class _ProviderLogo extends StatelessWidget {
+/// A provider's logo, fetched as bytes through the catalogue's http seam and
+/// drawn from memory; the monogram disc stands in while loading, or for
+/// good when the fetch fails — a logo is decoration.
+class _ProviderLogo extends ConsumerStatefulWidget {
   const _ProviderLogo({required this.provider});
 
   final ModelsDevProvider provider;
 
   @override
-  Widget build(BuildContext context) => SvgPicture.network(
-    provider.logoUrl,
-    width: 32,
-    height: 32,
-    fit: BoxFit.contain,
-    placeholderBuilder: (context) => Monogram(provider.name),
-    // A logo is decoration: a failed fetch draws the monogram, not an error.
-    errorBuilder: (context, _, __) => Monogram(provider.name),
-  );
+  ConsumerState<_ProviderLogo> createState() => _ProviderLogoState();
+}
+
+class _ProviderLogoState extends ConsumerState<_ProviderLogo> {
+  Future<Uint8List?>? _logo;
+
+  @override
+  void initState() {
+    super.initState();
+    _logo = fetchProviderLogo(ref.read(modelsDevHttpProvider), widget.provider);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox.square(
+      dimension: 32,
+      child: FutureBuilder<Uint8List?>(
+        future: _logo,
+        builder: (context, snapshot) {
+          final bytes = snapshot.data;
+          if (bytes == null) return Monogram(widget.provider.name);
+          return SvgPicture.memory(bytes, width: 32, height: 32, fit: BoxFit.contain);
+        },
+      ),
+    );
+  }
 }
 
 class _CatalogError extends StatelessWidget {

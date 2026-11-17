@@ -103,6 +103,13 @@ class _FakeCatalogHttp implements UpdateHttp {
   @override
   Future<UpdateHttpResponse> get(Uri url, {Map<String, String> headers = const {}, Duration timeout = const Duration(seconds: 15)}) async {
     expect(url.host, 'models.dev');
+    if (url.path.startsWith('/logos/')) {
+      final bytes = utf8.encode(
+        '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24">'
+        '<circle cx="12" cy="12" r="10" fill="teal"/></svg>',
+      );
+      return UpdateHttpResponse(status: 200, body: Stream.value(bytes), contentLength: bytes.length);
+    }
     return UpdateHttpResponse(
       status: 200,
       body: Stream.value(
@@ -566,10 +573,14 @@ void main() {
       final http = _FakeCatalogHttp();
       await _open(tester, backend, http: http, catalogFirst: true);
       // The catalogue sheet is up (opened by the form itself). The catalogue
-      // loads through the fake over the next pumps; wait for the row.
-      for (var i = 0; i < 30 && find.text('Example Cloud').evaluate().isEmpty; i++) {
-        await tester.pump(const Duration(milliseconds: 100));
-      }
+      // settles on real timers, so wait in runAsync, then pump the rebuild.
+      await tester.runAsync(() async {
+        final container = ProviderScope.containerOf(
+          tester.element(find.byType(ProviderFormPage)),
+        );
+        await container.read(modelsDevCatalogProvider.future).timeout(const Duration(seconds: 5));
+      });
+      await settle(tester);
       expect(find.text('Example Cloud'), findsOneWidget);
       await tester.tap(find.text('Example Cloud'));
       await settle(tester);
