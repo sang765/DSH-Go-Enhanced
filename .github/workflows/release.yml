@@ -66,12 +66,18 @@ jobs:
       # libtawcroot (a release build must carry it) is compiled with the pinned NDK.
       - name: Ensure the pinned NDK
         run: |
+          set -o pipefail
           ndk=$(python3 -c "import json;print(json.load(open('runtime/tawcroot/source.json'))['ndkVersion'])")
           echo "NDK_VERSION=$ndk" >> "$GITHUB_ENV"
-          if [ ! -d "$ANDROID_HOME/ndk/$ndk" ]; then
+          # A version-named directory may still carry another Pkg.Revision (a stale
+          # image cache); tawcroot checks the file, so verify the same way.
+          if [ ! -e "$ANDROID_HOME/ndk/$ndk/source.properties" ] \
+            || ! grep -qx "Pkg.Revision=$ndk" "$ANDROID_HOME/ndk/$ndk/source.properties"; then
+            rm -rf "$ANDROID_HOME/ndk/$ndk"
             yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "ndk;$ndk" > /dev/null
           fi
-          test -d "$ANDROID_HOME/ndk/$ndk"
+          grep -H Pkg.Revision "$ANDROID_HOME/ndk/$ndk/source.properties"
+          test -f "$ANDROID_HOME/ndk/$ndk/toolchains/llvm/prebuilt/linux-x86_64/bin/clang"
 
       - name: Build the bundled runtime (arm64)
         run: runtime/build-runtime.sh arm64-v8a
@@ -108,7 +114,11 @@ jobs:
           test -s app/android/key.properties
 
       - name: Build the APK (arm64 release, star prompt on — public release)
-        run: tooling/build-apk.sh -- --dart-define=DSH_STAR_PROMPT=true
+        run: |
+          # The runner may pre-set ANDROID_NDK_HOME to an older NDK; tawcroot
+          # reads that first, so pin it to the version its sources demand.
+          export ANDROID_NDK_HOME="$ANDROID_HOME/ndk/$NDK_VERSION"
+          tooling/build-apk.sh -- --dart-define=DSH_STAR_PROMPT=true
 
       - name: Verify the signature (no debug certs)
         run: |
