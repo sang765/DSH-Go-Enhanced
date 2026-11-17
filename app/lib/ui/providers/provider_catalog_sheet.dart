@@ -80,7 +80,7 @@ class _ProviderCatalogSheetState extends ConsumerState<ProviderCatalogSheet> {
               child: ConstrainedBox(
                 constraints: BoxConstraints(maxHeight: maxList),
                 child: switch (catalog) {
-                  AsyncValue(:final value?) => _CatalogList(providers: _visible(value.providers), query: _query),
+                  AsyncValue(:final value?) => _CatalogList(providers: _visible(value.providers)),
                   AsyncValue(:final error?, hasValue: false) => _CatalogError(
                     error: error,
                     onRetry: () => ref.invalidate(modelsDevCatalogProvider),
@@ -114,12 +114,9 @@ class _ProviderCatalogSheetState extends ConsumerState<ProviderCatalogSheet> {
 }
 
 class _CatalogList extends StatelessWidget {
-  const _CatalogList({required this.providers, required this.query});
+  const _CatalogList({required this.providers});
 
   final List<ModelsDevProvider> providers;
-
-  /// Non-empty shows a "no match" footer instead of a bare list end.
-  final String query;
 
   @override
   Widget build(BuildContext context) {
@@ -149,15 +146,6 @@ class _CatalogList extends StatelessWidget {
             ].join(' · '),
             chevron: true,
             onTap: () => Navigator.of(context).pop(provider),
-          ),
-        if (query.trim().isNotEmpty)
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 12),
-            child: Text(
-              l10n.engineProviderCatalogNoMatch,
-              textAlign: TextAlign.center,
-              style: theme.textTheme.bodySmall?.copyWith(color: colors.textTertiary),
-            ),
           ),
       ],
     );

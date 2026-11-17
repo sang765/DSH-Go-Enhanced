@@ -573,12 +573,18 @@ void main() {
       final http = _FakeCatalogHttp();
       await _open(tester, backend, http: http, catalogFirst: true);
       // The catalogue sheet is up (opened by the form itself). The catalogue
-      // settles on real timers, so wait in runAsync, then pump the rebuild.
+      // settles on real timers, so poll its state in runAsync, then pump the
+      // rebuild.
       await tester.runAsync(() async {
         final container = ProviderScope.containerOf(
           tester.element(find.byType(ProviderFormPage)),
         );
-        await container.read(modelsDevCatalogProvider.future).timeout(const Duration(seconds: 5));
+        for (var i = 0; i < 50; i++) {
+          await Future<void>.delayed(const Duration(milliseconds: 100));
+          if (container.read(modelsDevCatalogProvider) case AsyncValue(:final value?)) {
+            if (value.providers.isNotEmpty) return;
+          }
+        }
       });
       await settle(tester);
       expect(find.text('Example Cloud'), findsOneWidget);
