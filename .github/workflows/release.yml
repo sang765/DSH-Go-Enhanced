@@ -74,7 +74,7 @@ jobs:
           if [ ! -e "$ANDROID_HOME/ndk/$ndk/source.properties" ] \
             || ! grep -qx "Pkg.Revision=$ndk" "$ANDROID_HOME/ndk/$ndk/source.properties"; then
             rm -rf "$ANDROID_HOME/ndk/$ndk"
-            yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "ndk;$ndk" > /dev/null
+            yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --sdk_root="$ANDROID_HOME" "ndk;$ndk" | tail -n 8
           fi
           grep -H Pkg.Revision "$ANDROID_HOME/ndk/$ndk/source.properties"
           test -f "$ANDROID_HOME/ndk/$ndk/toolchains/llvm/prebuilt/linux-x86_64/bin/clang"
