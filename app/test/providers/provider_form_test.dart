@@ -565,8 +565,12 @@ void main() {
       final backend = FakeProviderBackend(discoverResult: discovered);
       final http = _FakeCatalogHttp();
       await _open(tester, backend, http: http, catalogFirst: true);
-      // The catalogue sheet is up (opened by the form itself). Pick Example.
-      expect(find.byType(ProviderCatalogSheet), findsOneWidget);
+      // The catalogue sheet is up (opened by the form itself). The catalogue
+      // loads through the fake over the next pumps; wait for the row.
+      for (var i = 0; i < 30 && find.text('Example Cloud').evaluate().isEmpty; i++) {
+        await tester.pump(const Duration(milliseconds: 100));
+      }
+      expect(find.text('Example Cloud'), findsOneWidget);
       await tester.tap(find.text('Example Cloud'));
       await settle(tester);
       expect(find.byType(ProviderCatalogSheet), findsNothing);

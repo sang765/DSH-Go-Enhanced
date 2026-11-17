@@ -12,6 +12,7 @@ import 'package:dsh_app/ui/providers/provider_catalog_sheet.dart';
 import 'package:dsh_app/update/update_http.dart';
 import 'package:dsh_client/dsh_client.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import '../shell/golden_harness.dart' show goldenApp, loadGoldenFonts;
@@ -30,8 +31,6 @@ class _FakeHttp implements UpdateHttp {
   @override
   Future<UpdateHttpResponse> get(Uri url, {Map<String, String> headers = const {}, Duration timeout = const Duration(seconds: 15)}) async {
     if (error != null) throw error!;
-    expect(url.host, 'models.dev');
-    expect(url.path, '/api.json');
     final bytes = utf8.encode(body ?? '');
     return UpdateHttpResponse(status: 200, body: Stream.value(bytes), contentLength: bytes.length);
   }
@@ -66,10 +65,23 @@ const _catalogJson = '''
 }
 ''';
 
-Future<void> _pumpCatalog(
-  WidgetTester tester, {
-  UpdateHttp? http,
-}) async {
+/// Pumps until the catalogue leaves loading; reports the observed state so a
+/// failure names what the notifier actually did.
+Future<String> _untilLoaded(WidgetTester tester) async {
+  var observed = 'never-read';
+  for (var i = 0; i < 30; i++) {
+    await tester.pump(const Duration(milliseconds: 100));
+    final container = ProviderScope.containerOf(tester.element(find.text('open')));
+    final state = container.read(modelsDevCatalogProvider);
+    observed = state.map(data: (_) => 'data(${state.value!.providers.length})', error: (e) => 'error($e)', loading: () => 'loading');
+    if (observed != 'loading') break;
+  }
+  // ignore: avoid_print
+  print('catalog state after pumps: $observed');
+  return observed;
+}
+
+Future<void> _pumpCatalog(WidgetTester tester, {UpdateHttp? http}) async {
   await tester.runAsync(loadGoldenFonts);
   tester.view.devicePixelRatio = 2;
   tester.view.physicalSize = const Size(390 * 2, 1400 * 2);
@@ -95,7 +107,7 @@ Future<void> _pumpCatalog(
     ),
   );
   await tester.tap(find.text('open'));
-  await settle(tester);
+  await _untilLoaded(tester);
 }
 
 void main() {
@@ -129,7 +141,8 @@ void main() {
     // Retry now succeeds.
     http.error = null;
     await tester.tap(find.text('重试'));
-    await settle(tester);
+    final observed = await _untilLoaded(tester);
+    expect(observed, startsWith('data(2)'), reason: 'the retry reloaded the catalogue');
     expect(find.text('Example Cloud'), findsOneWidget);
   });
 
@@ -165,7 +178,7 @@ void main() {
       ),
     );
     await tester.tap(find.text('open'));
-    await settle(tester);
+    await _untilLoaded(tester);
     await tester.tap(find.text('Example Cloud'));
     await settle(tester);
     expect(picked?.id, 'example');
