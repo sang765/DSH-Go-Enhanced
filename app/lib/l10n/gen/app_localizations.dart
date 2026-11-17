@@ -12576,7 +12576,7 @@ abstract class L10n {
   ///
   /// In zh, this message translates to:
   /// **'从 models.dev 预填 — {name}'**
-  String engineProviderCatalogPreset(String name);
+  String engineProviderCatalogPreset(Object name);
 
   /// No description provided for @engineProviderCatalogPresetNote.
   ///

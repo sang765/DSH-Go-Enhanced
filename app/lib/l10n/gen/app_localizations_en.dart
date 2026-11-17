@@ -7071,7 +7071,7 @@ class L10nEn extends L10n {
   String get engineProviderCatalogCustom => 'Add a custom provider';
 
   @override
-  String engineProviderCatalogPreset(String name) {
+  String engineProviderCatalogPreset(Object name) {
     return 'Preset from models.dev — $name';
   }
 

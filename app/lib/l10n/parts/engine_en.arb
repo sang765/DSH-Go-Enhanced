@@ -257,7 +257,9 @@
   "engineProviderCatalogPreset": "Preset from models.dev — {name}",
   "@engineProviderCatalogPreset": {
     "placeholders": {
-      "name": {}
+      "name": {
+        "type": "String"
+      }
     }
   },
   "engineProviderCatalogPresetNote": "Name, protocol and Base URL come from models.dev",

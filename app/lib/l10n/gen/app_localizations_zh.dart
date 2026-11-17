@@ -6705,7 +6705,7 @@ class L10nZh extends L10n {
   String get engineProviderCatalogCustom => '添加自定义渠道';
 
   @override
-  String engineProviderCatalogPreset(String name) {
+  String engineProviderCatalogPreset(Object name) {
     return '从 models.dev 预填 — $name';
   }
 
