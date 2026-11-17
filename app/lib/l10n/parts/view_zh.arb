@@ -712,6 +712,7 @@
   },
   "viewEmptySwitchWorkspace": "切换工作区",
   "viewEmptyHostDefaultDirectory": "主机默认目录",
+  "viewEmptyChooseWorkspace": "选择工作区",
   "viewScheduleTitle": "自动化任务",
   "viewScheduleRefreshFailed": "没能刷新",
   "viewScheduleNone": "没有进行中的任务",
@@ -832,6 +833,8 @@
   "viewModelNone": "暂无可用模型",
   "viewModelKeyHint": "Key 可能尚未生效或已失效",
   "viewModelManageProviders": "管理渠道",
+  "viewModelSearch": "搜索模型",
+  "viewModelSearchEmpty": "没有匹配的模型",
   "viewContinuePrompt": "接着附件里这段对话聊：",
   "viewContinueRange": "第 {first}–{second} 轮，共 {third} 轮",
   "@viewContinueRange": {

@@ -17132,6 +17132,18 @@ abstract class L10n {
   /// **'GitHub 主页'**
   String get hubAboutGithub;
 
+  /// No description provided for @hubAboutFork.
+  ///
+  /// In zh, this message translates to:
+  /// **'DSH-Go-Enhanced 分支'**
+  String get hubAboutFork;
+
+  /// No description provided for @hubAboutForkRepo.
+  ///
+  /// In zh, this message translates to:
+  /// **'分支仓库'**
+  String get hubAboutForkRepo;
+
   /// No description provided for @hubAboutNewVersion.
   ///
   /// In zh, this message translates to:
@@ -20725,6 +20737,90 @@ abstract class L10n {
   /// In zh, this message translates to:
   /// **'删除对话和文件后重新解压'**
   String get phoneEngineResetHint;
+
+  /// No description provided for @phoneHomeImport.
+  ///
+  /// In zh, this message translates to:
+  /// **'导入 DSH Go 数据'**
+  String get phoneHomeImport;
+
+  /// No description provided for @phoneHomeImportHint.
+  ///
+  /// In zh, this message translates to:
+  /// **'并入原 DSH Go 应用的对话、工作区与记忆'**
+  String get phoneHomeImportHint;
+
+  /// No description provided for @phoneHomeImportIntro.
+  ///
+  /// In zh, this message translates to:
+  /// **'把同一台手机上原 DSH Go 应用的数据并入这里：对话、工作区文件、长期记忆、插件与引擎设置。应用设置与 API Key 不在导出范围内，需要在这里重新配置。'**
+  String get phoneHomeImportIntro;
+
+  /// No description provided for @phoneHomeImportStep1.
+  ///
+  /// In zh, this message translates to:
+  /// **'第一步：在旧的 DSH Go 应用里，对它的代理说这句话或打开它的终端，运行其中一条命令：'**
+  String get phoneHomeImportStep1;
+
+  /// No description provided for @phoneHomeImportFull.
+  ///
+  /// In zh, this message translates to:
+  /// **'全部数据（含工作区文件，可能很大）'**
+  String get phoneHomeImportFull;
+
+  /// No description provided for @phoneHomeImportLight.
+  ///
+  /// In zh, this message translates to:
+  /// **'轻量（对话、记忆与引擎设置，不含工作区文件）'**
+  String get phoneHomeImportLight;
+
+  /// No description provided for @phoneHomeImportCopied.
+  ///
+  /// In zh, this message translates to:
+  /// **'命令已复制'**
+  String get phoneHomeImportCopied;
+
+  /// No description provided for @phoneHomeImportStep2.
+  ///
+  /// In zh, this message translates to:
+  /// **'第二步：在这里选择导出的 .tgz。引擎会先停止，数据并入后再启动；相同路径的文件以导出内容为准。'**
+  String get phoneHomeImportStep2;
+
+  /// No description provided for @phoneHomeImportPick.
+  ///
+  /// In zh, this message translates to:
+  /// **'选择导出文件并导入'**
+  String get phoneHomeImportPick;
+
+  /// No description provided for @phoneHomeImportRunning.
+  ///
+  /// In zh, this message translates to:
+  /// **'正在并入，文件多时要几分钟…'**
+  String get phoneHomeImportRunning;
+
+  /// No description provided for @phoneHomeImportDone.
+  ///
+  /// In zh, this message translates to:
+  /// **'导入完成，引擎已重新启动。'**
+  String get phoneHomeImportDone;
+
+  /// No description provided for @phoneHomeImportStopped.
+  ///
+  /// In zh, this message translates to:
+  /// **'引擎未能停止，请重试。'**
+  String get phoneHomeImportStopped;
+
+  /// No description provided for @phoneHomeImportFailed.
+  ///
+  /// In zh, this message translates to:
+  /// **'导入失败'**
+  String get phoneHomeImportFailed;
+
+  /// No description provided for @phoneHomeImportNotTar.
+  ///
+  /// In zh, this message translates to:
+  /// **'请选择旧应用导出的 .tgz 文件'**
+  String get phoneHomeImportNotTar;
 
   /// No description provided for @phoneEngineResetTitle.
   ///
@@ -46010,6 +46106,12 @@ abstract class L10n {
   /// **'主机默认目录'**
   String get viewEmptyHostDefaultDirectory;
 
+  /// No description provided for @viewEmptyChooseWorkspace.
+  ///
+  /// In zh, this message translates to:
+  /// **'选择工作区'**
+  String get viewEmptyChooseWorkspace;
+
   /// No description provided for @viewScheduleTitle.
   ///
   /// In zh, this message translates to:
@@ -46249,6 +46351,18 @@ abstract class L10n {
   /// In zh, this message translates to:
   /// **'管理渠道'**
   String get viewModelManageProviders;
+
+  /// No description provided for @viewModelSearch.
+  ///
+  /// In zh, this message translates to:
+  /// **'搜索模型'**
+  String get viewModelSearch;
+
+  /// No description provided for @viewModelSearchEmpty.
+  ///
+  /// In zh, this message translates to:
+  /// **'没有匹配的模型'**
+  String get viewModelSearchEmpty;
 
   /// No description provided for @viewContinuePrompt.
   ///

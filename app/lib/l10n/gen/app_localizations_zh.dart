@@ -9260,6 +9260,12 @@ class L10nZh extends L10n {
   String get hubAboutGithub => 'GitHub 主页';
 
   @override
+  String get hubAboutFork => 'DSH-Go-Enhanced 分支';
+
+  @override
+  String get hubAboutForkRepo => '分支仓库';
+
+  @override
   String get hubAboutNewVersion => '有新版本';
 
   @override
@@ -11148,6 +11154,48 @@ class L10nZh extends L10n {
 
   @override
   String get phoneEngineResetHint => '删除对话和文件后重新解压';
+
+  @override
+  String get phoneHomeImport => '导入 DSH Go 数据';
+
+  @override
+  String get phoneHomeImportHint => '并入原 DSH Go 应用的对话、工作区与记忆';
+
+  @override
+  String get phoneHomeImportIntro => '把同一台手机上原 DSH Go 应用的数据并入这里：对话、工作区文件、长期记忆、插件与引擎设置。应用设置与 API Key 不在导出范围内，需要在这里重新配置。';
+
+  @override
+  String get phoneHomeImportStep1 => '第一步：在旧的 DSH Go 应用里，对它的代理说这句话或打开它的终端，运行其中一条命令：';
+
+  @override
+  String get phoneHomeImportFull => '全部数据（含工作区文件，可能很大）';
+
+  @override
+  String get phoneHomeImportLight => '轻量（对话、记忆与引擎设置，不含工作区文件）';
+
+  @override
+  String get phoneHomeImportCopied => '命令已复制';
+
+  @override
+  String get phoneHomeImportStep2 => '第二步：在这里选择导出的 .tgz。引擎会先停止，数据并入后再启动；相同路径的文件以导出内容为准。';
+
+  @override
+  String get phoneHomeImportPick => '选择导出文件并导入';
+
+  @override
+  String get phoneHomeImportRunning => '正在并入，文件多时要几分钟…';
+
+  @override
+  String get phoneHomeImportDone => '导入完成，引擎已重新启动。';
+
+  @override
+  String get phoneHomeImportStopped => '引擎未能停止，请重试。';
+
+  @override
+  String get phoneHomeImportFailed => '导入失败';
+
+  @override
+  String get phoneHomeImportNotTar => '请选择旧应用导出的 .tgz 文件';
 
   @override
   String get phoneEngineResetTitle => '重置运行环境？';
@@ -25167,6 +25215,9 @@ class L10nZh extends L10n {
   String get viewEmptyHostDefaultDirectory => '主机默认目录';
 
   @override
+  String get viewEmptyChooseWorkspace => '选择工作区';
+
+  @override
   String get viewScheduleTitle => '自动化任务';
 
   @override
@@ -25307,6 +25358,12 @@ class L10nZh extends L10n {
 
   @override
   String get viewModelManageProviders => '管理渠道';
+
+  @override
+  String get viewModelSearch => '搜索模型';
+
+  @override
+  String get viewModelSearchEmpty => '没有匹配的模型';
 
   @override
   String get viewContinuePrompt => '接着附件里这段对话聊：';

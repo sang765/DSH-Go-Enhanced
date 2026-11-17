@@ -9778,6 +9778,12 @@ class L10nEn extends L10n {
   String get hubAboutGithub => 'GitHub profile';
 
   @override
+  String get hubAboutFork => 'DSH-Go-Enhanced fork';
+
+  @override
+  String get hubAboutForkRepo => 'Fork repository';
+
+  @override
   String get hubAboutNewVersion => 'Update available';
 
   @override
@@ -11734,6 +11740,48 @@ class L10nEn extends L10n {
 
   @override
   String get phoneEngineResetHint => 'Delete chats and files, then extract again';
+
+  @override
+  String get phoneHomeImport => 'Import DSH Go data';
+
+  @override
+  String get phoneHomeImportHint => 'Merge chats, workspace files and memory from the original DSH Go app';
+
+  @override
+  String get phoneHomeImportIntro => 'Merges data from the original DSH Go app on this phone: chats, workspace files, long-term memory, plugins and engine settings. App settings and API keys are not part of the export — set them up here by hand.';
+
+  @override
+  String get phoneHomeImportStep1 => 'Step 1 · In the old DSH Go app, tell its agent or open its terminal and run one of:';
+
+  @override
+  String get phoneHomeImportFull => 'Everything (workspace files included; can be large)';
+
+  @override
+  String get phoneHomeImportLight => 'Light (chats, memory and engine settings; no workspace files)';
+
+  @override
+  String get phoneHomeImportCopied => 'Command copied';
+
+  @override
+  String get phoneHomeImportStep2 => 'Step 2 · Pick the exported .tgz here. The engine stops, the data merges in, then the engine starts again; exported files replace same-path files.';
+
+  @override
+  String get phoneHomeImportPick => 'Choose export file and import';
+
+  @override
+  String get phoneHomeImportRunning => 'Merging — a few minutes for large exports…';
+
+  @override
+  String get phoneHomeImportDone => 'Imported. The engine is running again.';
+
+  @override
+  String get phoneHomeImportStopped => 'The engine didn’t stop; try again.';
+
+  @override
+  String get phoneHomeImportFailed => 'Import failed';
+
+  @override
+  String get phoneHomeImportNotTar => 'Pick the .tgz the old app exported';
 
   @override
   String get phoneEngineResetTitle => 'Reset the runtime?';
@@ -26538,6 +26586,9 @@ class L10nEn extends L10n {
   String get viewEmptyHostDefaultDirectory => 'Host default folder';
 
   @override
+  String get viewEmptyChooseWorkspace => 'Choose a workspace';
+
+  @override
   String get viewScheduleTitle => 'Automations';
 
   @override
@@ -26681,6 +26732,12 @@ class L10nEn extends L10n {
 
   @override
   String get viewModelManageProviders => 'Manage providers';
+
+  @override
+  String get viewModelSearch => 'Search models';
+
+  @override
+  String get viewModelSearchEmpty => 'No matching models';
 
   @override
   String get viewContinuePrompt => 'Continue the chat attached here:';

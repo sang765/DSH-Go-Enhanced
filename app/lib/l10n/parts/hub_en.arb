@@ -148,6 +148,8 @@
   "hubAboutBilibili": "Bilibili profile",
   "hubAboutX": "X profile",
   "hubAboutGithub": "GitHub profile",
+  "hubAboutFork": "DSH-Go-Enhanced fork",
+  "hubAboutForkRepo": "Fork repository",
   "hubAboutNewVersion": "Update available",
   "hubValueSet": "Set",
   "hubValueOff": "Off",
