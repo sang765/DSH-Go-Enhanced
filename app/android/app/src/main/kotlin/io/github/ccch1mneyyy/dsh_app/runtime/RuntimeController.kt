@@ -854,10 +854,12 @@ class RuntimeController private constructor(private val app: Context) : DshProce
                 checkRecoveryWrite(mainProfileOnly = false)
                 val source = File(path)
                 check(source.isFile) { "export file not found: $path" }
-                val extractor = TarExtractor(installer.rootfs, { }, include = { name ->
-                    name == "root" || name.startsWith("root/")
-                })
-                source.inputStream().use { raw -> extractor.extract(raw, source.name) }
+                val extractor = TarExtractor(installer.rootfs, { })
+                source.inputStream().use { raw ->
+                    extractor.extract(raw, source.name, include = { name ->
+                        name == "root" || name.startsWith("root/")
+                    })
+                }
                 log("[dsh-app] imported DSH Go home data from $path", "system")
                 main.post { onDone(null) }
             } catch (e: Throwable) {

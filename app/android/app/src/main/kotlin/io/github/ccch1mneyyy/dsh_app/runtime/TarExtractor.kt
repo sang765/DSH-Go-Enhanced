@@ -20,9 +20,6 @@ import org.tukaani.xz.XZInputStream
 class TarExtractor(
     private val root: File,
     private val onProgress: (compressedRead: Long) -> Unit,
-    /** Null extracts everything; otherwise only entries whose cleaned name passes (the
-     *  DSH Go home import takes `root/` alone, never the provisioned system tree). */
-    private val include: ((name: String) -> Boolean)? = null,
 ) {
     private class CountingStream(input: InputStream, private val onRead: (Long) -> Unit) : FilterInputStream(input) {
         var count = 0L
@@ -50,19 +47,22 @@ class TarExtractor(
     private val deferredDirModes = ArrayList<Pair<File, Int>>()
     private val copyBuffer = ByteArray(1 shl 16)
 
-    fun extract(raw: InputStream, fileName: String) {
+    /** [include] null extracts everything; otherwise only entries whose cleaned name
+     *  passes (the DSH Go home import takes `root/` alone, never the provisioned
+     *  system tree). */
+    fun extract(raw: InputStream, fileName: String, include: ((name: String) -> Boolean)? = null) {
         val counting = CountingStream(raw.buffered(1 shl 16), onProgress)
         val decoded: InputStream = when {
             fileName.endsWith(".gz") || fileName.endsWith(".tgz") -> GZIPInputStream(counting, 1 shl 16)
             fileName.endsWith(".xz") -> XZInputStream(counting)
             else -> counting
         }
-        extractDecoded(decoded)
+        extractDecoded(decoded, include)
     }
 
-    fun extractDecoded(decoded: InputStream) {
+    fun extractDecoded(decoded: InputStream, include: ((name: String) -> Boolean)? = null) {
         decoded.buffered(1 shl 16).use {
-            readArchive(it)
+            readArchive(it, include)
             // Consume the tar's trailing padding so the whole compressed asset is read
             // (callers may be hashing the raw stream).
             while (it.read(copyBuffer) >= 0) {}
@@ -71,7 +71,7 @@ class TarExtractor(
         for ((dir, mode) in deferredDirModes.asReversed()) chmod(dir, mode)
     }
 
-    private fun readArchive(input: InputStream) {
+    private fun readArchive(input: InputStream, include: ((name: String) -> Boolean)?) {
         val header = ByteArray(BLOCK)
         var longName: String? = null
         var longLink: String? = null
