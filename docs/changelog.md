@@ -2,6 +2,24 @@
 
 每个版本先中文、后英文。发版时把对应版本的正文（不含版本标题）作为 Release 正文，见 `docs/release.md`。
 
+## 1.2.0 · 2026-11-17
+
+### 中文
+
+- **模型选择加搜索。** 选择模型的弹层在渠道模型多于 8 个时出现搜索框，输入即跨渠道过滤、每个渠道一组；选中后回到原视图。
+- **fork 独立身份。** 包名改为 `io.github.sang765.dsh_app_enhanced`，可与原版并存安装；配置正式发布签名；关于页新增 fork 署名，指向本仓库。
+- **数据迁移。** 新增「导入 DSH Go 数据」：旧应用里一条命令把引擎数据打包到共享存储，本应用选择文件后并入对话、工作区文件、长期记忆、插件与引擎设置；导入时引擎先停止，完成后自动重启。应用设置与 API Key 不随导出，需要重新配置。
+- **新对话页的工作区入口。** 还没选过工作区时也会显示「选择工作区」，点开即可挑选，行为与网页版一致。
+- **验证情况。** 本版本的改动只通过静态检查（l10n 与指南同步、结构核对）和导出命令的实测；Kotlin 与 Dart 改动未经编译，真机未完整验证。遇到问题请导出诊断并开 issue。
+
+### English
+
+- **Model search.** The model picker gains a search field once the catalog has more than eight models: typing filters across every channel, grouped per channel, and picking a result returns to the channel view.
+- **A fork identity of its own.** The package name becomes `io.github.sang765.dsh_app_enhanced`, so the fork installs alongside the original; a release signing key is set up, and the About page credits the fork with a link to this repository.
+- **Data migration.** New "Import DSH Go data": the old app packs its engine data onto shared storage with one command, and this app merges in chats, workspace files, long-term memory, plugins and engine settings; the engine stops for the import and starts again after. App settings and API keys are not part of the export and need setting up again.
+- **Workspace entry on the new-chat screen.** The workspace chip now shows even before a workspace has ever been picked, opening the same picker as the web UI.
+- **Verification.** This version's changes passed static checks only (l10n and guide sync, structural review) plus a real run of the export command; the Kotlin and Dart changes are uncompiled and untested on a device. If something breaks, export diagnostics and open an issue.
+
 ## 1.1.0 · 2026-11-15
 
 ### 中文
