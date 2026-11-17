@@ -1146,6 +1146,13 @@ abstract final class Spots {
     keywords: (l) => l.searchKwEngineUninstall,
     ohosKeywords: (l) => l.harmonyKwEngineUninstall,
   );
+  static final engineImport = SettingSpot(
+    'engine-import',
+    page: SettingsPageId.engine,
+    title: (l) => l.phoneHomeImport,
+    keywords: (l) => l.searchKwEngineImport,
+    androidOnly: true,
+  );
 
   // 远程主机.
   static final addSshHost = SettingSpot(
@@ -1292,6 +1299,7 @@ final _rows = <SettingSpot>[
   Spots.workspaceRecovery,
   Spots.engineReset,
   Spots.engineUninstall,
+  Spots.engineImport,
   Spots.addSshHost,
   Spots.remoteAutoConnect,
   Spots.remoteCompactHistory,

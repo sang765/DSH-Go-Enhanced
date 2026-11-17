@@ -31916,6 +31916,12 @@ abstract class L10n {
   /// **'卸载,删除运行环境,释放空间'**
   String get searchKwEngineUninstall;
 
+  /// No description provided for @searchKwEngineImport.
+  ///
+  /// In zh, this message translates to:
+  /// **'导入,迁移,合并,DSH Go'**
+  String get searchKwEngineImport;
+
   /// No description provided for @searchKwWorkspaceRecovery.
   ///
   /// In zh, this message translates to:

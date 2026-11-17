@@ -18272,6 +18272,9 @@ class L10nEn extends L10n {
   String get searchKwEngineUninstall => 'uninstall,remove,free space';
 
   @override
+  String get searchKwEngineImport => 'import,migrate,merge,dsh go';
+
+  @override
   String get searchKwWorkspaceRecovery => 'workspace,index,recovery,rescue,missing chats,chats won\'t open';
 
   @override

@@ -17363,6 +17363,9 @@ class L10nZh extends L10n {
   String get searchKwEngineUninstall => '卸载,删除运行环境,释放空间';
 
   @override
+  String get searchKwEngineImport => '导入,迁移,合并,DSH Go';
+
+  @override
   String get searchKwWorkspaceRecovery => '工作区,索引,救援,对话打不开,对话不见了,恢复对话';
 
   @override

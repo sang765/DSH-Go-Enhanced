@@ -15,6 +15,7 @@ import 'package:dsh_app/state/models_state.dart';
 import 'package:dsh_app/state/sessions_state.dart';
 import 'package:dsh_app/state/settings_state.dart';
 import 'package:dsh_app/state/usage_state.dart';
+import 'package:dsh_app/state/workspaces_state.dart';
 import 'package:dsh_app/ui/common/side_insets.dart';
 import 'package:dsh_app/ui/theme/theme.dart';
 import 'package:dsh_client/dsh_client.dart';
@@ -435,6 +436,10 @@ class ChatHarness {
     }),
     attachmentPickerProvider.overrideWithValue(picker),
     settingsProvider.overrideWith(() => TestSettings(settings)),
+    // The chat screen reads workspace readiness for the new-chat chip; keep
+    // the controller off the fake connection, whose mocks answer no
+    // `workspace/follow` stream.
+    workspacesProvider.overrideWith(_HarnessWorkspaces.new),
     // The test key must not send dictation to DeepSeek: the phone's and the
     // engine's recognizers as before (test/speech covers the cloud ones).
     voiceCloudProvider.overrideWithValue((_) async => null),
@@ -527,4 +532,11 @@ class StaticRuntime extends LocalRuntimeController {
 
   @override
   Future<void> stop() async {}
+}
+
+/// A workspace registry that is ready and empty: the new-chat chip stays
+/// hidden, and nothing reaches the fake connection's unmocked APIs.
+class _HarnessWorkspaces extends WorkspacesController {
+  @override
+  WorkspacesState build() => const WorkspacesState(status: WorkspacesStatus.ready);
 }
