@@ -1,5 +1,5 @@
 // About DSH Go: app information, the original author and personal profiles,
-// then the brand mark, slogan and unofficial-app disclaimer.
+// the fork's repository, then the brand mark, slogan and unofficial-app disclaimer.
 
 import 'dart:async';
 
@@ -84,6 +84,19 @@ class AboutPage extends ConsumerWidget {
               l10n.hubAboutGithub,
               '@${AppInfo.author}',
               AppInfo.authorGithubUrl,
+            ),
+          ],
+        ),
+        SettingsSection(
+          title: l10n.hubAboutFork,
+          children: [
+            _authorLink(
+              context,
+              ref,
+              'about-fork',
+              l10n.hubAboutForkRepo,
+              '@${AppInfo.forkAuthor}',
+              AppInfo.forkUrl,
             ),
           ],
         ),

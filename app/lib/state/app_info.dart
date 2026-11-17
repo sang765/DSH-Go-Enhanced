@@ -37,6 +37,11 @@ abstract final class AppInfo {
   static const authorXUrl = 'https://x.com/cccch1mneyyyy';
   static const authorGithubUrl = 'https://github.com/ccch1mneyyy';
 
+  /// The fork's maintainer and repository, credited on the About page under
+  /// the original author.
+  static const forkAuthor = 'sang765';
+  static const forkUrl = 'https://github.com/sang765/DSH-Go-Enhanced';
+
   static const deepseekPlatform = 'https://platform.deepseek.com/api_keys';
   static const remoteConsole = 'https://dsh.r2049.cn/app';
 

@@ -49,7 +49,10 @@ android {
     }
 
     defaultConfig {
-        applicationId = "io.github.ccch1mneyyy.dsh_app"
+        // The fork's own applicationId (new install identity, its own signing key);
+        // the namespace and every code package stay upstream's so their changes
+        // keep merging cleanly. shortcuts.xml's targetPackage must match this.
+        applicationId = "io.github.sang765.dsh_app_enhanced"
         // java.nio.file (symlinks while unpacking the rootfs) needs API 26.
         minSdk = 26
         // Target 28 like Termux, so the API 29+ exec restriction on app-private
