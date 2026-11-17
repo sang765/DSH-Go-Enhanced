@@ -1,0 +1,65 @@
+--- a/node_modules/@deepseek-ai/dsh-llm-pi-ai/lib/index.js
++++ b/node_modules/@deepseek-ai/dsh-llm-pi-ai/lib/index.js
+@@ -2370,6 +2370,33 @@
+ 	return new TextDecoder().decode(body);
+ }
+ /**
++ * The input modalities one advertised entry declares, or `undefined` when the
++ * listing says nothing: OpenRouter shapes live under `architecture`, some
++ * aggregations spell `input_modalities` flat. Unknown modality names are
++ * dropped; an empty answer stays `undefined` — silence, not a denial.
++ * @param entry - one raw listing row.
++ * @returns the declared modalities, or `undefined` to keep the route default.
++ */
++function advertisedInputModalities(entry) {
++	const raw = entry?.architecture?.input_modalities ?? entry?.input_modalities;
++	if (!Array.isArray(raw)) return void 0;
++	const modalities = [...new Set(raw.filter((value) => MODALITIES.includes(value)))];
++	return modalities.length > 0 ? modalities : void 0;
++}
++/**
++ * The thinking levels one advertised entry implies, or `undefined`: an
++ * aggregator that lists a reasoning parameter among its supported ones takes
++ * the common effort trio — the listing carries no per-level detail.
++ * @param entry - one raw listing row.
++ * @returns the level ids, or `undefined` when the entry reads non-reasoning.
++ */
++function advertisedReasoningEfforts(entry) {
++	const raw = entry?.supported_parameters;
++	if (!Array.isArray(raw)) return void 0;
++	const reasons = raw.some((value) => value === "reasoning" || value === "reasoning_effort" || value === "include_reasoning");
++	return reasons ? ["low", "medium", "high"] : void 0;
++}
++/**
+ * Read one supported model-listing reply. The standard `data` array takes
+ * precedence when both supported formats are present. An enriched `models`
+ * map uses each property key as the endpoint-facing id; its nested `id` is
+@@ -2404,11 +2431,15 @@
+ 		const name = label(entry?.name, entry?.display_name, entry?.displayName) ?? id;
+ 		const contextWindow = capacity(entry?.contextWindow, entry?.context_window, entry?.context_length, entry?.max_input_tokens, entry?.limit?.context);
+ 		const maxTokens = capacity(entry?.maxOutputTokens, entry?.max_output_tokens, entry?.maxTokens, entry?.max_tokens, entry?.limit?.output, entry?.top_provider?.max_completion_tokens);
++		const inputModalities = advertisedInputModalities(entry);
++		const reasoningEfforts = advertisedReasoningEfforts(entry);
+ 		models.push({
+ 			id,
+ 			name,
+ 			...contextWindow === void 0 ? {} : { contextWindow },
+-			...maxTokens === void 0 ? {} : { maxTokens }
++			...maxTokens === void 0 ? {} : { maxTokens },
++			...inputModalities === void 0 ? {} : { inputModalities },
++			...reasoningEfforts === void 0 ? {} : { reasoningEfforts }
+ 		});
+ 	}
+ 	return models;
+--- a/node_modules/@deepseek-ai/dsh-llm/lib/index.js
++++ b/node_modules/@deepseek-ai/dsh-llm/lib/index.js
+@@ -2242,7 +2242,8 @@
+ 					...model.name === void 0 ? {} : { name: model.name },
+ 					...model.contextWindow === void 0 ? {} : { contextWindow: model.contextWindow },
+ 					...model.maxTokens === void 0 ? {} : { maxTokens: model.maxTokens },
+-					...model.inputModalities === void 0 ? {} : { inputModalities: [...model.inputModalities] }
++					...model.inputModalities === void 0 ? {} : { inputModalities: [...model.inputModalities] },
++					...model.reasoningEfforts === void 0 ? {} : { reasoningEfforts: [...model.reasoningEfforts] }
+ 				});
+ 			}
+ 			return models;

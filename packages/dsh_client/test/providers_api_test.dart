@@ -600,6 +600,33 @@ void main() {
       }, reason: 'a name equal to the id is dropped');
     });
 
+    test('advertised reasoning becomes an efforts map, unknown levels drop', () async {
+      host.handlers['llm/discoverModels'] = (args) {
+        return ok([
+          {
+            'id': 'gateway-pro',
+            'reasoningEfforts': ['low', 'medium', 'high'],
+          },
+          {
+            'id': 'gateway-odd',
+            'reasoningEfforts': ['minimal', 'off', 'none'],
+          },
+        ]);
+      };
+      final models = await (await connect()).discoverModels(
+        baseUrl: 'https://gw.example.com/v1',
+        api: ProviderApi.openaiCompletions,
+      );
+      expect(models[0].toSpec().toJson(), {
+        'id': 'gateway-pro',
+        'reasoningEfforts': {'low': 'low', 'medium': 'medium', 'high': 'high'},
+      });
+      expect(models[1].toSpec().toJson()['reasoningEfforts'], {'minimal': 'minimal'},
+          reason: 'off is offered implicitly and unknown names cannot be declared');
+      expect(models[1].toSpec().reasoningEfforts, isNotNull);
+      expect(models[1].toSpec().thinkingLevels, ['minimal']);
+    });
+
     test('a configured route sends only what the draft has (stored key)', () async {
       Map<String, Object?>? sent;
       host.handlers['llm/discoverModels'] = (args) {

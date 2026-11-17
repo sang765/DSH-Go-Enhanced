@@ -62,6 +62,18 @@
         }
       }
     },
+    "discovery-capabilities.diff": {
+      "0.2.2-rc.1": {
+        "node_modules/@deepseek-ai/dsh-llm-pi-ai/lib/index.js": {
+          "after": "a1132374286f00639bfee5e7cd65577871cd6d08dfd33d0401601603de9628d0",
+          "before": "71bef2194ebc72d9d86a0ce3a0fe24345b808208a4752fb077f71cf6603b04aa"
+        },
+        "node_modules/@deepseek-ai/dsh-llm/lib/index.js": {
+          "after": "78d499972b3b1a86e52a937960e2269fb3502ae1c35f48ed4cb7bdafc2863f33",
+          "before": "e498311537374b963f955f57c9628961d55fdb518e9de77e86cc56f33f3562b3"
+        }
+      }
+    },
     "fork-default-effort.diff": {
       "0.2.2-rc.1": {
         "node_modules/@deepseek-ai/dsh-api-session-controller/lib/index.js": {
@@ -155,8 +167,8 @@
     "ohos-attachment-diagnostic.diff": {
       "0.2.2-rc.1": {
         "node_modules/@deepseek-ai/dsh-llm-pi-ai/lib/index.js": {
-          "after": "083ff174256a8166633c1f655720aaab897368ea5e1a553cdcec7b0fa329202a",
-          "before": "71bef2194ebc72d9d86a0ce3a0fe24345b808208a4752fb077f71cf6603b04aa"
+          "after": "e762688357b87548e7616300de047b2646fd20fb5369be3353318972c00b6565",
+          "before": "a1132374286f00639bfee5e7cd65577871cd6d08dfd33d0401601603de9628d0"
         }
       }
     },
@@ -295,16 +307,16 @@
     "ohos-piai-empty-models.diff": {
       "0.2.2-rc.1": {
         "node_modules/@deepseek-ai/dsh-llm-pi-ai/lib/index.js": {
-          "after": "25f7f6eb315754950170bd26ef0710fce3cf48d3046647c8eed9f64e7a72ab0b",
-          "before": "083ff174256a8166633c1f655720aaab897368ea5e1a553cdcec7b0fa329202a"
+          "after": "acdbc0ac7e7f72768e02c89b451aea6e2b8c053429096fcf761a9f2336609229",
+          "before": "e762688357b87548e7616300de047b2646fd20fb5369be3353318972c00b6565"
         }
       }
     },
     "ohos-piai-text-preabort.diff": {
       "0.2.2-rc.1": {
         "node_modules/@deepseek-ai/dsh-llm-pi-ai/lib/index.js": {
-          "after": "762e49300daac811c36184c9cb8ba44460de7fb5bacca06bc0c1b377cb192be1",
-          "before": "25f7f6eb315754950170bd26ef0710fce3cf48d3046647c8eed9f64e7a72ab0b"
+          "after": "af7483f8c5f8b48f76e33e8df27af630093a78a446a086cc68085baadf5c4011",
+          "before": "acdbc0ac7e7f72768e02c89b451aea6e2b8c053429096fcf761a9f2336609229"
         }
       }
     },
@@ -2479,7 +2491,8 @@
       "fork-default-effort.diff",
       "config-editor-lock-order.diff",
       "piai-overflow-output-limit.diff",
-      "schedule-authorization-availability.diff"
+      "schedule-authorization-availability.diff",
+      "discovery-capabilities.diff"
     ],
     "ohos": [
       "cordis-effect-dispose-completion.diff",
@@ -2632,6 +2645,7 @@
       "config-editor-lock-order.diff",
       "piai-overflow-output-limit.diff",
       "schedule-authorization-availability.diff",
+      "discovery-capabilities.diff",
       "ohos-attachment-publication.diff",
       "ohos-attachment-diagnostic.diff",
       "ohos-hap-native-libraries.diff",

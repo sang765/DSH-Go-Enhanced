@@ -419,19 +419,33 @@ class ProviderSettings {
 /// One `llm/discoverModels` candidate: metadata the endpoint advertised, for
 /// the user to adopt. Nothing is stored.
 class DiscoveredModel {
-  const DiscoveredModel({required this.id, this.name, this.contextWindow, this.maxTokens, this.inputModalities});
+  const DiscoveredModel({
+    required this.id,
+    this.name,
+    this.contextWindow,
+    this.maxTokens,
+    this.inputModalities,
+    this.reasoningEfforts,
+  });
 
   static DiscoveredModel? fromJson(Object? json) {
     final map = asMap(json);
     final id = asString(map?['id']);
     if (map == null || id == null || id.isEmpty) return null;
     final input = asList(map['inputModalities']);
+    final efforts = asList(map['reasoningEfforts']);
     return DiscoveredModel(
       id: id,
       name: asString(map['name']),
       contextWindow: asInt(map['contextWindow']),
       maxTokens: asInt(map['maxTokens']),
       inputModalities: input?.whereType<String>().toList(growable: false),
+      // The listing names reasoning without per-level detail; keep the levels
+      // this adapter can declare, `off` excluded (it is offered implicitly).
+      reasoningEfforts: efforts
+          ?.whereType<String>()
+          .where((level) => level != 'off' && piAiThinkingLevels.contains(level))
+          .toList(growable: false),
     );
   }
 
@@ -441,14 +455,21 @@ class DiscoveredModel {
   final int? maxTokens;
   final List<String>? inputModalities;
 
+  /// The thinking levels the endpoint advertised, or null when its listing
+  /// says nothing about reasoning (the entry then declares none).
+  final List<String>? reasoningEfforts;
+
   /// As a `models` entry (the official page's `adopt`). A name equal to the
-  /// id adds nothing and is dropped.
+  /// id adds nothing and is dropped; an advertised effort sends its own name.
   ProviderModelSpec toSpec() => ProviderModelSpec(
     id: id,
     name: name == null || name == id ? null : name,
     contextWindow: contextWindow,
     maxTokens: maxTokens,
     input: inputModalities,
+    extra: reasoningEfforts == null || reasoningEfforts!.isEmpty
+        ? const {}
+        : {'reasoningEfforts': {for (final level in reasoningEfforts!) level: level}},
   );
 }
 
