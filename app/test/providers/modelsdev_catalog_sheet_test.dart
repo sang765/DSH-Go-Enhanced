@@ -71,14 +71,14 @@ const _catalogJson = '''
 /// notifier actually did.
 Future<String> _untilLoaded(WidgetTester tester) async {
   final container = ProviderScope.containerOf(tester.element(find.text('open')));
-  final outcome = await tester.runAsync<String>(() async {
+  final outcome = (await tester.runAsync<String?>(() async {
     try {
       final catalog = await container.read(modelsDevCatalogProvider.future).timeout(const Duration(seconds: 5));
       return 'data(${catalog.providers.length})';
     } catch (error) {
       return 'threw($error)';
     }
-  });
+  })) ?? 'runAsync-yielded-null';
   final state = container.read(modelsDevCatalogProvider);
   final observed = state.map(
     data: (_) => outcome,
