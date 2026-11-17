@@ -76,6 +76,10 @@ CI (`.github/workflows/ci.yml`) runs general checks plus the parts a PR touches,
 - Never record, echo, or persist full API keys, tokens, cookies, or login states.
 - Manually inspect diagnostic bundles and logs before sending them out; automatic redaction is not a guarantee.
 
+### Language for repository records
+
+- Commits, pull requests, and issues are written **in English only** — never in Chinese (or any other language). This applies to commit messages, PR titles/descriptions, issue titles/bodies, and PR/issue comments.
+
 ### Git safety
 
 - **Level the baseline before starting work**: after `git fetch origin main`, sync the current branch to the latest `origin/main` (fast-forward with `git merge --ff-only` when possible); inspect, change, and open PRs on the latest baseline. Never stack work on a branch that is behind `main` — otherwise you risk re-implementing what `main` already fixed, for nothing.
