@@ -7053,6 +7053,35 @@ class L10nEn extends L10n {
   String get engineProviderAdd => 'Add provider';
 
   @override
+  String get engineProviderCatalogTitle => 'Choose a provider';
+
+  @override
+  String get engineProviderCatalogSearch => 'Search providers';
+
+  @override
+  String get engineProviderCatalogNoMatch => 'No provider matches';
+
+  @override
+  String get engineProviderCatalogFetchFailed => 'Couldn\'t load the provider list from models.dev';
+
+  @override
+  String get engineProviderCatalogCredit => 'Provider data from models.dev';
+
+  @override
+  String get engineProviderCatalogCustom => 'Add a custom provider';
+
+  @override
+  String engineProviderCatalogPreset(String name) {
+    return 'Preset from models.dev — $name';
+  }
+
+  @override
+  String get engineProviderCatalogPresetNote => 'Name, protocol and Base URL come from models.dev';
+
+  @override
+  String get engineProviderCatalogDoc => 'Provider docs';
+
+  @override
   String get engineProviderBasicInfo => 'Basic info';
 
   @override

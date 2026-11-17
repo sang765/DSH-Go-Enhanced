@@ -50,8 +50,8 @@ class ModelsDevModel {
     this.contextWindow,
     this.maxTokens,
     this.input,
-    this.reasoningEfforts,
-    this.reasons,
+    this.reasoningEfforts = const [],
+    this.reasons = false,
   });
 
   final String id;

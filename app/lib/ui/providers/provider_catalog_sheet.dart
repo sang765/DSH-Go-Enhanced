@@ -52,7 +52,6 @@ class _ProviderCatalogSheetState extends ConsumerState<ProviderCatalogSheet> {
     final theme = Theme.of(context);
     final colors = DshColors.of(context);
     final catalog = ref.watch(modelsDevCatalogProvider);
-    final providers = catalog.value?.providers ?? const <ModelsDevProvider>[];
     const inset = SheetTitleBar.inset;
     final maxList = MediaQuery.sizeOf(context).height * 0.6;
 
@@ -177,7 +176,7 @@ class _ProviderLogo extends StatelessWidget {
     width: 32,
     height: 32,
     fit: BoxFit.contain,
-    placeholderBuilder: () => Monogram(provider.name),
+    placeholderBuilder: (context) => Monogram(provider.name),
   );
 }
 

@@ -12536,6 +12536,60 @@ abstract class L10n {
   /// **'添加渠道'**
   String get engineProviderAdd;
 
+  /// No description provided for @engineProviderCatalogTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'选择渠道'**
+  String get engineProviderCatalogTitle;
+
+  /// No description provided for @engineProviderCatalogSearch.
+  ///
+  /// In zh, this message translates to:
+  /// **'搜索渠道'**
+  String get engineProviderCatalogSearch;
+
+  /// No description provided for @engineProviderCatalogNoMatch.
+  ///
+  /// In zh, this message translates to:
+  /// **'没有匹配的渠道'**
+  String get engineProviderCatalogNoMatch;
+
+  /// No description provided for @engineProviderCatalogFetchFailed.
+  ///
+  /// In zh, this message translates to:
+  /// **'无法从 models.dev 加载渠道列表'**
+  String get engineProviderCatalogFetchFailed;
+
+  /// No description provided for @engineProviderCatalogCredit.
+  ///
+  /// In zh, this message translates to:
+  /// **'渠道数据来自 models.dev'**
+  String get engineProviderCatalogCredit;
+
+  /// No description provided for @engineProviderCatalogCustom.
+  ///
+  /// In zh, this message translates to:
+  /// **'添加自定义渠道'**
+  String get engineProviderCatalogCustom;
+
+  /// No description provided for @engineProviderCatalogPreset.
+  ///
+  /// In zh, this message translates to:
+  /// **'从 models.dev 预填 — {name}'**
+  String engineProviderCatalogPreset(String name);
+
+  /// No description provided for @engineProviderCatalogPresetNote.
+  ///
+  /// In zh, this message translates to:
+  /// **'名称、协议和 Base URL 来自 models.dev'**
+  String get engineProviderCatalogPresetNote;
+
+  /// No description provided for @engineProviderCatalogDoc.
+  ///
+  /// In zh, this message translates to:
+  /// **'渠道文档'**
+  String get engineProviderCatalogDoc;
+
   /// No description provided for @engineProviderBasicInfo.
   ///
   /// In zh, this message translates to:

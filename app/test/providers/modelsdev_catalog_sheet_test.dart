@@ -20,10 +20,9 @@ import 'support.dart';
 
 /// An [UpdateHttp] answering from a canned catalogue (or failing).
 class _FakeHttp implements UpdateHttp {
-  _FakeHttp({this.body, this.status = 200, this.error});
+  _FakeHttp({this.body, this.error});
 
   final String? body;
-  final int status;
 
   /// Set on every request while non-null; cleared by the test to let a
   /// retry through.
@@ -34,11 +33,8 @@ class _FakeHttp implements UpdateHttp {
     if (error != null) throw error!;
     expect(url.host, 'models.dev');
     expect(url.path, '/api.json');
-    return UpdateHttpResponse(
-      status: status,
-      body: Stream.value(utf8.encode(body ?? '')),
-      contentLength: utf8.encode(body ?? '').length,
-    );
+    final bytes = utf8.encode(body ?? '');
+    return UpdateHttpResponse(status: 200, body: Stream.value(bytes), contentLength: bytes.length);
   }
 }
 

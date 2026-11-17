@@ -412,18 +412,18 @@ class _ProviderFormPageState extends ConsumerState<ProviderFormPage> with FieldP
             SettingsSection(
               title: l10n.engineProviderBasicInfo,
               children: [
-                if (_locked && _preset case final preset?)
+                if (_locked && _preset != null)
                   Padding(
                     padding: const EdgeInsets.only(bottom: 8),
                     child: Row(
                       children: [
                         Expanded(
                           child: Text(
-                            l10n.engineProviderCatalogPreset(preset.name),
+                            l10n.engineProviderCatalogPreset(_preset!.name),
                             style: theme.textTheme.bodySmall?.copyWith(color: colors.textTertiary),
                           ),
                         ),
-                        if (preset.doc case final doc?)
+                        if (_preset!.doc case final doc?)
                           FormSmallButton(
                             label: l10n.engineProviderCatalogDoc,
                             onPressed: () => _openDoc(context, doc),

@@ -3790,6 +3790,20 @@
   "engineProviderNeedModel": "至少添加一个模型",
   "engineProviderEdit": "编辑渠道",
   "engineProviderAdd": "添加渠道",
+  "engineProviderCatalogTitle": "选择渠道",
+  "engineProviderCatalogSearch": "搜索渠道",
+  "engineProviderCatalogNoMatch": "没有匹配的渠道",
+  "engineProviderCatalogFetchFailed": "无法从 models.dev 加载渠道列表",
+  "engineProviderCatalogCredit": "渠道数据来自 models.dev",
+  "engineProviderCatalogCustom": "添加自定义渠道",
+  "engineProviderCatalogPreset": "从 models.dev 预填 — {name}",
+  "@engineProviderCatalogPreset": {
+    "placeholders": {
+      "name": {}
+    }
+  },
+  "engineProviderCatalogPresetNote": "名称、协议和 Base URL 来自 models.dev",
+  "engineProviderCatalogDoc": "渠道文档",
   "engineProviderBasicInfo": "基本信息",
   "engineProviderNameHint": "比如：我的网关",
   "engineProviderCompatibleProtocol": "兼容协议",

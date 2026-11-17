@@ -6687,6 +6687,35 @@ class L10nZh extends L10n {
   String get engineProviderAdd => '添加渠道';
 
   @override
+  String get engineProviderCatalogTitle => '选择渠道';
+
+  @override
+  String get engineProviderCatalogSearch => '搜索渠道';
+
+  @override
+  String get engineProviderCatalogNoMatch => '没有匹配的渠道';
+
+  @override
+  String get engineProviderCatalogFetchFailed => '无法从 models.dev 加载渠道列表';
+
+  @override
+  String get engineProviderCatalogCredit => '渠道数据来自 models.dev';
+
+  @override
+  String get engineProviderCatalogCustom => '添加自定义渠道';
+
+  @override
+  String engineProviderCatalogPreset(String name) {
+    return '从 models.dev 预填 — $name';
+  }
+
+  @override
+  String get engineProviderCatalogPresetNote => '名称、协议和 Base URL 来自 models.dev';
+
+  @override
+  String get engineProviderCatalogDoc => '渠道文档';
+
+  @override
   String get engineProviderBasicInfo => '基本信息';
 
   @override
