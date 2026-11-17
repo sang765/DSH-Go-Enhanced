@@ -73,7 +73,11 @@ Future<String> _untilLoaded(WidgetTester tester) async {
     await tester.pump(const Duration(milliseconds: 100));
     final container = ProviderScope.containerOf(tester.element(find.text('open')));
     final state = container.read(modelsDevCatalogProvider);
-    observed = state.map(data: (_) => 'data(${state.value!.providers.length})', error: (e) => 'error($e)', loading: () => 'loading');
+    observed = state.map(
+      data: (_) => 'data(${state.value!.providers.length})',
+      error: (e) => 'error(${e.error})',
+      loading: (_) => 'loading',
+    );
     if (observed != 'loading') break;
   }
   // ignore: avoid_print
