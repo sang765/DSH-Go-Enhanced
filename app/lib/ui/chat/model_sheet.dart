@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: MIT
 // See THIRD_PARTY_NOTICES.md.
 // Local changes: a glass bottom sheet fed by `session/modelCatalog`, with a
-// channel filter, model cards and a capsule effort selector.
+// search field, a channel filter, model cards and a capsule effort selector.
 
 import 'dart:async';
 import 'dart:math' as math;
@@ -18,6 +18,7 @@ import '../../state/settings_state.dart';
 import '../common/app_sheet.dart';
 import '../common/empty_view.dart';
 import '../common/pressable.dart';
+import '../common/search_capsule.dart';
 import '../common/segmented_pill.dart';
 import '../common/sheet_title_bar.dart';
 import '../common/smooth_size.dart';
@@ -408,6 +409,8 @@ Future<void> showModelSheet(
 ///                    ───
 ///   选择模型                               (×)
 ///
+///   [ 搜索模型 ]                           模型够多时
+///
 ///   ((  DeepSeek  )   OpenRouter            )    渠道多于一个时
 ///
 ///   ╭─────────────────╮  ╭─────────────────╮
@@ -440,12 +443,20 @@ class _ModelSheetState extends ConsumerState<_ModelSheet> {
   /// The channel being browsed; null follows the selected model's.
   String? _channel;
 
+  /// Searching looks in every channel at once; empty shows the channel view.
+  final _query = TextEditingController();
+
+  /// From this many models in the catalog, the sheet offers a search field;
+  /// below that the channel bar finds everything in a tap or two.
+  static const _searchFrom = 8;
+
   /// Closes the sheet once the effort thumb has landed.
   Timer? _close;
 
   @override
   void dispose() {
     _close?.cancel();
+    _query.dispose();
     super.dispose();
   }
 
@@ -464,6 +475,7 @@ class _ModelSheetState extends ConsumerState<_ModelSheet> {
     setState(() {
       _selection = next;
       _channel = model.provider;
+      _query.clear();
     });
     if (!widget.confirmSelection) widget.onSelected(next);
   }
@@ -532,43 +544,48 @@ class _ModelSheetState extends ConsumerState<_ModelSheet> {
       }
     }
 
+    // The keyboard's inset lifts the search field above it, composed under
+    // SafeArea the way ModelPickerSheet does it.
     final sheet = SafeArea(
       top: false,
-      child: SingleChildScrollView(
-        padding: const EdgeInsets.only(bottom: 20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            SheetTitleBar(catalog == null ? l10n.viewModelSelect : readListHeading(l10n.viewModelSelect, view.status)),
-            body,
-            if (picking && widget.confirmSelection && !isValidModelSelection(catalog, _selection))
-              Padding(
-                padding: const EdgeInsets.fromLTRB(SheetTitleBar.inset, 16, SheetTitleBar.inset, 0),
-                child: Text(l10n.engineNewChatDefaultsSelectionUnavailable),
-              ),
-            if (picking && widget.confirmSelection)
-              Padding(
-                padding: const EdgeInsets.fromLTRB(SheetTitleBar.inset, 20, SheetTitleBar.inset, 0),
-                child: FilledButton(
-                  onPressed: !active || view.readOnly || !isValidModelSelection(catalog, _selection)
-                      ? null
-                      : () {
-                          final currentView = ref.read(modelListViewProvider);
-                          if (!_active ||
-                              currentView.readOnly ||
-                              !isValidModelSelection(currentView.value, _selection)) {
-                            return;
-                          }
-                          widget.onSelected(_selection!);
-                          Navigator.of(context).pop();
-                        },
-                  child: Text(l10n.commonSave),
+      child: Padding(
+        padding: EdgeInsets.only(bottom: MediaQuery.viewInsetsOf(context).bottom),
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.only(bottom: 20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              SheetTitleBar(catalog == null ? l10n.viewModelSelect : readListHeading(l10n.viewModelSelect, view.status)),
+              body,
+              if (picking && widget.confirmSelection && !isValidModelSelection(catalog, _selection))
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(SheetTitleBar.inset, 16, SheetTitleBar.inset, 0),
+                  child: Text(l10n.engineNewChatDefaultsSelectionUnavailable),
                 ),
-              ),
-            // 「管理模型 ›」: 设置 › 模型, over the sheet (back returns here).
-            if (picking) ...[const SizedBox(height: 12), const ManageModelsLink()],
-          ],
+              if (picking && widget.confirmSelection)
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(SheetTitleBar.inset, 20, SheetTitleBar.inset, 0),
+                  child: FilledButton(
+                    onPressed: !active || view.readOnly || !isValidModelSelection(catalog, _selection)
+                        ? null
+                        : () {
+                            final currentView = ref.read(modelListViewProvider);
+                            if (!_active ||
+                                currentView.readOnly ||
+                                !isValidModelSelection(currentView.value, _selection)) {
+                              return;
+                            }
+                            widget.onSelected(_selection!);
+                            Navigator.of(context).pop();
+                          },
+                    child: Text(l10n.commonSave),
+                  ),
+                ),
+              // 「管理模型 ›」: 设置 › 模型, over the sheet (back returns here).
+              if (picking) ...[const SizedBox(height: 12), const ManageModelsLink()],
+            ],
+          ),
         ),
       ),
     );
@@ -581,80 +598,135 @@ class _ModelSheetState extends ConsumerState<_ModelSheet> {
     final efforts = selected?.efforts ?? const <ReasoningEffort>[];
     final quick = AppMotion.of(context, AppMotion.quick);
     const inset = SheetTitleBar.inset;
+    final searching = _query.text.trim().isNotEmpty;
+    final total = [for (final group in groups) ...group.models].length;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       mainAxisSize: MainAxisSize.min,
       children: [
-        if (groups.length > 1)
+        if (total > _searchFrom)
           Padding(
-            padding: const EdgeInsets.only(top: 4, bottom: 16),
-            child: _ChannelBar(groups: groups, shown: shown.id, onChanged: (id) => setState(() => _channel = id)),
-          )
-        else
-          SheetSectionLabel(shown.name),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: inset),
-          child: SmoothSize(
-            duration: AppMotion.of(context, AppMotion.standard),
-            curve: AppMotion.std,
-            alignment: Alignment.topCenter,
-            child: AnimatedSwitcher(
-              duration: quick,
-              switchInCurve: AppMotion.enter,
-              switchOutCurve: AppMotion.exit,
-              layoutBuilder: (current, previous) =>
-                  Stack(alignment: Alignment.topCenter, children: [...previous, ?current]),
-              child: _ModelGrid(
-                key: ValueKey(shown.id),
-                models: shown.models,
-                selected: selected,
-                onPick: readOnly ? null : _pickModel,
+            padding: EdgeInsets.fromLTRB(inset, 4, inset, searching ? 16 : 8),
+            child: SearchCapsule(
+              controller: _query,
+              hint: context.l10n.viewModelSearch,
+              onChanged: (_) => setState(() {}),
+              onClear: () => setState(_query.clear),
+            ),
+          ),
+        if (searching)
+          _searchResults(groups, selected, readOnly: readOnly)
+        else ...[
+          if (groups.length > 1)
+            Padding(
+              padding: const EdgeInsets.only(top: 4, bottom: 16),
+              child: _ChannelBar(groups: groups, shown: shown.id, onChanged: (id) => setState(() => _channel = id)),
+            )
+          else
+            SheetSectionLabel(shown.name),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: inset),
+            child: SmoothSize(
+              duration: AppMotion.of(context, AppMotion.standard),
+              curve: AppMotion.std,
+              alignment: Alignment.topCenter,
+              child: AnimatedSwitcher(
+                duration: quick,
+                switchInCurve: AppMotion.enter,
+                switchOutCurve: AppMotion.exit,
+                layoutBuilder: (current, previous) =>
+                    Stack(alignment: Alignment.topCenter, children: [...previous, ?current]),
+                child: _ModelGrid(
+                  key: ValueKey(shown.id),
+                  models: shown.models,
+                  selected: selected,
+                  onPick: readOnly ? null : _pickModel,
+                ),
               ),
             ),
           ),
-        ),
-        // Fades out first, then the height folds away (and the reverse on the
-        // way in), so nothing below jumps.
-        SmoothSize(
-          duration: AppMotion.of(context, AppMotion.collapse),
-          curve: AppMotion.collapseCurve,
-          alignment: Alignment.topCenter,
-          child: AnimatedSwitcher(
-            duration: quick,
-            layoutBuilder: (current, previous) =>
-                Stack(alignment: Alignment.topCenter, children: [...previous, ?current]),
-            child: efforts.length < 2
-                ? const SizedBox(key: ValueKey('none'), width: double.infinity)
-                : Column(
-                    key: const ValueKey('effort'),
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const SizedBox(height: 16),
-                      SheetSectionLabel(appL10n.viewModelEffort),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: inset),
-                        child: SegmentedPill<String>(
-                          height: 40,
-                          segments: [for (final e in efforts) PillSegment(e.id, effortLabel(e.id, e.name))],
-                          selected: _selection?.reasoningEffort ?? selected?.defaultEffort ?? efforts.first.id,
-                          onChanged: readOnly
-                              ? null
-                              : (effort) {
-                                  if (identical(
-                                    findModel(ref.read(modelListViewProvider).value, _selection),
-                                    selected,
-                                  )) {
-                                    _pickEffort(effort);
-                                  }
-                                },
+          // Fades out first, then the height folds away (and the reverse on the
+          // way in), so nothing below jumps.
+          SmoothSize(
+            duration: AppMotion.of(context, AppMotion.collapse),
+            curve: AppMotion.collapseCurve,
+            alignment: Alignment.topCenter,
+            child: AnimatedSwitcher(
+              duration: quick,
+              layoutBuilder: (current, previous) =>
+                  Stack(alignment: Alignment.topCenter, children: [...previous, ?current]),
+              child: efforts.length < 2
+                  ? const SizedBox(key: ValueKey('none'), width: double.infinity)
+                  : Column(
+                      key: const ValueKey('effort'),
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const SizedBox(height: 16),
+                        SheetSectionLabel(appL10n.viewModelEffort),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: inset),
+                          child: SegmentedPill<String>(
+                            height: 40,
+                            segments: [for (final e in efforts) PillSegment(e.id, effortLabel(e.id, e.name))],
+                            selected: _selection?.reasoningEffort ?? selected?.defaultEffort ?? efforts.first.id,
+                            onChanged: readOnly
+                                ? null
+                                : (effort) {
+                                    if (identical(
+                                      findModel(ref.read(modelListViewProvider).value, _selection),
+                                      selected,
+                                    )) {
+                                      _pickEffort(effort);
+                                    }
+                                  },
+                          ),
                         ),
-                      ),
-                    ],
-                  ),
+                      ],
+                    ),
+            ),
           ),
+        ],
+      ],
+    );
+  }
+
+  /// The models matching the search across every channel, each channel a
+  /// labelled section of the same cards; nothing found says so where the
+  /// cards would be.
+  Widget _searchResults(List<ProviderGroup> groups, ModelInfo? selected, {required bool readOnly}) {
+    final term = _query.text.trim().toLowerCase();
+    bool matches(ModelInfo model) =>
+        model.name.toLowerCase().contains(term) ||
+        model.id.toLowerCase().contains(term) ||
+        shortModelName(model.name).toLowerCase().contains(term);
+    final sections = [
+      for (final group in groups)
+        (name: group.name, models: [for (final model in group.models) if (matches(model)) model]),
+    ].where((section) => section.models.isNotEmpty).toList();
+    if (sections.isEmpty) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: 32),
+        child: Text(
+          context.l10n.viewModelSearchEmpty,
+          textAlign: TextAlign.center,
+          style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: DshColors.of(context).textTertiary),
         ),
+      );
+    }
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        for (final (index, section) in sections.indexed) ...[
+          if (index > 0) const SizedBox(height: 16),
+          SheetSectionLabel(section.name),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: SheetTitleBar.inset),
+            child: _ModelGrid(models: section.models, selected: selected, onPick: readOnly ? null : _pickModel),
+          ),
+        ],
       ],
     );
   }
