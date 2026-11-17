@@ -27,6 +27,7 @@ import '../theme/theme.dart';
 import '../web/local_web_screen.dart';
 import 'engine_status.dart';
 import 'engine_capabilities.dart';
+import 'home_import_page.dart';
 import 'linux_section.dart';
 import 'local_uninstall.dart';
 import 'reset_outcome.dart';
@@ -205,6 +206,7 @@ class EngineScreen extends ConsumerWidget {
             if (!missing)
               SettingsSection(
                 children: [
+                  if (ref.watch(operatingSystemProvider) != 'ohos') HomeImportRow(enabled: !status.phase.isBusy),
                   _ResetRow(enabled: !status.phase.isBusy),
                   LocalUninstallRow(enabled: !status.phase.isBusy),
                 ],

@@ -20,6 +20,9 @@ import org.tukaani.xz.XZInputStream
 class TarExtractor(
     private val root: File,
     private val onProgress: (compressedRead: Long) -> Unit,
+    /** Null extracts everything; otherwise only entries whose cleaned name passes (the
+     *  DSH Go home import takes `root/` alone, never the provisioned system tree). */
+    private val include: ((name: String) -> Boolean)? = null,
 ) {
     private class CountingStream(input: InputStream, private val onRead: (Long) -> Unit) : FilterInputStream(input) {
         var count = 0L
@@ -99,6 +102,10 @@ class TarExtractor(
             val link = paxLink ?: longLink ?: cString(header, 157, 100)
             longName = null; longLink = null; paxPath = null; paxLink = null; paxSize = null
             val mode = parseNumber(header, 100, 8).toInt() and 0xFFF
+            if (include != null && !include(name.trimStart('/').removePrefix("./"))) {
+                skip(input, padded(size))
+                continue
+            }
             val target = resolve(name)
             if (target == null) {
                 skip(input, padded(size))

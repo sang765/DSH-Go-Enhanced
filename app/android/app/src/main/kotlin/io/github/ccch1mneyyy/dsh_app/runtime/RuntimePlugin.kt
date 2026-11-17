@@ -167,6 +167,9 @@ class RuntimePlugin :
             "moveAside" -> controller.moveAside(call.argument<List<String>>("paths") ?: emptyList()) { moved, error ->
                 if (error == null) result.success(moved) else result.error(if (error is RuntimeNotStoppedException) "runtime_not_stopped" else "move_failed", error.message, null)
             }
+            "importHomeData" -> controller.importHomeData(call.argument<String>("path") ?: "") { error ->
+                if (error == null) result.success(null) else result.error(if (error is RuntimeNotStoppedException) "runtime_not_stopped" else "home_import_failed", error.message, null)
+            }
             "clearFailure" -> {
                 controller.clearFailure()
                 result.success(null)

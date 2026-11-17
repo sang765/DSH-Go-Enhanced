@@ -72,6 +72,18 @@ Deletes data on this phone and reinstalls the runtime, to fix a runtime that won
 
 With the defaults, chats, workspaces, plugins and settings are deleted, including custom model providers; the DeepSeek key saved in the app is filled back in. Anything else in the home folder (`/root`) goes too, including files in your workspaces, `AGENTS.md` and data that plugins store themselves, such as memories. The dialog spells out what will go; tap **Delete and reset** and the app reinstalls the runtime. A reset can't be undone, so export chats you need first with `/export` or **Export chat log** in All features.
 
+## Import DSH Go data
+
+<!-- nav: commonSettings,hubSettingsEngine,phoneHomeImport -->
+`Settings › Local engine › Import DSH Go data`
+
+Merges the original DSH Go app's engine data into this one (the fork's package name differs, so the two apps share nothing). Two steps:
+
+1. **Export**: in the old DSH Go app, tell its agent or open its terminal and run the command this page offers. It packs the engine data into `/sdcard/Download/dsh-go-export.tgz`. There is an everything variant and one without workspace files; exports can be large, so check free storage first.
+2. **Import**: pick that file on this page. The engine stops, the data under `/root` merges in by path (exported files replace same-path ones), and the engine starts again.
+
+Merged in: chats, workspace files, long-term memory, plugins and engine settings. Not part of the export: app settings, API keys (secret storage is bound to each app and can't be read across) and phone-control grants — set those up in the new app by hand.
+
 ## Uninstall the runtime
 
 <!-- nav: commonSettings,hubSettingsEngine,localEnvUninstall -->

@@ -844,6 +844,28 @@ class RuntimeController private constructor(private val app: Context) : DshProce
         }
     }
 
+    /** Merges a DSH Go home export (the old app's tar.gz of its `/root`) into the rootfs.
+     *  Only `root/` entries are taken, so the provisioned system tree stays ours. The
+     *  engine must be stopped: the Dart side stops it first, the gate refuses a live
+     *  process anyway. */
+    fun importHomeData(path: String, onDone: (Throwable?) -> Unit) {
+        worker.execute {
+            try {
+                checkRecoveryWrite(mainProfileOnly = false)
+                val source = File(path)
+                check(source.isFile) { "export file not found: $path" }
+                val extractor = TarExtractor(installer.rootfs, { }, include = { name ->
+                    name == "root" || name.startsWith("root/")
+                })
+                source.inputStream().use { raw -> extractor.extract(raw, source.name) }
+                log("[dsh-app] imported DSH Go home data from $path", "system")
+                main.post { onDone(null) }
+            } catch (e: Throwable) {
+                main.post { onDone(e) }
+            }
+        }
+    }
+
     /** Worker-only: another physical launch or disk action cannot interleave with the write. */
     private fun checkRecoveryWrite(mainProfileOnly: Boolean) {
         val state = synchronized(this) {

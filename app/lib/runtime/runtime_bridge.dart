@@ -678,6 +678,12 @@ class RuntimeBridge {
     ];
   }
 
+  /// Merges a DSH Go home export (the old app's tar.gz of its `/root`) into this
+  /// engine's rootfs. Only `root/` entries are taken; the engine must be stopped
+  /// (EngineControl.stopAndWait first — the native gate refuses a live one).
+  Future<void> importHomeData(String path) =>
+      _methods.invokeMethod<void>('importHomeData', {'path': path});
+
   Future<void> clearFailure() => _methods.invokeMethod<void>('clearFailure');
 
   Future<void> setAutoSafe(bool enabled) => _methods.invokeMethod<void>('setAutoSafe', {'enabled': enabled});
