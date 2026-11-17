@@ -4,14 +4,18 @@
 // fields, the protocol capsule, the pinned button and the picker.
 
 import 'dart:async';
+import 'dart:convert';
 
+import 'package:dsh_app/state/modelsdev_provider_catalog.dart';
 import 'package:dsh_app/state/providers_state.dart';
 import 'package:dsh_app/ui/common/segmented_pill.dart';
 import 'package:dsh_app/ui/common/sheet_title_bar.dart';
+import 'package:dsh_app/ui/providers/provider_catalog_sheet.dart';
 import 'package:dsh_app/ui/providers/provider_form_page.dart';
 import 'package:dsh_app/ui/settings/settings_widgets.dart' show SettingsMetrics;
 import 'package:dsh_app/ui/theme/app_icons.dart';
 import 'package:dsh_app/ui/theme/theme.dart';
+import 'package:dsh_app/update/update_http.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -60,6 +64,7 @@ Future<void> _open(
   MemoryProviderKeyVault? vault,
   double height = 1400,
   FakeProviderBackend? Function()? backendFor,
+  UpdateHttp? http,
 }) async {
   // Real glyph widths: the capsule's fit depends on them.
   await tester.runAsync(loadGoldenFonts);
@@ -72,17 +77,51 @@ Future<void> _open(
     goldenApp(
       home: _Opener(existing: existing),
       brightness: Brightness.light,
-      overrides: backendFor == null
-          ? providerOverrides(backend, vault: vault)
-          : [
-              // The support helper's first override is the backend being switched.
-              ...providerOverrides(backend, vault: vault).skip(1),
-              providerBackendProvider.overrideWith((ref) => backendFor()),
-            ],
+      overrides: [
+        if (http != null) modelsDevHttpProvider.overrideWithValue(http),
+        ...backendFor == null
+            ? providerOverrides(backend, vault: vault)
+            : [
+                // The support helper's first override is the backend being switched.
+                ...providerOverrides(backend, vault: vault).skip(1),
+                providerBackendProvider.overrideWith((ref) => backendFor()),
+              ],
+      ],
     ),
   );
   await tester.tap(find.text('open'));
   await settle(tester);
+}
+
+/// A models.dev catalogue with one entry, for the preset flow.
+class _FakeCatalogHttp implements UpdateHttp {
+  @override
+  Future<UpdateHttpResponse> get(Uri url, {Map<String, String> headers = const {}, Duration timeout = const Duration(seconds: 15)}) async {
+    expect(url.host, 'models.dev');
+    return UpdateHttpResponse(
+      status: 200,
+      body: Stream.value(
+        utf8.encode(jsonEncode({
+          'example': {
+            'id': 'example',
+            'name': 'Example Cloud',
+            'npm': '@ai-sdk/openai-compatible',
+            'api': 'https://api.example.com/v1',
+            'env': ['EXAMPLE_API_KEY'],
+            'models': {
+              'example-pro': {
+                'id': 'example-pro',
+                'name': 'Example Pro',
+                'reasoning': true,
+                'limit': {'context': 131072, 'output': 65536},
+                'modalities': {'input': ['text', 'image'], 'output': ['text']},
+              },
+            },
+          },
+        })),
+      ),
+    );
+  }
 }
 
 Finder _field(String label) => find.descendant(
@@ -517,6 +556,46 @@ void main() {
   });
 
   group('create', () {
+    testWidgets('a catalogue preset locks name, protocol and Base URL; only key and models stay editable', (tester) async {
+      final backend = FakeProviderBackend(discoverResult: discovered);
+      final http = _FakeCatalogHttp();
+      await _open(tester, backend, http: http);
+      // The catalogue sheet is up (opened by the form itself). Pick Example.
+      expect(find.byType(ProviderCatalogSheet), findsOneWidget);
+      await tester.tap(find.text('Example Cloud'));
+      await settle(tester);
+      expect(find.byType(ProviderCatalogSheet), findsNothing);
+      expect(_field('Base URL'), findsOneWidget);
+      expect(tester.widget<TextField>(_field('Base URL')).controller!.text, 'https://api.example.com/v1');
+      expect(tester.widget<TextField>(_field('名称')).controller!.text, 'Example Cloud');
+      // Locked: readOnly on the two text fields, protocol capsule disabled.
+      expect(tester.widget<TextField>(_field('名称')).readOnly, isTrue);
+      expect(tester.widget<TextField>(_field('Base URL')).readOnly, isTrue);
+      // The key is the only field to fill; save with it.
+      await _type(tester, 'API Key', 'sk-example-1');
+      // Fetch picks the catalogue model; keep the flow engine-driven.
+      await tester.tap(find.text('获取模型'));
+      await settle(tester);
+      await tester.tap(find.text('添加 3 个模型'));
+      await settle(tester);
+      await tester.tap(find.text('保存'));
+      await settle(tester);
+      final create = backend.calls.firstWhere((c) => c.$1 == 'create').$2;
+      expect(create['displayName'], 'Example Cloud');
+      expect(create['baseURL'], 'https://api.example.com/v1');
+      expect(create['api'], 'openai-completions');
+      expect(find.text('result: custom-example-cloud'), findsOneWidget);
+    });
+
+    testWidgets('the custom entry leaves every field editable', (tester) async {
+      final backend = FakeProviderBackend(discoverResult: discovered);
+      await _open(tester, backend, http: _FakeCatalogHttp());
+      await tester.tap(find.text('添加自定义渠道'));
+      await settle(tester);
+      expect(tester.widget<TextField>(_field('名称')).readOnly, isFalse);
+      expect(tester.widget<TextField>(_field('Base URL')).readOnly, isFalse);
+    });
+
     for (final (label, endpoint, expected) in [
       ('OpenAI', 'https://gw.example.com/v1/chat/completions///', 'https://gw.example.com/v1'),
       ('Responses', 'https://gw.example.com/api/v3/responses', 'https://gw.example.com/api/v3'),

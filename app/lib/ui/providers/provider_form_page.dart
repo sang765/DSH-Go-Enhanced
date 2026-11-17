@@ -9,8 +9,10 @@ import 'package:flutter/foundation.dart' show mapEquals;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../l10n/l10n.dart';
+import '../../state/modelsdev_provider_catalog.dart';
 import '../../state/providers_state.dart';
 import '../common/app_dialog.dart';
 import '../common/app_sheet.dart';
@@ -23,6 +25,7 @@ import '../settings/settings_widgets.dart';
 import '../shell/page_frame.dart';
 import '../theme/app_icons.dart';
 import '../theme/theme.dart';
+import 'provider_catalog_sheet.dart';
 import 'provider_model_page.dart';
 import 'provider_widgets.dart';
 
@@ -76,6 +79,11 @@ class _ProviderFormPageState extends ConsumerState<ProviderFormPage> with FieldP
   bool _obscure = true;
   bool _saving = false;
   bool _discovering = false;
+
+  /// The models.dev entry the form was preset with: name, protocol and Base
+  /// URL come from the catalogue and stay locked; only the API key (and the
+  /// models) are the user's to fill. Null for a fully custom provider.
+  ModelsDevProvider? _preset;
 
   Map<_F, String> _errors = const {};
 
@@ -150,6 +158,39 @@ class _ProviderFormPageState extends ConsumerState<ProviderFormPage> with FieldP
   void initState() {
     super.initState();
     _clean = _signature();
+    if (widget.existing == null) {
+      // A sheet needs a built route to anchor on.
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _offerCatalog();
+      });
+    }
+  }
+
+  /// A new form opens with the models.dev catalogue sheet on top. Picking an
+  /// entry presets (and locks) name, protocol and Base URL; custom keeps the
+  /// plain form. The engine backend may still be loading — the preset only
+  /// fills the controllers, it does not need it.
+  Future<void> _offerCatalog() async {
+    final preset = await showProviderCatalogSheet(context);
+    if (preset == null || !mounted) return;
+    final url = preset.apiUrl;
+    setState(() {
+      _preset = preset;
+      _name.text = preset.name;
+      _api = protocolOf(preset);
+      if (url != null) _baseUrl.text = url;
+    });
+    _clean = _signature();
+  }
+
+  /// Whether the name / protocol / Base URL fields are locked by a preset.
+  bool get _locked => _preset != null;
+
+  /// The models.dev docs of a preset provider, in the system browser.
+  void _openDoc(BuildContext context, String url) {
+    final uri = Uri.tryParse(url);
+    if (uri == null || !uri.hasScheme || !uri.isScheme('https')) return;
+    launchUrl(uri, mode: LaunchMode.externalApplication);
   }
 
   @override
@@ -371,12 +412,32 @@ class _ProviderFormPageState extends ConsumerState<ProviderFormPage> with FieldP
             SettingsSection(
               title: l10n.engineProviderBasicInfo,
               children: [
+                if (_locked && _preset case final preset?)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 8),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            l10n.engineProviderCatalogPreset(preset.name),
+                            style: theme.textTheme.bodySmall?.copyWith(color: colors.textTertiary),
+                          ),
+                        ),
+                        if (preset.doc case final doc?)
+                          FormSmallButton(
+                            label: l10n.engineProviderCatalogDoc,
+                            onPressed: () => _openDoc(context, doc),
+                          ),
+                      ],
+                    ),
+                  ),
                 FormFieldGroup(
                   children: [
                     FormFieldBlock(
                       label: l10n.commonName,
                       child: TextField(
                         controller: _name,
+                        readOnly: _locked,
                         textInputAction: TextInputAction.next,
                         inputFormatters: [LengthLimitingTextInputFormatter(32)],
                         decoration: InputDecoration(hintText: l10n.engineProviderNameHint),
@@ -387,7 +448,7 @@ class _ProviderFormPageState extends ConsumerState<ProviderFormPage> with FieldP
                       child: SegmentedPill<ProviderApi>(
                         segments: _protocols,
                         selected: _api,
-                        onChanged: busy ? null : (v) => setState(() => _api = v),
+                        onChanged: busy || _locked ? null : (v) => setState(() => _api = v),
                       ),
                     ),
                   ],
@@ -406,6 +467,7 @@ class _ProviderFormPageState extends ConsumerState<ProviderFormPage> with FieldP
                       helper: _errors[_F.baseUrl] == null ? _baseUrlNote : null,
                       child: TextField(
                         controller: _baseUrl,
+                        readOnly: _locked,
                         keyboardType: TextInputType.url,
                         autocorrect: false,
                         // Android adds a password variation when suggestions are disabled.
