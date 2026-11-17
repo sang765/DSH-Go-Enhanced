@@ -64,20 +64,26 @@ jobs:
             || { echo "release $TAG does not exist — create it (tag + notes) first"; exit 1; }
 
       # libtawcroot (a release build must carry it) is compiled with the pinned NDK.
-      - name: Ensure the pinned NDK
+      # sdkmanager's `yes`-pipe dies of SIGPIPE under pipefail and its NDK's
+      # source.properties uses "Pkg.Revision = value" spacing, so download the
+      # official zip directly instead. Bump NDK_URL together with source.json's
+      # ndkVersion.
+      - name: Install the pinned NDK
+        env:
+          NDK_URL: https://dl.google.com/android/repository/android-ndk-r28c-linux.zip
         run: |
-          set -o pipefail
           ndk=$(python3 -c "import json;print(json.load(open('runtime/tawcroot/source.json'))['ndkVersion'])")
           echo "NDK_VERSION=$ndk" >> "$GITHUB_ENV"
-          # A version-named directory may still carry another Pkg.Revision (a stale
-          # image cache); tawcroot checks the file, so verify the same way.
-          if [ ! -e "$ANDROID_HOME/ndk/$ndk/source.properties" ] \
-            || ! grep -qx "Pkg.Revision=$ndk" "$ANDROID_HOME/ndk/$ndk/source.properties"; then
-            rm -rf "$ANDROID_HOME/ndk/$ndk"
-            yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --sdk_root="$ANDROID_HOME" "ndk;$ndk" | tail -n 8
+          dest="$ANDROID_HOME/ndk/$ndk"
+          if [ ! -e "$dest/source.properties" ] || ! grep -q "Pkg.Revision *= *$ndk" "$dest/source.properties"; then
+            rm -rf "$dest"
+            curl -fsSL --retry 3 -o "$RUNNER_TEMP/ndk.zip" "$NDK_URL"
+            mkdir -p "$RUNNER_TEMP/ndk" "$ANDROID_HOME/ndk"
+            unzip -q "$RUNNER_TEMP/ndk.zip" -d "$RUNNER_TEMP/ndk"
+            mv "$RUNNER_TEMP/ndk"/android-ndk-* "$dest"
           fi
-          grep -H Pkg.Revision "$ANDROID_HOME/ndk/$ndk/source.properties"
-          test -f "$ANDROID_HOME/ndk/$ndk/toolchains/llvm/prebuilt/linux-x86_64/bin/clang"
+          grep -H Pkg.Revision "$dest/source.properties"
+          test -f "$dest/toolchains/llvm/prebuilt/linux-x86_64/bin/clang"
 
       - name: Build the bundled runtime (arm64)
         run: runtime/build-runtime.sh arm64-v8a
