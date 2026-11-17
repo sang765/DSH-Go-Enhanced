@@ -58,7 +58,7 @@ import '../../state/usage_state.dart';
 import '../../state/voice_state.dart';
 import '../../state/voice_model_state.dart';
 import '../../state/voice_settings.dart';
-import '../../state/workspaces_state.dart' show selectedWorkspaceProvider, workspaceTitle;
+import '../../state/workspaces_state.dart' show selectedWorkspaceProvider, workspacesProvider, workspaceTitle;
 import '../../usage/usage_stats.dart';
 import '../common/app_sheet.dart';
 import '../common/brief_notice.dart';
@@ -1741,6 +1741,11 @@ class _ChatScreenState extends ConsumerState<ChatScreen> with WidgetsBindingObse
     final workspace =
         ref.watch(selectedWorkspaceProvider) ?? (newChat ? ref.watch(recentWorkspaceForNewChatProvider) : null);
     final inHostDefault = newChat && workspace == null && ref.watch(newChatInHostDefaultProvider);
+    // The host's workspace list has arrived. When it holds workspaces but
+    // nothing is picked (a local host never falls back on its own), the chip
+    // stays on screen as the way in — DSH Web never hides its workspace chip.
+    final workspacesReady = ref.watch(workspacesProvider.select((s) => s.ready));
+    final hasWorkspaces = ref.watch(workspacesProvider.select((s) => s.workspaces.isNotEmpty));
     // A one-shot subagent takes no messages: DSH Web shows it read-only.
     final readOnly =
         sessionId != null &&
@@ -1862,6 +1867,8 @@ class _ChatScreenState extends ConsumerState<ChatScreen> with WidgetsBindingObse
                                           ? workspaceTitle(workspace)
                                           : inHostDefault
                                           ? context.l10n.viewEmptyHostDefaultDirectory
+                                          : newChat && workspacesReady && hasWorkspaces
+                                          ? context.l10n.viewEmptyChooseWorkspace
                                           : null,
                                       onWorkspace: () => showWorkspaceSheet(
                                         context,
