@@ -65,23 +65,28 @@ const _catalogJson = '''
 }
 ''';
 
-/// Pumps until the catalogue leaves loading; reports the observed state so a
-/// failure names what the notifier actually did.
+/// Waits (in real async — the notifier's stream timeouts only complete on
+/// real timers, which fake-async pumps never fire) for the catalogue to
+/// settle, and reports the observed state so a failure names what the
+/// notifier actually did.
 Future<String> _untilLoaded(WidgetTester tester) async {
-  var observed = 'never-read';
-  for (var i = 0; i < 30; i++) {
-    await tester.pump(const Duration(milliseconds: 100));
-    final container = ProviderScope.containerOf(tester.element(find.text('open')));
-    final state = container.read(modelsDevCatalogProvider);
-    observed = state.map(
-      data: (_) => 'data(${state.value!.providers.length})',
-      error: (e) => 'error(${e.error})',
-      loading: (_) => 'loading',
-    );
-    if (observed != 'loading') break;
-  }
+  final container = ProviderScope.containerOf(tester.element(find.text('open')));
+  final outcome = await tester.runAsync<String>(() async {
+    try {
+      final catalog = await container.read(modelsDevCatalogProvider.future).timeout(const Duration(seconds: 5));
+      return 'data(${catalog.providers.length})';
+    } catch (error) {
+      return 'threw($error)';
+    }
+  });
+  final state = container.read(modelsDevCatalogProvider);
+  final observed = state.map(
+    data: (_) => outcome,
+    error: (e) => 'error(${e.error})',
+    loading: (_) => 'loading-after-$outcome',
+  );
   // ignore: avoid_print
-  print('catalog state after pumps: $observed');
+  print('catalog state: $observed');
   return observed;
 }
 
@@ -112,6 +117,7 @@ Future<void> _pumpCatalog(WidgetTester tester, {UpdateHttp? http}) async {
   );
   await tester.tap(find.text('open'));
   await _untilLoaded(tester);
+  await settle(tester);
 }
 
 void main() {
@@ -146,6 +152,7 @@ void main() {
     http.error = null;
     await tester.tap(find.text('重试'));
     final observed = await _untilLoaded(tester);
+    await settle(tester);
     expect(observed, startsWith('data(2)'), reason: 'the retry reloaded the catalogue');
     expect(find.text('Example Cloud'), findsOneWidget);
   });
