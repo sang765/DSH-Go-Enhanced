@@ -62,6 +62,22 @@
         }
       }
     },
+    "deepseek-refusal.diff": {
+      "0.2.2-rc.1": {
+        "node_modules/@deepseek-ai/dsh-llm-deepseek/lib/index.js": {
+          "after": "074ea3696725abfbf1ed9c770130c2d6a1b5cc34f1991c4127e24cbc39a4d6be",
+          "before": "33932219045bc1f31f96c94ce2a18883ad108ecdf0f7f74d7911e8a7d6257917"
+        }
+      }
+    },
+    "deepseek-unnamed-stream-error.diff": {
+      "0.2.2-rc.1": {
+        "node_modules/@deepseek-ai/dsh-llm-deepseek/lib/index.js": {
+          "after": "0ace65d8cf477ebaeaeaaf3af7080ea4695d46f5cc8a34c7f92d5107715e08a9",
+          "before": "074ea3696725abfbf1ed9c770130c2d6a1b5cc34f1991c4127e24cbc39a4d6be"
+        }
+      }
+    },
     "discovery-capabilities.diff": {
       "0.2.2-rc.1": {
         "node_modules/@deepseek-ai/dsh-llm-pi-ai/lib/index.js": {
@@ -2492,6 +2508,8 @@
       "config-editor-lock-order.diff",
       "piai-overflow-output-limit.diff",
       "schedule-authorization-availability.diff",
+      "deepseek-refusal.diff",
+      "deepseek-unnamed-stream-error.diff",
       "discovery-capabilities.diff"
     ],
     "ohos": [
@@ -2645,6 +2663,8 @@
       "config-editor-lock-order.diff",
       "piai-overflow-output-limit.diff",
       "schedule-authorization-availability.diff",
+      "deepseek-refusal.diff",
+      "deepseek-unnamed-stream-error.diff",
       "discovery-capabilities.diff",
       "ohos-attachment-publication.diff",
       "ohos-attachment-diagnostic.diff",

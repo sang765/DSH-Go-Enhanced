@@ -149,6 +149,8 @@ fork-default-effort.diff
 config-editor-lock-order.diff
 piai-overflow-output-limit.diff
 schedule-authorization-availability.diff
+deepseek-refusal.diff
+deepseek-unnamed-stream-error.diff
 discovery-capabilities.diff
 # HarmonyOS-only overlays (pins.json targetSets.ohos), after the whole common chain.
 ohos-attachment-publication.diff
