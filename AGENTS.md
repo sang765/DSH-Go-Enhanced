@@ -80,6 +80,12 @@ CI (`.github/workflows/ci.yml`) runs general checks plus the parts a PR touches,
 
 - Commits, pull requests, and issues are written **in English only** — never in Chinese (or any other language). This applies to commit messages, PR titles/descriptions, issue titles/bodies, and PR/issue comments.
 
+### Waiting on CI and long-running checks
+
+- **`sleep` and `timeout` are completely forbidden** — never prefix a command with `sleep N` to wait for CI, never wrap a command in `timeout`. They burn a background-job slot for minutes doing nothing and pile up in the background-jobs list.
+- To follow a CI run, use the harness's background jobs with the tools GitHub already provides: start `gh run watch <run-id> --exit-status` (or `gh run watch --interval`) as a background job and end the turn — the harness notifies when it finishes. A one-shot status check is `gh run view <run-id> --json status,conclusion` or `gh run list --commit <sha>`; poll sparingly and only between turns.
+- `gh run watch` already re-checks on its own interval; never combine it with a leading `sleep`, and never busy-poll `gh run list` in a loop.
+
 ### Git safety
 
 - **Level the baseline before starting work**: after `git fetch origin main`, sync the current branch to the latest `origin/main` (fast-forward with `git merge --ff-only` when possible); inspect, change, and open PRs on the latest baseline. Never stack work on a branch that is behind `main` — otherwise you risk re-implementing what `main` already fixed, for nothing.
