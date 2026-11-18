@@ -13,7 +13,7 @@ import '../../state/modelsdev_provider_catalog.dart';
 import '../common/app_sheet.dart';
 import '../common/list_page_row.dart';
 import '../common/sheet_title_bar.dart';
-import '../settings/settings_widgets.dart';
+import '../settings/settings_widgets.dart' show SettingsMetrics;
 import '../theme/app_icons.dart';
 import '../theme/theme.dart';
 import 'provider_widgets.dart';
@@ -54,7 +54,9 @@ class _ProviderCatalogSheetState extends ConsumerState<ProviderCatalogSheet> {
     final colors = DshColors.of(context);
     final catalog = ref.watch(modelsDevCatalogProvider);
     const inset = SheetTitleBar.inset;
-    final maxList = MediaQuery.sizeOf(context).height * 0.6;
+    // The sheet takes most of the screen: search + up to 62 % for the list,
+    // credit and the custom entry stay visible below it.
+    final maxList = MediaQuery.sizeOf(context).height * 0.62;
 
     return SafeArea(
       top: false,
@@ -66,7 +68,7 @@ class _ProviderCatalogSheetState extends ConsumerState<ProviderCatalogSheet> {
           children: [
             SheetTitleBar(l10n.engineProviderCatalogTitle),
             Padding(
-              padding: const EdgeInsets.fromLTRB(inset, 0, inset, 8),
+              padding: const EdgeInsets.fromLTRB(inset, 2, inset, 12),
               child: TextField(
                 autocorrect: false,
                 onChanged: (v) => setState(() => _query = v),
@@ -93,14 +95,14 @@ class _ProviderCatalogSheetState extends ConsumerState<ProviderCatalogSheet> {
               ),
             ),
             Padding(
-              padding: const EdgeInsets.fromLTRB(inset, 4, inset, 12),
+              padding: const EdgeInsets.fromLTRB(inset, 10, inset, 0),
               child: Text(
                 l10n.engineProviderCatalogCredit,
                 style: theme.textTheme.labelSmall?.copyWith(color: colors.textTertiary),
               ),
             ),
             Padding(
-              padding: const EdgeInsets.fromLTRB(inset, 0, inset, 12),
+              padding: const EdgeInsets.fromLTRB(inset, 12, inset, 16),
               child: FilledButton.tonal(
                 onPressed: () => Navigator.of(context).pop(),
                 child: Text(l10n.engineProviderCatalogCustom),
@@ -133,21 +135,46 @@ class _CatalogList extends StatelessWidget {
         ),
       );
     }
-    return ListPageCard(
-      margin: const EdgeInsets.symmetric(horizontal: SheetTitleBar.inset - SettingsMetrics.inset),
-      children: [
-        for (final provider in providers)
-          ListPageRow(
-            leading: _ProviderLogo(provider: provider),
-            title: provider.name,
-            subtitle: [
-              if (provider.apiUrl case final url?) Uri.parse(url).host,
-              if (provider.models.isNotEmpty) l10n.engineProviderModels(provider.models.length),
-            ].join(' · '),
-            chevron: true,
-            onTap: () => Navigator.of(context).pop(provider),
+    // A scrollable list, not a card-sized column: the catalogue has hundreds
+    // of rows, and a fixed column overflows into the sheet's footer. Same
+    // card look as ListPageCard (card-tier glass, radius 20, rows touching);
+    // a hairline separates the rows that scroll.
+    final scheme = Theme.of(context).colorScheme;
+    final gutter = SheetTitleBar.inset;
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: gutter - SettingsMetrics.inset),
+      child: GlassSurface(
+        tier: GlassTier.card,
+        borderRadius: AppShape.radiusLg,
+        child: Material(
+          type: MaterialType.transparency,
+          clipBehavior: Clip.antiAlias,
+          shape: const RoundedSuperellipseBorder(borderRadius: AppShape.radiusLg),
+          child: ListView.builder(
+            padding: const EdgeInsets.symmetric(vertical: 4),
+            itemCount: providers.length,
+            itemBuilder: (context, i) => Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                if (i > 0)
+                  Divider(height: 1, thickness: 0.5, color: scheme.onSurface.withValues(alpha: 0.06)),
+                ListPageRow(
+                  leading: _ProviderLogo(provider: providers[i]),
+                  title: providers[i].name,
+                  subtitle: [
+                    if (providers[i].apiUrl case final url?) Uri.parse(url).host,
+                    if (providers[i].models.isNotEmpty)
+                      l10n.engineProviderModels(providers[i].models.length),
+                  ].join(' · '),
+                  chevron: true,
+                  onTap: () => Navigator.of(context).pop(providers[i]),
+                ),
+              ],
+            ),
           ),
-      ],
+        ),
+      ),
     );
   }
 }
