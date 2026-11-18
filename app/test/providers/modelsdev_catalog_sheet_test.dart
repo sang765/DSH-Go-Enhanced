@@ -172,7 +172,11 @@ void main() {
     // rebuild run — its chain is microtask-only (the fake's stream fires
     // immediately), so plain pumps carry it to data.
     http.error = null;
-    await tester.tap(find.text('重试'));
+    final retryButton = find.text('重试');
+    expect(retryButton, findsOneWidget, reason: 'the error view offers a retry');
+    await tester.tap(retryButton, warnIfMissed: true);
+    await tester.pump();
+    print('retry button still visible after tap: ' + find.text('重试').evaluate().isNotEmpty.toString());
     var lastState = '';
     final container = ProviderScope.containerOf(tester.element(find.text('open')));
     for (var i = 0; i < 20 && find.text('Example Cloud').evaluate().isEmpty; i++) {
