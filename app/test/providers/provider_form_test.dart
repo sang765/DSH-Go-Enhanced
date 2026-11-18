@@ -130,7 +130,7 @@ class _FakeCatalogHttp implements UpdateHttp {
               },
             },
           },
-        })).asBroadcastStream(),
+        }))).asBroadcastStream(),
       ),
     );
   }
