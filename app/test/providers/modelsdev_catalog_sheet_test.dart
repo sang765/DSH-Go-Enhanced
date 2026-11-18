@@ -168,13 +168,14 @@ void main() {
     final http = _FakeHttp(error: const HttpException('offline'));
     await _pumpCatalog(tester, http: http);
     expect(find.text('无法从 models.dev 加载渠道列表'), findsOneWidget);
-    // Retry now succeeds: clear the fault, tap, then poll until the state
-    // leaves error (the first poll sighting is the old error).
+    // Retry now succeeds: clear the fault, tap, then let the invalidated
+    // rebuild run — its chain is microtask-only (the fake's stream fires
+    // immediately), so plain pumps carry it to data.
     http.error = null;
     await tester.tap(find.text('重试'));
-    await settle(tester);
-    await _untilLoaded(tester, requireData: true);
-    await settle(tester);
+    for (var i = 0; i < 20 && find.text('Example Cloud').evaluate().isEmpty; i++) {
+      await tester.pump(const Duration(milliseconds: 100));
+    }
     expect(find.text('Example Cloud'), findsOneWidget);
   });
 
