@@ -77,7 +77,7 @@ const _catalogJson = '''
 /// real timers, which fake-async pumps never fire) for the catalogue to
 /// settle, and reports the observed state so a failure names what the
 /// notifier actually did.
-Future<String> _untilLoaded(WidgetTester tester) async {
+Future<String> _untilLoaded(WidgetTester tester, {bool requireData = false}) async {
   final container = ProviderScope.containerOf(tester.element(find.text('open')));
   var observed = 'loading';
   await tester.runAsync(() async {
@@ -90,8 +90,12 @@ Future<String> _untilLoaded(WidgetTester tester) async {
         observed = 'data(${value.providers.length})';
         return;
       }
-      if (state.hasError) {
+      if (state.hasError && !requireData) {
         observed = 'error(${state.error})';
+        return;
+      }
+      if (requireData && !state.isLoading && state.value != null) {
+        observed = 'data(${state.value!.providers.length})';
         return;
       }
     }
@@ -101,7 +105,7 @@ Future<String> _untilLoaded(WidgetTester tester) async {
   return observed;
 }
 
-Future<void> _pumpCatalog(WidgetTester tester, {UpdateHttp? http}) async {
+Future<void> _pumpCatalog(WidgetTester tester, {UpdateHttp? http, ValueChanged<ModelsDevProvider>? onPicked}) async {
   await tester.runAsync(loadGoldenFonts);
   tester.view.devicePixelRatio = 2;
   tester.view.physicalSize = const Size(390 * 2, 1400 * 2);
@@ -115,7 +119,10 @@ Future<void> _pumpCatalog(WidgetTester tester, {UpdateHttp? http}) async {
         body: Builder(
           builder: (context) => Center(
             child: TextButton(
-              onPressed: () => showProviderCatalogSheet(context),
+              onPressed: () async {
+                final picked = await showProviderCatalogSheet(context);
+                onPicked?.call(picked!);
+              },
               child: const Text('open'),
             ),
           ),
@@ -143,7 +150,7 @@ void main() {
     );
     expect(find.text('api.anthro-like.io'), findsOneWidget);
     expect(find.textContaining('api.example.com'), findsOneWidget);
-    expect(find.textContaining('1 model'), findsOneWidget);
+    expect(find.textContaining('个模型'), findsOneWidget);
   });
 
   testWidgets('search filters by name', (tester) async {
@@ -158,12 +165,13 @@ void main() {
     final http = _FakeHttp(error: const HttpException('offline'));
     await _pumpCatalog(tester, http: http);
     expect(find.text('无法从 models.dev 加载渠道列表'), findsOneWidget);
-    // Retry now succeeds.
+    // Retry now succeeds: clear the fault, tap, then poll until the state
+    // leaves error (the first poll sighting is the old error).
     http.error = null;
     await tester.tap(find.text('重试'));
-    final observed = await _untilLoaded(tester);
     await settle(tester);
-    expect(observed, startsWith('data(2)'), reason: 'the retry reloaded the catalogue');
+    await _untilLoaded(tester, requireData: true);
+    await settle(tester);
     expect(find.text('Example Cloud'), findsOneWidget);
   });
 
