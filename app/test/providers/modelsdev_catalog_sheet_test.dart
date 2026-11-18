@@ -8,6 +8,7 @@ import 'dart:convert';
 import 'dart:io' show HttpException;
 
 import 'package:dsh_app/state/modelsdev_provider_catalog.dart';
+import 'package:dsh_app/ui/common/list_page_row.dart';
 import 'package:dsh_app/ui/providers/provider_catalog_sheet.dart';
 import 'package:dsh_app/update/update_http.dart';
 import 'package:dsh_client/dsh_client.dart';
@@ -176,6 +177,11 @@ void main() {
     final container = ProviderScope.containerOf(tester.element(find.text('open')));
     await tester.runAsync(() => container.read(modelsDevCatalogProvider.notifier).retry());
     await settle(tester);
+    final state = container.read(modelsDevCatalogProvider);
+    // ignore: avoid_print
+    print('after retry: state=${state.hasError ? 'error' : state.value != null ? 'data(${state.value!.providers.length})' : 'loading'}'
+        ', sheet=${find.byType(ProviderCatalogSheet).evaluate().isNotEmpty}'
+        ', rows=${find.byType(ListPageRow).evaluate().length}');
     expect(find.text('Example Cloud'), findsOneWidget);
     expect(find.text('无法从 models.dev 加载渠道列表'), findsNothing);
   });
