@@ -126,7 +126,7 @@ void main() {
     state = c.read(appUpdateProvider);
     expect(state.task, UpdateTaskPhase.ready);
     expect(state.total, _patch.length);
-    expect(state.source, 'github.com');
+    expect(state.source, 'GitHub');
     expect(built().readAsBytesSync(), _new);
     expect(downloads().listSync().map((f) => f.uri.pathSegments.last), [_apk], reason: 'the patch is gone');
     expect(asked(_apk), isEmpty);
