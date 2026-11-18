@@ -3799,7 +3799,9 @@
   "engineProviderCatalogPreset": "从 models.dev 预填 — {name}",
   "@engineProviderCatalogPreset": {
     "placeholders": {
-      "name": {}
+      "name": {
+        "type": "String"
+      }
     }
   },
   "engineProviderCatalogPresetNote": "名称、协议和 Base URL 来自 models.dev",
