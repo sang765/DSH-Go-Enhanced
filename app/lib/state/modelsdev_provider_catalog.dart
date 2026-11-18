@@ -146,11 +146,19 @@ int? _asInt(Object? value) => value is int ? value : (value is num ? value.toInt
 List<String> _effortsOf(Object? reasoning, Object? options) {
   if (options is! List) return reasoning == true ? const ['low'] : const [];
   final values = <String>[];
+  var sawEffort = false;
   for (final block in options) {
-    if (block is! Map || block['type'] != 'effort') continue;
+    if (block is! Map) continue;
+    if (block['type'] != 'effort') continue;
+    sawEffort = true;
     final raw = block['values'];
     if (raw is! List) continue;
     values.addAll([for (final v in raw) if (v is String) v]);
+  }
+  if (!sawEffort) {
+    // A toggle-only (or budget-only) listing names no levels: a reasoning
+    // model keeps `low`, matching the engine's discovery of such gateways.
+    return reasoning == true ? const ['low'] : const [];
   }
   return [
     for (final value in values)
