@@ -179,7 +179,7 @@ void main() {
     await settle(tester);
     final state = container.read(modelsDevCatalogProvider);
     // ignore: avoid_print
-    print('after retry: state=${state.hasError ? 'error' : state.value != null ? 'data(${state.value!.providers.length})' : 'loading'}'
+    print('after retry: state=${state.hasError ? 'error(${state.error})' : state.value != null ? 'data(${state.value!.providers.length})' : 'loading'}'
         ', sheet=${find.byType(ProviderCatalogSheet).evaluate().isNotEmpty}'
         ', rows=${find.byType(ListPageRow).evaluate().length}');
     expect(find.text('Example Cloud'), findsOneWidget);
