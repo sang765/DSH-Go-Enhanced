@@ -114,7 +114,7 @@ void main() {
   }
 
   test('the offer says the patch\'s size; only the patch comes, and the APK built from it is installed', () async {
-    http.routes['$_dl/$_patchName'] = fileRoute(_patch);
+    http.routes['$_github/$_patchName'] = fileRoute(_patch);
     final (c, controller) = await checked();
     var state = c.read(appUpdateProvider);
     expect(state.installedSha256, _sha(_old));
@@ -239,7 +239,7 @@ void main() {
   });
 
   test('the cached offer keeps its patches; an APK already built is checked and kept', () async {
-    http.routes['$_dl/$_patchName'] = fileRoute(_patch);
+    http.routes['$_github/$_patchName'] = fileRoute(_patch);
     final (_, controller) = await checked();
     await controller.startDownload();
 
@@ -258,7 +258,7 @@ void main() {
     final release = parseUpdateManifest({
       ..._manifest(),
       'assets': {
-        'arm64': {'name': _apk, 'url': '$_dl/$_apk', 'size': 180107933, 'sha256': _sha(_new)},
+        'arm64': {'name': _apk, 'url': '$_github/$_apk', 'size': 180107933, 'sha256': _sha(_new)},
       },
       'patches': {
         'arm64': [
