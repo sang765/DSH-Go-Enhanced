@@ -83,7 +83,7 @@ class _ProviderCatalogSheetState extends ConsumerState<ProviderCatalogSheet> {
                   AsyncValue(:final value?) => _CatalogList(providers: _visible(value.providers)),
                   AsyncValue(:final error?, hasValue: false) => _CatalogError(
                     error: error,
-                    onRetry: () => ref.invalidate(modelsDevCatalogProvider),
+                    onRetry: () => ref.read(modelsDevCatalogProvider.notifier).retry(),
                   ),
                   _ => const Padding(
                     padding: EdgeInsets.symmetric(vertical: 48),

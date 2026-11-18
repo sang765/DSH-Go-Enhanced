@@ -200,7 +200,17 @@ final modelsDevCatalogProvider = AsyncNotifierProvider<ModelsDevCatalogNotifier,
 
 class ModelsDevCatalogNotifier extends AsyncNotifier<ModelsDevCatalog> {
   @override
-  Future<ModelsDevCatalog> build() async {
+  Future<ModelsDevCatalog> build() => _load();
+
+  /// Reloads the catalogue in place: state moves to loading and the fetch
+  /// runs again. The sheet's retry button calls this instead of invalidating
+  /// the provider — a plain, explicit rebuild on the same notifier.
+  Future<void> retry() async {
+    state = const AsyncLoading<ModelsDevCatalog>();
+    state = await AsyncValue.guard(_load);
+  }
+
+  Future<ModelsDevCatalog> _load() async {
     final http = ref.watch(modelsDevHttpProvider);
     final response = await http.get(
       Uri.parse(_catalogUrl),

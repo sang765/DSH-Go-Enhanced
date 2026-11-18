@@ -183,9 +183,6 @@ void main() {
           : state.value != null
           ? 'data(${state.value!.providers.length})'
           : 'loading';
-      // The button's own invalidate may be swallowed by the gesture; force
-      // the rebuild from the container side as the loop's backstop.
-      if (state.hasError && i == 4) container.invalidate(modelsDevCatalogProvider);
     }
     // ignore: avoid_print
     print('retry loop ended at: $lastState');
