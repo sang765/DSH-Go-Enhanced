@@ -73,11 +73,12 @@ void main() {
       expect(http.urls, [_manifest]);
       final found = result as CheckFound;
       expect(found.endpoint.id, 'manifest:github');
-      final urls = sources.downloadUrls([found.release.apks[ApkFlavor.arm64]!.url]);
+      final apk = found.release.apks[ApkFlavor.arm64]!.url;
+      final urls = sources.downloadUrls([apk]);
       expect(urls.map((u) => u.url.toString()), [
-        _githubApk,
-        'https://ghfast.top/$_githubApk',
-        'https://gh-proxy.com/$_githubApk',
+        apk.toString(),
+        'https://ghfast.top/$apk',
+        'https://gh-proxy.com/$apk',
       ]);
     });
 
