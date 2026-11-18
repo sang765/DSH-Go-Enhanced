@@ -53,6 +53,12 @@ Future<void> _open(WidgetTester tester, FakeProviderBackend backend, {bool edit 
   await settle(tester);
   await tester.tap(find.text(edit ? 'open form' : '添加渠道'));
   await settle(tester);
+  if (!edit) {
+    // The add flow opens the models.dev catalogue first; this test exercises
+    // the plain form, so take the sheet's custom entry (its real-world path).
+    await tester.tap(find.text('添加自定义渠道'));
+    await settle(tester);
+  }
   expect(find.byType(ProviderFormPage), findsOneWidget);
 }
 

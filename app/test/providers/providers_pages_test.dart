@@ -69,6 +69,10 @@ void main() {
       await settle(tester);
       await tester.tap(find.text('添加渠道'));
       await settle(tester);
+      // The add flow opens the models.dev catalogue sheet first; take its
+      // custom entry to reach the plain form.
+      await tester.tap(find.text('添加自定义渠道'));
+      await settle(tester);
       expect(find.byType(ProviderFormPage), findsOneWidget);
     });
 
