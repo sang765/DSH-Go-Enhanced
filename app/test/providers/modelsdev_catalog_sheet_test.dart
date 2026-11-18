@@ -33,6 +33,7 @@ class _FakeHttp implements UpdateHttp {
   Future<UpdateHttpResponse> get(Uri url, {Map<String, String> headers = const {}, Duration timeout = const Duration(seconds: 15)}) async {
     if (error != null) throw error!;
     print('fake http get: ' + url.path);
+    if (error != null) print('fake: error set, will throw');
     if (url.path.startsWith('/logos/')) {
       // A one-circle SVG; the decoder must accept it and draw the logo.
       final bytes = utf8.encode(
@@ -42,6 +43,7 @@ class _FakeHttp implements UpdateHttp {
       return UpdateHttpResponse(status: 200, body: Stream.value(bytes).asBroadcastStream(), contentLength: bytes.length);
     }
     final bytes = utf8.encode(body ?? '');
+    print('fake: /api.json body bytes=' + bytes.length.toString());
     return UpdateHttpResponse(status: 200, body: Stream.value(bytes).asBroadcastStream(), contentLength: bytes.length);
   }
 }
