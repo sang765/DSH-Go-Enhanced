@@ -211,7 +211,9 @@ class ModelsDevCatalogNotifier extends AsyncNotifier<ModelsDevCatalog> {
   }
 
   Future<ModelsDevCatalog> _load() async {
-    final http = ref.watch(modelsDevHttpProvider);
+    // read, not watch: _load also runs from retry(), outside build, where
+    // watching is illegal — and the http seam doesn't change at runtime.
+    final http = ref.read(modelsDevHttpProvider);
     final response = await http.get(
       Uri.parse(_catalogUrl),
       headers: const {'Accept': 'application/json'},
