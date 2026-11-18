@@ -141,8 +141,8 @@ int? _asInt(Object? value) => value is int ? value : (value is num ? value.toInt
 /// lists the wire values (`low`…`max`); `none` maps to `off`, which the
 /// adapter offers implicitly and the map must not carry. `budget_tokens`
 /// models keep no levels here (the model page can declare them by hand);
-/// a model that only reasons as a toggle keeps `low`, matching the
-/// engine's own discovery of such gateways.
+/// a model that only reasons as a toggle keeps no levels (the wire takes
+/// an on/off switch, not a level); the badge still shows it reasons.
 List<String> _effortsOf(Object? reasoning, Object? options) {
   if (options is! List) return reasoning == true ? const ['low'] : const [];
   final values = <String>[];
@@ -156,9 +156,10 @@ List<String> _effortsOf(Object? reasoning, Object? options) {
     values.addAll([for (final v in raw) if (v is String) v]);
   }
   if (!sawEffort) {
-    // A toggle-only (or budget-only) listing names no levels: a reasoning
-    // model keeps `low`, matching the engine's discovery of such gateways.
-    return reasoning == true ? const ['low'] : const [];
+    // A toggle-only (or budget-only) listing names no levels; sending one
+    // anyway would be an invalid wire value. `reasons` stays true for the
+    // badge; the model page can declare levels by hand.
+    return const [];
   }
   return [
     for (final value in values)

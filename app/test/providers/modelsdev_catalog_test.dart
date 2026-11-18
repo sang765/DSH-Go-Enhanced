@@ -128,8 +128,9 @@ void main() {
         }),
       },
     );
-    // reasoning stays true → low, matching the engine's discovery of such
-    // gateways; reasoning false → nothing.
+    // A toggle-only listing names no levels — the wire takes an on/off
+    // switch, not a level — so efforts stay empty while `reasons` still
+    // marks the model as a thinking one; reasoning false → nothing at all.
     final toggled = _catalog(
       providers: {
         'a': _provider(models: {
@@ -139,7 +140,8 @@ void main() {
         }),
       },
     );
-    expect(toggled.providers[0].models.single.reasoningEfforts, ['low']);
+    expect(toggled.providers[0].models.single.reasoningEfforts, isEmpty);
+    expect(toggled.providers[0].models.single.reasons, isTrue);
     expect(catalog.providers[0].models.single.reasoningEfforts, isEmpty);
   });
 
