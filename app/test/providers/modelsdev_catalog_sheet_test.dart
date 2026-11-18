@@ -8,7 +8,6 @@ import 'dart:convert';
 import 'dart:io' show HttpException;
 
 import 'package:dsh_app/state/modelsdev_provider_catalog.dart';
-import 'package:dsh_app/ui/common/list_page_row.dart';
 import 'package:dsh_app/ui/providers/provider_catalog_sheet.dart';
 import 'package:dsh_app/update/update_http.dart';
 import 'package:dsh_client/dsh_client.dart';
@@ -32,8 +31,6 @@ class _FakeHttp implements UpdateHttp {
   @override
   Future<UpdateHttpResponse> get(Uri url, {Map<String, String> headers = const {}, Duration timeout = const Duration(seconds: 15)}) async {
     if (error != null) throw error!;
-    print('fake http get: ' + url.path);
-    if (error != null) print('fake: error set, will throw');
     if (url.path.startsWith('/logos/')) {
       // A one-circle SVG; the decoder must accept it and draw the logo.
       final bytes = utf8.encode(
@@ -43,7 +40,6 @@ class _FakeHttp implements UpdateHttp {
       return UpdateHttpResponse(status: 200, body: Stream.value(bytes).asBroadcastStream(), contentLength: bytes.length);
     }
     final bytes = utf8.encode(body ?? '');
-    print('fake: /api.json body bytes=' + bytes.length.toString());
     return UpdateHttpResponse(status: 200, body: Stream.value(bytes).asBroadcastStream(), contentLength: bytes.length);
   }
 }
@@ -81,7 +77,7 @@ const _catalogJson = '''
 /// real timers, which fake-async pumps never fire) for the catalogue to
 /// settle, and reports the observed state so a failure names what the
 /// notifier actually did.
-Future<String> _untilLoaded(WidgetTester tester, {bool requireData = false}) async {
+Future<String> _untilLoaded(WidgetTester tester) async {
   final container = ProviderScope.containerOf(tester.element(find.text('open')));
   var observed = 'loading';
   await tester.runAsync(() async {
@@ -97,18 +93,12 @@ Future<String> _untilLoaded(WidgetTester tester, {bool requireData = false}) asy
         observed = 'data(${value.providers.length})';
         return;
       }
-      if (state.hasError && !requireData) {
+      if (state.hasError) {
         observed = 'error(${state.error})';
-        return;
-      }
-      if (requireData && !state.isLoading && state.value != null) {
-        observed = 'data(${state.value!.providers.length})';
         return;
       }
     }
   });
-  // ignore: avoid_print
-  print('catalog state: $observed');
   return observed;
 }
 
@@ -169,7 +159,7 @@ void main() {
   });
 
   testWidgets('a fetch failure offers a retry that loads the list', (tester) async {
-    final http = _FakeHttp(error: const HttpException('offline'));
+    final http = _FakeHttp(body: _catalogJson, error: const HttpException('offline'));
     await _pumpCatalog(tester, http: http);
     expect(find.text('无法从 models.dev 加载渠道列表'), findsOneWidget);
     // Retry now succeeds. The contract under test is the reload: the sheet's
@@ -180,11 +170,6 @@ void main() {
     final container = ProviderScope.containerOf(tester.element(find.text('open')));
     await tester.runAsync(() => container.read(modelsDevCatalogProvider.notifier).retry());
     await settle(tester);
-    final state = container.read(modelsDevCatalogProvider);
-    // ignore: avoid_print
-    print('after retry: state=${state.hasError ? 'error(${state.error})' : state.value != null ? 'data(${state.value!.providers.length})' : 'loading'}'
-        ', sheet=${find.byType(ProviderCatalogSheet).evaluate().isNotEmpty}'
-        ', rows=${find.byType(ListPageRow).evaluate().length}');
     expect(find.text('Example Cloud'), findsOneWidget);
     expect(find.text('无法从 models.dev 加载渠道列表'), findsNothing);
   });
