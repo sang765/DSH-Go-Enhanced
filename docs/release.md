@@ -6,7 +6,9 @@ App 以 APK 分发、不上商店，更新靠 App 自己查 GitHub Releases、�
 
 ## 资产约定
 
-每个版本一个 GitHub Release，仓库 `ccch1mneyyy/dsh-go`，必须公开（私有仓库匿名访问一律 404，App 只会显示「暂时检查不了」）。同一组文件也放在公开下载桶：`https://dl.dshtui.com/download/<版本>/<文件>`，最新版的清单在 `https://dl.dshtui.com/update.json`（见「公开下载桶 dl」）。
+每个版本一个 GitHub Release，仓库 `sang765/DSH-Go-Enhanced`，必须公开（私有仓库匿名访问一律 404，App 只会显示「暂时检查不了」）。同一组文件也放在公开下载桶：`https://dl.dshtui.com/download/<版本>/<文件>`，最新版的清单在 `https://dl.dshtui.com/update.json`（见「公开下载桶 dl」）。
+
+> **本 fork 的差异。** fork 没有公开下载桶、香港桶和内测通道：发版只建 GitHub Release（tag + 正文），再跑 `.github/workflows/release.yml` 由 CI 构建签名 APK 并附到 Release 上；应用内更新直接走 GitHub（加速器可换）。下文涉及 dl / beta 通道的小节是上游的基础设施，fork 不使用。
 
 正式版统一提供 arm64 安装包。`update.json` 供更新清单回退读取，`SHA256SUMS` 供缺少 GitHub digest 时校验 APK，`*.dshdelta` 是从最近几个旧版升上来的增量补丁（`docs/design/delta-update.md`），都由 App 自己用，不要求用户手动下载。GitHub 自动生成的 Source code 压缩包是源码快照，不是安装包。
 
@@ -32,7 +34,7 @@ App 以 APK 分发、不上商店，更新靠 App 自己查 GitHub Releases、�
   "title": "DSH 1.2.0",
   "publishedAt": "2026-11-01T08:00:00Z",
   "notes": "## 新功能\n…",
-  "page": "https://github.com/ccch1mneyyy/dsh-go/releases/tag/v1.2.0",
+  "page": "https://github.com/sang765/DSH-Go-Enhanced/releases/tag/v1.2.0",
   "assets": {
     "arm64": { "name": "dsh-go-1.2.0-arm64.apk", "size": 180107933, "sha256": "…" }
   },
@@ -176,7 +178,7 @@ npx wrangler r2 object put dshgo-share/beta/update.json --file prev.json --conte
 |---|---|---|---|
 | 国内线路 | `<CN_BASE_URL><版本>/<文件>` | 香港对象存储（阿里云 OSS 或腾讯云 COS），公共读 | `request.cf.country` 为 `CN` |
 | 海外线路 | 公开模式 `https://dl.dshtui.com/download/<版本>/<文件>`（清单 `routes` 里没有 `dl` 的旧版本是 `/download/<版本>/<文件>`）；密钥模式是 10 分钟的签名链接 | 公开模式：公开 R2 桶 `dshgo-dl`，字节不经 Worker；旧版本和密钥模式：R2 `beta/<版本>/`，经 Worker | 其他地区 |
-| GitHub | `github.com/ccch1mneyyy/dsh-go/releases/download/v<版本>/<文件>` | GitHub Release | 手动切换 |
+| GitHub | `github.com/sang765/DSH-Go-Enhanced/releases/download/v<版本>/<文件>` | GitHub Release | 手动切换 |
 
 - 页面上用分段按钮切换（纯 CSS，不跑脚本）；`?via=cn|global|github` 直接指定线路，`?lang=zh|en` 指定语言（默认跟浏览器）。
 - 一条线路只在**配置了**并且**这一版确实传上去了**时出现：`beta/update.json` 的 `routes` 由发布脚本在下载核对之后写入。`CN_BASE_URL` 为空时国内线路整项隐藏；没有 `routes` 的旧清单只给海外线路。

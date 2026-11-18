@@ -1,27 +1,31 @@
 /// Where in-app updates come from. Everything network-facing about updates is
 /// configured here; the conventions and trade-offs are in `docs/release.md`.
 ///
-/// Every build asks our own copy of the release files first
-/// ([updateDownloadOrigin]: `/update.json`, `/download/<version>/<file>`), then
-/// GitHub and the public accelerators, and the rate-limited GitHub API last.
-/// Beta builds carry a channel token (`--dart-define=DSH_BETA_CHANNEL_TOKEN`,
+/// Every build asks GitHub (the release's `update.json` asset, then the
+/// REST API) and the public accelerators. A self-hosted copy of the release
+/// files ([updateDownloadOrigin], off by default) would be asked first, and
+/// beta builds carry a channel token (`--dart-define=DSH_BETA_CHANNEL_TOKEN`,
 /// put in by `tooling/build-apk.sh`): they ask the beta channel before all of
-/// that ([UpdateChannel], `go.dshtui.com/beta/update.json`,
-/// docs/design/share-links.md) and download from it with the token.
+/// that ([UpdateChannel], docs/design/share-links.md) and download from it
+/// with the token.
 ///
 /// Build-time overrides (no code change needed):
 /// - `--dart-define=DSH_BETA_CHANNEL_ORIGIN=https://example.com` moves the beta
 ///   channel;
-/// - `--dart-define=DSH_UPDATE_MIRROR=https://example.com` moves the copy of
-///   the release files (empty string = none);
+/// - `--dart-define=DSH_UPDATE_MIRROR=https://example.com` adds a copy of
+///   the release files (empty string = none, the default);
 /// - `--dart-define=DSH_UPDATE_FEED=https://example.com/dsh/update.json`
 ///   asks another manifest in place of the copy's (empty string = none);
 /// - `--dart-define=DSH_UPDATE_MIRRORS=https://a.example/,https://b.example/`
 ///   replaces the public GitHub accelerator list (empty string = none).
 library;
 
-/// GitHub repository the releases live in.
-const updateRepo = 'ccch1mneyyy/dsh-go';
+/// GitHub repository the releases live in: this fork's own releases.
+const updateRepo = 'sang765/DSH-Go-Enhanced';
+
+/// The original project's repository: the star prompt, share cards and the
+/// community hub keep crediting it (they are not part of the update path).
+const projectRepo = 'ccch1mneyyy/dsh-go';
 
 /// `releases/latest` of the REST API: tag, notes, assets with sizes and
 /// SHA-256 digests. Unauthenticated: 60 requests per hour per IP.
@@ -38,14 +42,11 @@ Uri githubLatestAsset(String name) => Uri.parse('https://github.com/$updateRepo/
 Uri githubReleaseAsset(String tag, String name) =>
     Uri.parse('https://github.com/$updateRepo/releases/download/$tag/$name');
 
-/// The share host (services/share-worker). It serves the beta channel under
-/// `/beta/`; public files come from [updateDownloadOrigin].
-const updateMirrorOrigin = 'https://go.dshtui.com';
-
-/// Our public copy of the release files (an R2 bucket): `/update.json`, the
+/// A self-hosted copy of the release files (an R2 bucket): `/update.json`, the
 /// latest public manifest with absolute asset URLs, and
-/// `/download/<version>/<file>` for every file of every release.
-const updateDownloadOrigin = 'https://dl.dshtui.com';
+/// `/download/<version>/<file>` for every file of every release. Empty on this
+/// fork: there is no such bucket; set `DSH_UPDATE_MIRROR` to add one.
+const updateDownloadOrigin = '';
 
 /// The beta channel: `<origin>/beta/update.json` and `<origin>/beta/<version>/<file>`,
 /// both behind `Authorization: Bearer <token>`. The token is compiled into beta
@@ -54,9 +55,9 @@ const updateDownloadOrigin = 'https://dl.dshtui.com';
 class UpdateChannel {
   UpdateChannel._(this.origin, this.token);
 
-  /// Null when [token] is empty or [origin] isn't an HTTPS origin (plain HTTP
-  /// only for a loopback test server).
-  static UpdateChannel? tryCreate({required String token, String origin = updateMirrorOrigin}) {
+  /// Null when [token] or [origin] is empty or [origin] isn't an HTTPS origin
+  /// (plain HTTP only for a loopback test server).
+  static UpdateChannel? tryCreate({required String token, String origin = ''}) {
     final t = token.trim();
     final uri = Uri.tryParse(origin.trim().replaceFirst(RegExp(r'/+$'), ''));
     if (t.isEmpty || uri == null || uri.host.isEmpty || (uri.path.isNotEmpty && uri.path != '/')) return null;
@@ -149,7 +150,7 @@ const _mirrorDefine = String.fromEnvironment('DSH_UPDATE_MIRROR', defaultValue: 
 const _feedDefine = String.fromEnvironment('DSH_UPDATE_FEED', defaultValue: _unset);
 const _mirrorsDefine = String.fromEnvironment('DSH_UPDATE_MIRRORS', defaultValue: _unset);
 const _betaTokenDefine = String.fromEnvironment('DSH_BETA_CHANNEL_TOKEN');
-const _betaOriginDefine = String.fromEnvironment('DSH_BETA_CHANNEL_ORIGIN', defaultValue: updateMirrorOrigin);
+const _betaOriginDefine = String.fromEnvironment('DSH_BETA_CHANNEL_ORIGIN');
 
 /// The configuration the app ships with (see the library comment for overrides).
 UpdateSources defaultUpdateSources() => buildUpdateSources(
@@ -170,7 +171,7 @@ UpdateSources buildUpdateSources({
   String? feed,
   String? accelerators,
   String channelToken = '',
-  String channelOrigin = updateMirrorOrigin,
+  String channelOrigin = '',
 }) {
   final origin = mirror.trim().replaceFirst(RegExp(r'/+$'), '');
   final own = origin.isEmpty ? null : UpdateMirror.selfHosted(origin);
@@ -225,10 +226,10 @@ class UpdateEndpoint {
 /// The ordered list of update sources.
 ///
 /// Metadata: the beta channel (beta builds only; always asked first, since a
-/// GitHub release can lag behind it) → our `update.json` → `update.json` on
-/// the latest release through each GitHub mirror, GitHub first → GitHub API.
-/// Downloads: the asset's own URL (the channel's, with its token, when the
-/// channel answered), then each mirror in order, our copy first. Apart from
+/// GitHub release can lag behind it) → `update.json` on the latest release
+/// through each mirror, GitHub first → GitHub API. Downloads: the asset's own
+/// URL (the channel's, with its token, when the channel answered), then each
+/// mirror in order. Apart from
 /// the channel and the API, whatever worked last time moves to the front, so
 /// a phone that can't reach one source stops waiting on it every time. The
 /// API stays last even then: anonymous calls get 60 an hour per IP, shared

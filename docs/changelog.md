@@ -3,6 +3,22 @@
 每个版本先中文、后英文。发版时把对应版本的正文（不含版本标题）作为 Release 正文，见 `docs/release.md`。
 
 
+## 1.2.1 · 2026-11-18
+
+### 中文
+
+- **检查更新改到本仓库。** 应用内的更新检查与下载全部指向本 fork（`sang765/DSH-Go-Enhanced`）的 GitHub Releases，不再检查原仓库，也不会再提示安装原仓库的版本；默认不再使用原仓库的下载镜像。分享卡片、求 star 提示与社区内容仍指向原项目。
+- **渠道目录。** 「设置 → 模型 → 添加渠道」新增从 models.dev 选择的目录：按名字搜索、显示官方 logo，选中后自动填好名称、协议与 Base URL，也可以照旧手动添加。
+- **同步上游。** 合入上游 1.2.0：iOS 测试包、鸿蒙版合入主线、酒馆接口补齐、会话搜索（能搜到自己问过的话）、手机操控确认改三档、长回复分块渲染，以及一批修复（详见 1.2.0 一节）。
+- **验证情况。** 改动通过 GitHub Actions 全量 CI（分析、测试、编译均绿）；真机尚未完整验证。
+
+### English
+
+- **Update checks moved to this repository.** In-app update checks and downloads now point at this fork's GitHub Releases (`sang765/DSH-Go-Enhanced`) instead of the original repository, and no longer offer the original repository's builds; the original repository's download mirror is no longer used by default. Share cards, the star prompt and community content still credit the original project.
+- **Provider catalogue.** Settings → Models → Add provider gains a catalogue powered by models.dev: search by name with official logos, and picking one fills in the name, protocol and Base URL for you; manual entry is unchanged.
+- **Upstream sync.** Merged upstream 1.2.0: the iOS test package, HarmonyOS on the main line, complete Tavern interfaces, chat search that finds your own questions, three-choice phone-control confirmation, block-wise rendering of long replies, and a batch of fixes (see the 1.2.0 section for details).
+- **Testing.** The changes pass GitHub Actions' full CI (analysis, tests and builds all green); not yet fully verified on a real device.
+
 ## 1.2.0 · 2026-11-18
 
 ### 中文
