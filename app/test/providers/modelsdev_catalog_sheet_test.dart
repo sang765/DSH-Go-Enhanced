@@ -173,9 +173,19 @@ void main() {
     // immediately), so plain pumps carry it to data.
     http.error = null;
     await tester.tap(find.text('重试'));
+    var lastState = '';
+    final container = ProviderScope.containerOf(tester.element(find.text('open')));
     for (var i = 0; i < 20 && find.text('Example Cloud').evaluate().isEmpty; i++) {
       await tester.pump(const Duration(milliseconds: 100));
+      final state = container.read(modelsDevCatalogProvider);
+      lastState = state.hasError
+          ? 'error(${state.error})'
+          : state.value != null
+          ? 'data(${state.value!.providers.length})'
+          : 'loading';
     }
+    // ignore: avoid_print
+    print('retry loop ended at: $lastState');
     expect(find.text('Example Cloud'), findsOneWidget);
   });
 
