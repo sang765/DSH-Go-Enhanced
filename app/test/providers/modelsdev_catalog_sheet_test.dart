@@ -32,6 +32,7 @@ class _FakeHttp implements UpdateHttp {
   @override
   Future<UpdateHttpResponse> get(Uri url, {Map<String, String> headers = const {}, Duration timeout = const Duration(seconds: 15)}) async {
     if (error != null) throw error!;
+    print('fake http get: ' + url.path);
     if (url.path.startsWith('/logos/')) {
       // A one-circle SVG; the decoder must accept it and draw the logo.
       final bytes = utf8.encode(
