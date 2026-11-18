@@ -108,7 +108,7 @@ class _FakeCatalogHttp implements UpdateHttp {
         '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24">'
         '<circle cx="12" cy="12" r="10" fill="teal"/></svg>',
       );
-      return UpdateHttpResponse(status: 200, body: Stream.value(bytes), contentLength: bytes.length);
+      return UpdateHttpResponse(status: 200, body: Stream.value(bytes).asBroadcastStream(), contentLength: bytes.length);
     }
     return UpdateHttpResponse(
       status: 200,
@@ -130,7 +130,7 @@ class _FakeCatalogHttp implements UpdateHttp {
               },
             },
           },
-        })),
+        })).asBroadcastStream(),
       ),
     );
   }
