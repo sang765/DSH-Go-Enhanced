@@ -142,7 +142,7 @@ class _CatalogList extends StatelessWidget {
     final scheme = Theme.of(context).colorScheme;
     final gutter = SheetTitleBar.inset;
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: gutter - SettingsMetrics.inset),
+      padding: EdgeInsets.symmetric(horizontal: gutter - SettingsMetrics.inset),
       child: GlassSurface(
         tier: GlassTier.card,
         borderRadius: AppShape.radiusLg,
