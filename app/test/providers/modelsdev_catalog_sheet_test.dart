@@ -85,6 +85,9 @@ Future<String> _untilLoaded(WidgetTester tester, {bool requireData = false}) asy
     // build that started under fake async (its timers never fire there).
     for (var i = 0; i < 50; i++) {
       await Future<void>.delayed(const Duration(milliseconds: 100));
+      // A pump per poll: an invalidated notifier only rebuilds when the
+      // watching widget does.
+      await tester.pump();
       final state = container.read(modelsDevCatalogProvider);
       if (state case AsyncValue(:final value?)) {
         observed = 'data(${value.providers.length})';
@@ -184,30 +187,7 @@ void main() {
 
   testWidgets('picking a provider hands it back', (tester) async {
     ModelsDevProvider? picked;
-    await tester.runAsync(loadGoldenFonts);
-    tester.view.devicePixelRatio = 2;
-    tester.view.physicalSize = const Size(390 * 2, 1400 * 2);
-    addTearDown(tester.view.reset);
-    await tester.pumpWidget(
-      goldenApp(
-        brightness: Brightness.light,
-        home: Scaffold(
-          body: Builder(
-            builder: (context) => Center(
-              child: TextButton(
-                onPressed: () async {
-                  picked = await showProviderCatalogSheet(context);
-                },
-                child: const Text('open'),
-              ),
-            ),
-          ),
-        ),
-        overrides: [modelsDevHttpProvider.overrideWithValue(_FakeHttp(body: _catalogJson))],
-      ),
-    );
-    await tester.tap(find.text('open'));
-    await _untilLoaded(tester);
+    await _pumpCatalog(tester, http: _FakeHttp(body: _catalogJson), onPicked: (p) => picked = p);
     await tester.tap(find.text('Example Cloud'));
     await settle(tester);
     expect(picked?.id, 'example');
