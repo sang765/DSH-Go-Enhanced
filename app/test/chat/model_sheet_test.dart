@@ -292,7 +292,8 @@ void main() {
       expect(find.text('思考深度'), findsOneWidget, reason: 'thumb first');
       await pumpFrames(tester, 8);
       expect(find.text('思考深度'), findsNothing);
-      expect(find.text('V4 Pro 最高'), findsOneWidget);
+      // The pill leads with the provider in bold: 「DeepSeek V4 Pro 最高」.
+      expect(find.text('DeepSeek V4 Pro 最高'), findsOneWidget);
     });
 
     testWidgets('cards read as selectable buttons to a screen reader', (tester) async {
