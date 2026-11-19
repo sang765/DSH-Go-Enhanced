@@ -91,6 +91,7 @@ class ComposerModelPill extends ConsumerWidget {
     final shown = effort == null ? name : '$name ${effortLabel(effort)}';
     final providerName = modelProviderName(effective, catalog);
     final base = theme.textTheme.labelMedium?.copyWith(fontSize: 12.5, color: colors.onSurface);
+    final semantic = DshColors.of(context);
     void open() => showModelSheet(context, current: effective, onSelected: onSelected);
     return Semantics(
       button: true,
@@ -122,7 +123,7 @@ class ComposerModelPill extends ConsumerWidget {
                     TextSpan(text: provider, style: base?.copyWith(fontWeight: FontWeight.w600)),
                   TextSpan(
                     text: providerName == null ? shown : ' $shown',
-                    style: base?.copyWith(color: colors.textTertiary),
+                    style: base?.copyWith(color: semantic.textTertiary),
                   ),
                 ],
               ),
