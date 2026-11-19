@@ -822,7 +822,8 @@ class PetLayerState extends ConsumerState<PetLayer> with TickerProviderStateMixi
     if (spot == null || !_dragging) return;
     final (lo, hi) = _range(spot);
     final x = _dragFoot + details.delta.dx;
-    if ((x < lo || x > hi) && _crossRow(spot, spot.rect.left + x) case final next?) {
+    final next = x < lo || x > hi ? _crossRow(spot, spot.rect.left + x) : null;
+    if (next != null) {
       // Over the pill's edge: the drag continues on the neighbor pill.
       final (nlo, nhi) = _range(next);
       _spot = next;
