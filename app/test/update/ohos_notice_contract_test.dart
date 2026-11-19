@@ -55,10 +55,13 @@ void main() {
 
   Map<String, dynamic> manifest({String? page = 'https://updates.example/ohos/releases/1.2.0'}) {
     final result = jsonDecode(fixture('update.json')) as Map<String, dynamic>;
-    // Newer than any compiled AppInfo.version this suite will see: the OHOS
-    // offer is about the page and the bundle, not about a version bump per
-    // release (a 1.2.x pin broke the moment the app bumped to 1.2.2).
-    result['version'] = '9.9.9+7';
+    // The compiled AppInfo.version's name with a much bigger build: always an
+    // update for the compiled app (both sides carry a build, 9999 wins), and
+    // never ahead of the future version the device test poses as (names
+    // compare first; a build only matters when both sides have one). A
+    // literal pin broke the moment the app bumped past it.
+    final semver = AppInfo.version.split('+').first;
+    result['version'] = '$semver+9999';
     if (page == null) {
       result.remove('page');
     } else {
