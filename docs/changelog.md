@@ -3,6 +3,20 @@
 每个版本先中文、后英文。发版时把对应版本的正文（不含版本标题）作为 Release 正文，见 `docs/release.md`。
 
 
+## 1.2.2 · 2026-11-19
+
+### 中文
+
+- **渠道目录可以滚动了。** 「添加渠道」的 models.dev 目录列表改成真正可滚动的列表：几百个渠道不再溢出弹层、不再盖住底部的说明和「自定义」按钮，滚动时行与行之间有细分隔线；弹层的搜索框、列表高度与底部按钮的间距也调顺了。
+- **预设来源不再被遮住。** 从目录选择预设后，表单上的「预设自 models.dev」一行移到 Basic info 卡片和 Connection 卡片之间，不再被卡片的玻璃背景盖住；「文档」按钮与字段对齐。
+- **验证情况。** 改动通过 GitHub Actions 全量 CI（分析、测试、编译均绿）；真机尚未完整验证。
+
+### English
+
+- **The provider catalogue scrolls.** The models.dev list in Add provider is now a genuinely scrollable list: a few hundred providers no longer overflow the sheet or cover the credit line and the custom button, with a hairline between rows while scrolling; the sheet's search field, list height and footer spacing are tidied up.
+- **The preset note is no longer covered.** After picking a preset, the "Preset from models.dev" line on the form sits between the Basic info and Connection cards instead of under the card's glass, and its docs button lines up with the fields.
+- **Testing.** The changes pass GitHub Actions' full CI (analysis, tests and builds all green); not yet fully verified on a real device.
+
 ## 1.2.1 · 2026-11-18
 
 ### 中文
