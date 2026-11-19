@@ -151,7 +151,7 @@ class ComposerCapsule extends ConsumerWidget {
 /// capsules slide out under the screen's edge, not the composer's. A
 /// [leading] widget stays put at the left; the band starts after it.
 class ComposerCapsuleRow extends StatelessWidget {
-  const ComposerCapsuleRow({super.key, required this.items, this.leading, this.bleed = 12});
+  const ComposerCapsuleRow({super.key, required this.items, this.leading, this.bleed = 12, this.active = true});
 
   final List<CapsuleItem> items;
 
@@ -160,6 +160,9 @@ class ComposerCapsuleRow extends StatelessWidget {
 
   /// How far the band reaches past the row on each side.
   final double bleed;
+
+  /// False while the row folds away: its pills are no perch then.
+  final bool active;
 
   /// The chrome glass shadow's reach (blur 24, offset 8).
   static const shadowRoom = 32.0;
@@ -175,7 +178,8 @@ class ComposerCapsuleRow extends StatelessWidget {
             ? _band(left: bleed)
             : Row(
                 children: [
-                  leading,
+                  // The pinned pill is a perch of its own, like the capsules.
+                  PetPerch(kind: PerchKind.plugin, active: active, child: leading),
                   if (items.isNotEmpty) ...[
                     const SizedBox(width: CapsuleMetrics.gap),
                     // Under the pinned pills nothing slides: the band starts here.
@@ -203,7 +207,13 @@ class ComposerCapsuleRow extends StatelessWidget {
               children: [
                 for (final (i, item) in items.indexed) ...[
                   if (i > 0) const SizedBox(width: CapsuleMetrics.gap),
-                  ComposerCapsule(key: ValueKey(item.id), item: item),
+                  // One perch per pill: the pet hops between real blocks.
+                  PetPerch(
+                    key: ValueKey('perch-${item.id}'),
+                    kind: PerchKind.plugin,
+                    active: active,
+                    child: ComposerCapsule(key: ValueKey(item.id), item: item),
+                  ),
                 ],
               ],
             ),
@@ -291,13 +301,11 @@ class _ComposerCapsuleBarState extends ConsumerState<ComposerCapsuleBar> {
       open: open,
       child: _last.isEmpty && _lastLeading == null
           ? const SizedBox(width: double.infinity)
-          // The chat page's pet stands on the row's top edge, above the
-          // capsules (never on them); not while the row sinks.
-          : PetPerch(
-              kind: PerchKind.plugin,
-              active: open,
-              child: ComposerCapsuleRow(items: _last, leading: _lastLeading),
-            ),
+          // Each pill of the row is its own perch: the pet stands on a real
+          // block (a pill's top edge) instead of the row's, whose empty
+          // stretches between and past the pills left it hanging over
+          // nothing. Not while the row sinks.
+          : ComposerCapsuleRow(items: _last, leading: _lastLeading, active: open),
     );
   }
 }

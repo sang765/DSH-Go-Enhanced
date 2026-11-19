@@ -440,6 +440,21 @@ class PetLayerState extends ConsumerState<PetLayer> with TickerProviderStateMixi
     for (final s in spots) {
       if (top == null || s.rect.top < top.rect.top - 0.5) top = s;
     }
+    // Co-topped perches (each pill of the capsule row is its own): stay on
+    // the one under the foot, else the nearest — the gaps between pills are
+    // no ground to stand on.
+    if (top != null && _lastFoot != null) {
+      final same = [
+        for (final s in spots)
+          if ((s.rect.top - top.rect.top).abs() <= 0.5) s,
+      ];
+      if (same.length > 1) {
+        final fx = _lastFoot!.dx;
+        double gap(PerchSpot s) =>
+            fx < s.rect.left ? s.rect.left - fx : fx > s.rect.right ? fx - s.rect.right : 0.0;
+        top = same.reduce((a, b) => gap(a) <= gap(b) ? a : b);
+      }
+    }
     final avoid = [for (final r in widget.registry.avoids(stage)) r.inflate(PetMetrics.avoidGap)];
     final covered = widget.registry.covered;
     final global = stage.localToGlobal(Offset.zero);
@@ -806,11 +821,41 @@ class PetLayerState extends ConsumerState<PetLayer> with TickerProviderStateMixi
     final spot = _spot;
     if (spot == null || !_dragging) return;
     final (lo, hi) = _range(spot);
+    final x = _dragFoot + details.delta.dx;
+    if ((x < lo || x > hi) && _crossRow(spot, spot.rect.left + x) case final next?) {
+      // Over the pill's edge: the drag continues on the neighbor pill.
+      final (nlo, nhi) = _range(next);
+      _spot = next;
+      setState(() {
+        _dragFoot = (spot.rect.left + x - next.rect.left).clamp(nlo, nhi);
+        _lift = (_lift + details.delta.dy * 0.4).clamp(-PetMetrics.dragLift * 4, -PetMetrics.dragLift * 0.5);
+      });
+      return;
+    }
     setState(() {
-      _dragFoot = (_dragFoot + details.delta.dx).clamp(lo, hi);
+      _dragFoot = x.clamp(lo, hi);
       // Held up a little; pulling up lifts it further, with some give.
       _lift = (_lift + details.delta.dy * 0.4).clamp(-PetMetrics.dragLift * 4, -PetMetrics.dragLift * 0.5);
     });
+  }
+
+  /// The co-topped perch nearest the stage x [gx] — the pill under the
+  /// finger while a drag crosses the current one's edge; null when the row
+  /// has no other pill (the gaps and the empty stretch are no ground).
+  PerchSpot? _crossRow(PerchSpot spot, double gx) {
+    final stage = context.findRenderObject();
+    if (stage is! RenderBox || !stage.attached) return null;
+    PerchSpot? best;
+    var bestGap = double.infinity;
+    for (final s in widget.registry.spots(stage)) {
+      if (identical(s.perch, spot.perch) || (s.rect.top - spot.rect.top).abs() > 0.5) continue;
+      final gap = gx < s.rect.left ? s.rect.left - gx : gx > s.rect.right ? gx - s.rect.right : 0.0;
+      if (gap < bestGap) {
+        best = s;
+        bestGap = gap;
+      }
+    }
+    return best;
   }
 
   void _onDragEnd([DragEndDetails? _]) {

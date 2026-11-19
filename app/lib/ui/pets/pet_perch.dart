@@ -1,9 +1,10 @@
 // Where the pet can stand. The capsules above the composer (the composer
 // itself, the run strip, the todo / goal bars, the banners, the plugins' status
-// line and capsule row) wrap themselves in [PetPerch]; the chat page's pet
-// layer stands on the top edge of the topmost one it can see. Each perch is a
-// layer link leader, so the pet follows its capsule in the same frame
-// (keyboard, a growing composer, the strip rising) without a frame of lag.
+// line, and each pill of the capsule row) wrap themselves in [PetPerch]; the
+// chat page's pet layer stands on the top edge of the topmost one it can see.
+// Each perch is a layer link leader, so the pet follows its capsule in the
+// same frame (keyboard, a growing composer, the strip rising) without a frame
+// of lag.
 //
 // Outside a [PetPerchScope] (Bot chats, settings previews) the wrappers are
 // plain pass-throughs.
@@ -25,8 +26,10 @@ enum PerchKind {
   /// The banners and the auto-approve pill above them.
   banner,
 
-  /// The plugins' status line and the capsule row (ui.json's and plugins'):
-  /// the foot on the row's top edge, the capsules themselves stay free.
+  /// The plugins' status line, and each pill of the capsule row (the chat's
+  /// own pills, ui.json's and the plugins' capsules): the foot on that
+  /// pill's top edge — a real block under the foot, never the row's empty
+  /// stretch between and past the pills.
   plugin,
 }
 
