@@ -195,6 +195,7 @@ class _ProviderLogo extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final ink = Theme.of(context).colorScheme.onSurface;
     return SizedBox.square(
       dimension: 32,
       child: FutureBuilder<Uint8List?>(
@@ -205,11 +206,39 @@ class _ProviderLogo extends ConsumerWidget {
         builder: (context, snapshot) {
           final bytes = snapshot.data;
           if (bytes == null) return Monogram(provider.name);
-          return SvgPicture.memory(bytes, width: 32, height: 32, fit: BoxFit.contain);
+          return SvgPicture.memory(
+            bytes,
+            width: 32,
+            height: 32,
+            fit: BoxFit.contain,
+            colorMapper: _LogoInk(ink),
+          );
         },
       ),
     );
   }
+}
+
+/// models.dev logos are drawn for light pages: nearly all of them paint
+/// `currentColor` and a few hard-code black, both of which sink into the
+/// dark sheet. The catalogue's own site lets a logo follow its text color,
+/// so do the same: black paints (resolved currentColor or literal) become
+/// the row's ink; real brand colors pass through untouched. Equality is by
+/// ink so the svg cache keeps hitting across rebuilds.
+class _LogoInk extends ColorMapper {
+  const _LogoInk(this.ink);
+
+  final Color ink;
+
+  @override
+  Color substitute(String? id, String elementName, String attributeName, Color color) =>
+      color == const Color(0xFF000000) ? ink : color;
+
+  @override
+  bool operator ==(Object other) => other is _LogoInk && other.ink == ink;
+
+  @override
+  int get hashCode => ink.hashCode;
 }
 
 class _CatalogError extends StatelessWidget {
