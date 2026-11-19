@@ -48,6 +48,17 @@ String modelShortName(ModelSelection? selection, ModelCatalog? catalog) {
   return shortModelName(findModel(catalog, selection)?.name ?? selection.model);
 }
 
+/// Provider display name of the selection, from the catalog's group list;
+/// null when the catalog or its group is gone (custom provider, offline).
+String? modelProviderName(ModelSelection? selection, ModelCatalog? catalog) {
+  final model = findModel(catalog, selection);
+  if (model == null) return null;
+  for (final group in catalog!.groups) {
+    if (group.id == model.provider) return group.name;
+  }
+  return null;
+}
+
 /// 思考深度的中文名。协议词(off/low/high/max)不直接给人看。
 String effortLabel(String id, [String? fallback]) => switch (id) {
   'off' || 'none' => appL10n.viewModelThinkingOff,
@@ -77,11 +88,14 @@ class ComposerModelPill extends ConsumerWidget {
     final effective = selection ?? catalog?.defaultSelection;
     final effort = effective?.reasoningEffort;
     final name = modelShortName(effective, catalog);
+    final shown = effort == null ? name : '$name ${effortLabel(effort)}';
+    final providerName = modelProviderName(effective, catalog);
+    final base = theme.textTheme.labelMedium?.copyWith(fontSize: 12.5, color: colors.onSurface);
     void open() => showModelSheet(context, current: effective, onSelected: onSelected);
     return Semantics(
       button: true,
       label: [
-        l10n.viewModelLabel(name),
+        l10n.viewModelLabel(providerName == null ? name : '$providerName $name'),
         if (effort != null) l10n.viewModelEffortLabel(effortLabel(effort)),
       ].join(l10n.viewListSeparator),
       excludeSemantics: true,
@@ -99,15 +113,21 @@ class ComposerModelPill extends ConsumerWidget {
           child: Center(
             widthFactor: 1,
             heightFactor: 1,
-            child: Text(
-              effort == null ? name : '$name ${effortLabel(effort)}',
+            child: Text.rich(
+              TextSpan(
+                children: [
+                  // Provider first and bold, the model after it dimmed:
+                  // 「NVIDIA Z Ai/glm 5.3 Flash」.
+                  if (providerName case final provider?)
+                    TextSpan(text: provider, style: base?.copyWith(fontWeight: FontWeight.w600)),
+                  TextSpan(
+                    text: providerName == null ? shown : ' $shown',
+                    style: base?.copyWith(color: colors.textTertiary),
+                  ),
+                ],
+              ),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: theme.textTheme.labelMedium?.copyWith(
-                fontSize: 12.5,
-                color: colors.onSurface,
-                fontWeight: FontWeight.w400,
-              ),
             ),
           ),
         ),
