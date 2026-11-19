@@ -46,6 +46,10 @@ class SecureHostedLinkStore implements HostedLinkStore {
 
 final hostedLinkStoreProvider = Provider<HostedLinkStore>((ref) => const SecureHostedLinkStore());
 
+/// When the list prunes long-expired links by. Production uses the real
+/// clock; tests pin it so fixture links keep their ages.
+final hostedClockProvider = Provider<DateTime Function()>((ref) => DateTime.now);
+
 final hostedShareClientProvider = Provider<HostedShareClient>((ref) {
   final client = HostedShareClient();
   ref.onDispose(client.close);
@@ -150,7 +154,7 @@ class HostedLinksController extends Notifier<HostedLinksState> {
     try {
       final saved = await ref.read(hostedLinkStoreProvider).load();
       if (!ref.mounted) return false;
-      final cutoff = DateTime.now().subtract(keepExpired);
+      final cutoff = ref.read(hostedClockProvider)().subtract(keepExpired);
       final links = [
         for (final l in saved)
           if (l.expiresAt == null || l.expiresAt!.isAfter(cutoff)) l,
@@ -340,7 +344,7 @@ class HostedLinksController extends Notifier<HostedLinksState> {
     if (!ref.mounted) return;
     _canSave = true;
     _plainPersisted.addAll(saved.map((link) => link.id));
-    final cutoff = DateTime.now().subtract(keepExpired);
+    final cutoff = ref.read(hostedClockProvider)().subtract(keepExpired);
     final links = [
       for (final l in saved)
         if (l.expiresAt == null || l.expiresAt!.isAfter(cutoff)) l,

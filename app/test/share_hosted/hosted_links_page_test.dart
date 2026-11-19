@@ -62,6 +62,11 @@ Future<(FakeHost, MemoryStore)> _pump(
       brightness: brightness,
       overrides: [
         hostedLinkStoreProvider.overrideWithValue(store),
+        // The 30-day prune of long-expired links prunes by this clock too,
+        // not the real one: 旧的排查记录 expired 5 days before _now, which
+        // the real clock eventually turns into "long expired" (that is how
+        // its row silently fell off the page on 2026-11-19).
+        hostedClockProvider.overrideWithValue(() => _now),
         hostedShareClientProvider.overrideWithValue(
           HostedShareClient(client: host.client, origin: 'https://go.example'),
         ),
