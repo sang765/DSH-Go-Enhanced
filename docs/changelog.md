@@ -3,6 +3,20 @@
 每个版本先中文、后英文。发版时把对应版本的正文（不含版本标题）作为 Release 正文，见 `docs/release.md`。
 
 
+## 1.2.4 · 2026-11-19
+
+### 中文
+
+- **宠物踩在真的「积木」上。** 输入框上方的胶囊行（「完全权限」、插件入口等）之前整行只有一个落脚点，宠物走在行内的空档、或最后一颗胶囊之外时像悬在半空；现在每颗胶囊各自是一个落脚点：宠物站在某颗胶囊的顶边，胶囊消失时跳到最近的一颗，拖拽跨过边缘也会落到手指下的下一颗，不会再踩空。
+- **同步上游。** 合入上游：酒馆 W7/W8 脚本库与 MVU、DNS 故障转移、凭据引用绑定、会话读取上限提到 64 MiB、分享链接的时钟可替换、profile 根目录安装优先级补丁。
+- **验证情况。** 改动通过 GitHub Actions 全量 CI（分析、测试、编译均绿）；真机尚未完整验证。
+
+### English
+
+- **The pet stands on real blocks.** The capsule row above the composer (「Full access」, the plugins entry and the rest) used to be one full-width perch, so the pet hanging over its empty stretches — between the pills or past the last one — looked airborne; every pill is a perch of its own now: the pet stands on a pill's top edge, hops to the nearest one when its pill disappears, and a drag crossing a pill's edge lands on the neighbor under the finger instead of thin air.
+- **Upstream sync.** Merged upstream: the Tavern W7/W8 script library and MVU, DNS failover, credential-reference binding, the session read cap raised to 64 MiB, a replaceable share-link clock, and the profile root installation precedence patch.
+- **Testing.** The changes pass GitHub Actions' full CI (analysis, tests and builds all green); not yet fully verified on a real device.
+
 ## 1.2.3 · 2026-11-19
 
 ### 中文
