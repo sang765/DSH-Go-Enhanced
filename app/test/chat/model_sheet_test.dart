@@ -173,7 +173,8 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 500));
     expect(
-      tester.getSemantics(find.bySemanticsLabel('模型：V4 Pro，思考深度高')),
+      // The pill's semantics lead with the provider now, same as its text.
+      tester.getSemantics(find.bySemanticsLabel('模型：DeepSeek V4 Pro，思考深度高')),
       isSemantics(isButton: true, hasTapAction: true),
     );
     semantics.dispose();
