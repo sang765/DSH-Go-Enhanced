@@ -8,12 +8,16 @@
 ### 中文
 
 - **渠道目录可以滚动了。** 「添加渠道」的 models.dev 目录列表改成真正可滚动的列表：几百个渠道不再溢出弹层、不再盖住底部的说明和「自定义」按钮，滚动时行与行之间有细分隔线；弹层的搜索框、列表高度与底部按钮的间距也调顺了。
+- **渠道图标不再因为搜索而串行。** 目录的图标按渠道 id 缓存：过滤列表时行会被复用，之前每次输入都会重新请求图标、还可能显示上一行的图标；现在每个渠道的图标只取一次、始终显示自己的。
+- **获取模型自动带上模型能力。** 从目录预设的渠道获取模型时，接口列表没说的字段由 models.dev 补齐：显示名、上下文、输出上限、输入模态（文本 / 图片）和思考档位；接口自己报告的值优先。
 - **预设来源不再被遮住。** 从目录选择预设后，表单上的「预设自 models.dev」一行移到 Basic info 卡片和 Connection 卡片之间，不再被卡片的玻璃背景盖住；「文档」按钮与字段对齐。
 - **验证情况。** 改动通过 GitHub Actions 全量 CI（分析、测试、编译均绿）；真机尚未完整验证。
 
 ### English
 
 - **The provider catalogue scrolls.** The models.dev list in Add provider is now a genuinely scrollable list: a few hundred providers no longer overflow the sheet or cover the credit line and the custom button, with a hairline between rows while scrolling; the sheet's search field, list height and footer spacing are tidied up.
+- **Provider logos no longer scramble while searching.** Catalogue logos are cached by provider id: the lazy list recycles its rows while filtering, which used to refetch a logo on every keystroke and could show the previous row's logo; each provider's logo is now fetched once and always its own.
+- **Fetched models carry their capabilities.** When fetching models for a catalogue preset, what the endpoint's listing leaves out is filled in from models.dev: display name, context window, output limit, input modalities (text / image) and the thinking levels; what the endpoint reports itself wins.
 - **The preset note is no longer covered.** After picking a preset, the "Preset from models.dev" line on the form sits between the Basic info and Connection cards instead of under the card's glass, and its docs button lines up with the fields.
 - **Testing.** The changes pass GitHub Actions' full CI (analysis, tests and builds all green); not yet fully verified on a real device.
 

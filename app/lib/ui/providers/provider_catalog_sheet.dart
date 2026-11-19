@@ -179,36 +179,32 @@ class _CatalogList extends StatelessWidget {
   }
 }
 
+/// Session cache of fetched logos, keyed by provider id. The sheet's list is
+/// a lazy builder and recycles its rows whenever the query filters it, so a
+/// stateful row would show the previous row's logo and refetch on every
+/// keystroke; keyed by id, a logo is fetched once and always the right one.
+final _providerLogos = <String, Future<Uint8List?>>{};
+
 /// A provider's logo, fetched as bytes through the catalogue's http seam and
 /// drawn from memory; the monogram disc stands in while loading, or for
 /// good when the fetch fails — a logo is decoration.
-class _ProviderLogo extends ConsumerStatefulWidget {
+class _ProviderLogo extends ConsumerWidget {
   const _ProviderLogo({required this.provider});
 
   final ModelsDevProvider provider;
 
   @override
-  ConsumerState<_ProviderLogo> createState() => _ProviderLogoState();
-}
-
-class _ProviderLogoState extends ConsumerState<_ProviderLogo> {
-  Future<Uint8List?>? _logo;
-
-  @override
-  void initState() {
-    super.initState();
-    _logo = fetchProviderLogo(ref.read(modelsDevHttpProvider), widget.provider);
-  }
-
-  @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return SizedBox.square(
       dimension: 32,
       child: FutureBuilder<Uint8List?>(
-        future: _logo,
+        future: _providerLogos[provider.id] ??= fetchProviderLogo(
+          ref.read(modelsDevHttpProvider),
+          provider,
+        ),
         builder: (context, snapshot) {
           final bytes = snapshot.data;
-          if (bytes == null) return Monogram(widget.provider.name);
+          if (bytes == null) return Monogram(provider.name);
           return SvgPicture.memory(bytes, width: 32, height: 32, fit: BoxFit.contain);
         },
       ),

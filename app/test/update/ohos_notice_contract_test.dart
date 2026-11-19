@@ -55,9 +55,10 @@ void main() {
 
   Map<String, dynamic> manifest({String? page = 'https://updates.example/ohos/releases/1.2.0'}) {
     final result = jsonDecode(fixture('update.json')) as Map<String, dynamic>;
-    // Newer than the compiled AppInfo.version (1.2.1+1): the OHOS offer is
-    // about the page and the bundle, not about a version bump per release.
-    result['version'] = '1.2.1+7';
+    // Newer than any compiled AppInfo.version this suite will see: the OHOS
+    // offer is about the page and the bundle, not about a version bump per
+    // release (a 1.2.x pin broke the moment the app bumped to 1.2.2).
+    result['version'] = '9.9.9+7';
     if (page == null) {
       result.remove('page');
     } else {

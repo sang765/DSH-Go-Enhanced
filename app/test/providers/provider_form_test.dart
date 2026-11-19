@@ -612,6 +612,45 @@ void main() {
       expect(find.text('result: custom-example-cloud'), findsOneWidget);
     });
 
+    testWidgets('fetched models gain what the listing left out from the catalogue', (tester) async {
+      // The endpoint's listing names the model only; the preset's models.dev
+      // entry knows the display name, context, output limit, input
+      // modalities and the thinking level.
+      final backend = FakeProviderBackend(
+        discoverResult: const [DiscoveredModel(id: 'example-pro')],
+      );
+      await _open(tester, backend, http: _FakeCatalogHttp(), catalogFirst: true);
+      await tester.runAsync(() async {
+        final container = ProviderScope.containerOf(
+          tester.element(find.byType(ProviderFormPage)),
+        );
+        for (var i = 0; i < 50; i++) {
+          await Future<void>.delayed(const Duration(milliseconds: 100));
+          if (container.read(modelsDevCatalogProvider) case AsyncValue(:final value?)) {
+            if (value.providers.isNotEmpty) return;
+          }
+        }
+      });
+      await settle(tester);
+      await tester.tap(find.text('Example Cloud'));
+      await settle(tester);
+      await _type(tester, 'API Key', 'sk-example-1');
+      await tester.tap(find.text('获取模型'));
+      await settle(tester);
+      await tester.tap(find.text('添加 1 个模型'));
+      await settle(tester);
+      await tester.tap(find.text('保存'));
+      await settle(tester);
+      final create = backend.calls.firstWhere((c) => c.$1 == 'create').$2;
+      final models = (create['models'] as List).cast<Map<String, Object?>>();
+      expect(models.single['id'], 'example-pro');
+      expect(models.single['name'], 'Example Pro');
+      expect(models.single['contextWindow'], 131072);
+      expect(models.single['maxTokens'], 65536);
+      expect(models.single['input'], ['text', 'image']);
+      expect(models.single['reasoningEfforts'], {'low': 'low'});
+    });
+
     testWidgets('the custom entry leaves every field editable', (tester) async {
       final backend = FakeProviderBackend(discoverResult: discovered);
       await _open(tester, backend, http: _FakeCatalogHttp(), catalogFirst: true);

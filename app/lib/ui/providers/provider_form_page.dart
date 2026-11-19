@@ -306,7 +306,7 @@ class _ProviderFormPageState extends ConsumerState<ProviderFormPage> with FieldP
       final picked = await showModelPicker(context, candidates: result.models, added: {for (final m in _models) m.id});
       if (picked == null || picked.isEmpty || !isCurrent()) return;
       setState(() {
-        _models = [..._models, for (final m in picked) m.toSpec()];
+        _models = [..._models, for (final m in picked) _specFor(m)];
         _errors = {..._errors}..remove(_F.models);
       });
     } catch (error) {
@@ -314,6 +314,37 @@ class _ProviderFormPageState extends ConsumerState<ProviderFormPage> with FieldP
     } finally {
       if (mounted) setState(() => _discovering = false);
     }
+  }
+
+  /// The spec for a discovered model, with what the endpoint's listing left
+  /// out filled in from the preset provider's models.dev catalogue: display
+  /// name, context, output limit, input modalities and the thinking levels.
+  /// A live OpenAI-compatible listing usually names models only; the
+  /// catalogue knows the rest. Where both speak, discovery wins.
+  ProviderModelSpec _specFor(DiscoveredModel model) {
+    final spec = model.toSpec();
+    final presetId = _preset?.id;
+    if (presetId == null) return spec;
+    ModelsDevModel? entry;
+    for (final p in ref.read(modelsDevCatalogProvider).value?.providers ?? const <ModelsDevProvider>[]) {
+      if (p.id == presetId) {
+        for (final m in p.models) {
+          if (m.id == model.id) entry = m;
+        }
+        break;
+      }
+    }
+    if (entry == null) return spec;
+    return ProviderModelSpec(
+      id: spec.id,
+      name: spec.name ?? (entry.name == model.id ? null : entry.name),
+      contextWindow: spec.contextWindow ?? entry.contextWindow,
+      maxTokens: spec.maxTokens ?? entry.maxTokens,
+      input: spec.input ?? entry.input,
+      extra: spec.extra.isEmpty && entry.reasoningEfforts.isNotEmpty
+          ? {'reasoningEfforts': {for (final level in entry.reasoningEfforts) level: level}}
+          : spec.extra,
+    );
   }
 
   Future<void> _addByHand() async {
