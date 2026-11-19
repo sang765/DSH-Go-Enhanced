@@ -3,6 +3,22 @@
 每个版本先中文、后英文。发版时把对应版本的正文（不含版本标题）作为 Release 正文，见 `docs/release.md`。
 
 
+## 1.2.3 · 2026-11-19
+
+### 中文
+
+- **深色主题下渠道图标清晰可见。** 「添加渠道」目录的图标大多按 `currentColor` 绘制（少数硬编码黑色），在深色主题里会沉进背景；现在黑色笔触统一映射为行内文字色、跟随主题明暗，带品牌色的图标保持原样——与 models.dev 网站在深色模式下的做法一致。
+- **发送框的模型胶囊带上渠道名。** 输入框旁的模型胶囊先显示渠道名（加粗），模型名与思考档位随后（弱化），一眼能看出这条消息走的是哪个渠道；渠道显示名来自模型目录的渠道分组，没有分组信息时保持原样。
+- **同步上游。** 合入上游修复：Android 10 的 Shell 辅助进程启动修复、PRoot 启动失败时建议改用 tawcroot（安全模式）、引擎恢复的测试补齐。
+- **验证情况。** 改动通过 GitHub Actions 全量 CI（分析、测试、编译均绿）；真机尚未完整验证。
+
+### English
+
+- **Provider logos stay visible on dark theme.** Most logos in the Add provider catalogue paint `currentColor` (a few hard-code black), which sinks into the dark sheet; black paints now map to the row's text color and follow the theme, while logos with real brand colors keep theirs — the same way the models.dev site handles dark mode.
+- **The composer's model pill shows the provider.** The pill beside the input now leads with the provider name (bold), the model name and thinking level following it (dimmed), so the route a message takes is clear at a glance; the display name comes from the model catalog's provider group, and without one the pill looks as before.
+- **Upstream sync.** Merged upstream fixes: the Android 10 Shell helper startup fix, a suggestion to try tawcroot (safe mode) after a PRoot startup failure, and engine recovery tests.
+- **Testing.** The changes pass GitHub Actions' full CI (analysis, tests and builds all green); not yet fully verified on a real device.
+
 ## 1.2.2 · 2026-11-19
 
 ### 中文
