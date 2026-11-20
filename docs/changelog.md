@@ -3,6 +3,18 @@
 每个版本先中文、后英文。发版时把对应版本的正文（不含版本标题）作为 Release 正文，见 `docs/release.md`。
 
 
+## 1.2.10 · 2026-11-21
+
+### 中文
+
+- **「关于」页面按真机反馈收敛。** 去掉分组标题前的彩色圆点，所有行图标统一成中性线性图标，不再五颜六色；顶部品牌卡的两个信息胶囊改为居中，背景换成更明确的强调色晕染，整张卡片也更紧凑。
+- **验证情况。** 改动通过 GitHub Actions 全量 CI（分析、测试、编译均绿），并重新生成了「关于」页截图基线；真机尚未完整验证。
+
+### English
+
+- **About page toned down after device feedback.** Removed the coloured dots before group headings, switched every row to one neutral line-icon style instead of a rainbow, centred the two chips in the brand hero and gave its wash a clearer accent tint in a tighter card.
+- **Testing.** The changes pass GitHub Actions' full CI (analysis, tests and builds all green), and the About page golden images were regenerated; not yet fully verified on a real device.
+
 ## 1.2.9 · 2026-11-21
 
 ### 中文
