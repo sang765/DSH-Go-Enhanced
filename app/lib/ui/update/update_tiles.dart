@@ -14,10 +14,13 @@ import 'update_sheet.dart';
 /// 设置 → 关于: 「检查更新」 (marked when a new version is waiting) and the
 /// daily automatic check switch. Plain rows, lined up with the [InfoRow]s.
 class AppUpdateTiles extends ConsumerWidget {
-  const AppUpdateTiles({super.key, this.tint});
+  const AppUpdateTiles({super.key, this.tint, this.tinted = true});
 
   /// The group hue on the settings hub (rows get icons); null for plain rows.
   final int? tint;
+
+  /// False draws the icons as neutral line icons instead of tinted discs.
+  final bool tinted;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -33,6 +36,7 @@ class AppUpdateTiles extends ConsumerWidget {
         SettingsTile(
           icon: tint == null ? null : AppIcons.checkUpdate,
           tint: tint ?? 0,
+          tinted: tinted,
           spot: Spots.updateCheck,
           value: _value(context, update),
           onTap: update.check == UpdateCheckPhase.checking ? null : () => unawaited(checkForUpdates(context, ref)),
@@ -42,6 +46,7 @@ class AppUpdateTiles extends ConsumerWidget {
         SettingsSwitchTile(
           icon: tint == null ? null : AppIcons.autoUpdate,
           tint: tint ?? 0,
+          tinted: tinted,
           spot: Spots.updateAuto,
           subtitle: l10n.updateAutoCheckDaily,
           value: update.autoCheck,

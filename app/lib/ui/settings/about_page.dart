@@ -11,7 +11,6 @@ import '../../l10n/l10n.dart';
 import '../../state/app_info.dart';
 import '../../state/star_prompt.dart' show starLinkOpenerProvider;
 import '../../state/update_state.dart';
-import '../common/glass_pill.dart';
 import '../shell/brand_mark.dart';
 import '../shell/page_frame.dart';
 import '../star/star_prompt_dialog.dart' show openStarProject;
@@ -46,14 +45,16 @@ class AboutPage extends ConsumerWidget {
               spot: Spots.version,
               icon: AppIcons.info,
               tint: 5,
+              tinted: false,
               value: Text(version, style: AppType.tabular(theme.textTheme.bodyMedium!)),
             ),
-            const AppUpdateTiles(tint: 5),
+            const AppUpdateTiles(tint: 5, tinted: false),
             SettingsTile(
               key: const ValueKey('settings-star'),
               spot: Spots.star,
               icon: AppIcons.starProject,
               tint: 7,
+              tinted: false,
               onTap: () => unawaited(
                 openStarProject(ProviderScope.containerOf(context, listen: false), ScaffoldMessenger.maybeOf(context)),
               ),
@@ -62,6 +63,7 @@ class AboutPage extends ConsumerWidget {
               spot: Spots.licenses,
               icon: AppIcons.code,
               tint: 1,
+              tinted: false,
               onTap: () => showLicensePage(
                 context: context,
                 applicationName: AppInfo.name,
@@ -72,10 +74,10 @@ class AboutPage extends ConsumerWidget {
             ),
           ],
         ),
-        _AboutHeader(title: l10n.hubAboutAuthor, hue: 2),
+        _AboutHeader(title: l10n.hubAboutAuthor),
         SettingsSection(
           children: [
-            SettingsTile(title: AppInfo.author, icon: AppIcons.profile, tint: 2),
+            SettingsTile(title: AppInfo.author, icon: AppIcons.profile, tint: 2, tinted: false),
             _authorLink(
               context,
               ref,
@@ -85,6 +87,7 @@ class AboutPage extends ConsumerWidget {
               AppInfo.authorBilibiliUrl,
               icon: AppIcons.web,
               tint: 4,
+              tinted: false,
             ),
             _authorLink(
               context,
@@ -95,6 +98,7 @@ class AboutPage extends ConsumerWidget {
               AppInfo.authorXUrl,
               icon: AppIcons.community,
               tint: 3,
+              tinted: false,
             ),
             _authorLink(
               context,
@@ -105,10 +109,11 @@ class AboutPage extends ConsumerWidget {
               AppInfo.authorGithubUrl,
               icon: AppIcons.code,
               tint: 0,
+              tinted: false,
             ),
           ],
         ),
-        _AboutHeader(title: l10n.hubAboutFork, hue: 6),
+        _AboutHeader(title: l10n.hubAboutFork),
         SettingsSection(
           children: [
             _authorLink(
@@ -120,6 +125,7 @@ class AboutPage extends ConsumerWidget {
               AppInfo.forkUrl,
               icon: AppIcons.code,
               tint: 6,
+              tinted: false,
             ),
           ],
         ),
@@ -165,6 +171,7 @@ class AboutPage extends ConsumerWidget {
           key: ValueKey(key),
           icon: icon,
           tint: tint,
+          tinted: false,
           title: title,
           subtitle: handle,
           trailing: Icon(AppIcons.openExternal, size: 18, color: DshColors.of(context).textTertiary),
@@ -205,8 +212,6 @@ class _AboutHero extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final colors = DshColors.of(context);
-    final surfaces = DshSurfaces.of(context);
     final short = version.split(' ').first;
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 4, 16, 6),
@@ -217,45 +222,31 @@ class _AboutHero extends StatelessWidget {
           borderRadius: AppShape.radiusLg,
           child: Stack(
             children: [
-              Positioned.fill(child: CustomPaint(painter: _AboutHeroWash(surfaces: surfaces))),
+              Positioned.fill(
+                child: CustomPaint(
+                  painter: _AboutHeroWash(
+                    scheme: theme.colorScheme,
+                    dark: theme.brightness == Brightness.dark,
+                  ),
+                ),
+              ),
               Padding(
-                padding: const EdgeInsets.symmetric(vertical: 30, horizontal: 20),
+                padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 20),
                 child: Column(
                   children: [
                     const BrandMark(size: 64, tile: true),
-                    const SizedBox(height: 14),
+                    const SizedBox(height: 12),
                     Text(
                       AppInfo.name,
                       style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w700),
                     ),
-                    const SizedBox(height: 14),
-                    Wrap(
-                      alignment: WrapAlignment.center,
-                      spacing: 8,
-                      runSpacing: 8,
+                    const SizedBox(height: 12),
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
                       children: [
-                        GlassPill(
-                          fillWidth: false,
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(AppIcons.info, size: 13, color: colors.textTertiary),
-                              const SizedBox(width: 6),
-                              Text(short, style: theme.textTheme.labelMedium),
-                            ],
-                          ),
-                        ),
-                        GlassPill(
-                          fillWidth: false,
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(AppIcons.code, size: 13, color: colors.textTertiary),
-                              const SizedBox(width: 6),
-                              Text('@${AppInfo.forkAuthor}', style: theme.textTheme.labelMedium),
-                            ],
-                          ),
-                        ),
+                        _HeroChip(icon: AppIcons.info, label: short),
+                        const SizedBox(width: 8),
+                        _HeroChip(icon: AppIcons.code, label: '@${AppInfo.forkAuthor}'),
                       ],
                     ),
                   ],
@@ -269,22 +260,19 @@ class _AboutHero extends StatelessWidget {
   }
 }
 
+/// Two quiet corner glows over one accent-tinted base. The wash reads as a
+/// deliberate colour field instead of the muddy neutral the glass alone gave.
 class _AboutHeroWash extends CustomPainter {
-  const _AboutHeroWash({required this.surfaces});
+  const _AboutHeroWash({required this.scheme, required this.dark});
 
-  final DshSurfaces surfaces;
+  final ColorScheme scheme;
+  final bool dark;
 
   @override
   void paint(Canvas canvas, Size size) {
     final rect = Offset.zero & size;
-    canvas.drawRect(
-      rect,
-      Paint()..shader = LinearGradient(
-        begin: Alignment.topLeft,
-        end: Alignment.bottomRight,
-        colors: [surfaces.glowPrimary, surfaces.glowSecondary],
-      ).createShader(rect),
-    );
+    final base = Color.lerp(scheme.surface, scheme.primaryContainer, dark ? 0.34 : 0.24) ?? scheme.surface;
+    canvas.drawRect(rect, Paint()..color = base);
     void glow(Offset center, double radius, Color color) {
       final box = Rect.fromCircle(center: center, radius: radius);
       canvas.drawRect(
@@ -293,38 +281,62 @@ class _AboutHeroWash extends CustomPainter {
       );
     }
 
-    glow(Offset(size.width * 0.08, 0), size.height * 0.9, surfaces.glowPrimary);
-    glow(Offset(size.width * 0.92, size.height), size.height * 0.9, surfaces.glowSecondary);
+    glow(
+      Offset(size.width * 0.04, 0),
+      size.height * 1.1,
+      scheme.primary.withValues(alpha: dark ? 0.26 : 0.18),
+    );
+    glow(
+      Offset(size.width, size.height),
+      size.height * 1.1,
+      scheme.tertiary.withValues(alpha: dark ? 0.2 : 0.14),
+    );
   }
 
   @override
-  bool shouldRepaint(covariant _AboutHeroWash old) => old.surfaces != surfaces;
+  bool shouldRepaint(covariant _AboutHeroWash old) => old.scheme != scheme || old.dark != dark;
 }
 
-/// A group title with one identity-coloured dot, the same voice as the hub's
-/// section labels but a touch more deliberate on a short page.
-class _AboutHeader extends StatelessWidget {
-  const _AboutHeader({required this.title, required this.hue});
+/// A small centred chip in the hero. Painted directly rather than through the
+/// shared glass pill: that one stretches to its parent and left-aligns here.
+class _HeroChip extends StatelessWidget {
+  const _HeroChip({required this.icon, required this.label});
 
-  final String title;
-  final int hue;
+  final IconData icon;
+  final String label;
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     final colors = DshColors.of(context);
-    final dot = colors.identity[hue % colors.identity.length];
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(24, 16, 24, 8),
-      child: Semantics(
-        header: true,
-        child: Row(
-          children: [
-            Container(width: 6, height: 6, decoration: BoxDecoration(color: dot, shape: BoxShape.circle)),
-            const SizedBox(width: 8),
-            Text(title, style: SettingsSection.titleStyle(context)),
-          ],
-        ),
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.onSurface.withValues(alpha: theme.brightness == Brightness.dark ? 0.08 : 0.05),
+        borderRadius: BorderRadius.circular(99),
+        border: Border.all(color: theme.colorScheme.outlineVariant.withValues(alpha: 0.6), width: 0.5),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 13, color: colors.textTertiary),
+          const SizedBox(width: 6),
+          Text(label, style: theme.textTheme.labelMedium),
+        ],
       ),
     );
   }
+}
+
+/// A group title in the hub's own voice, with no extra ornament.
+class _AboutHeader extends StatelessWidget {
+  const _AboutHeader({required this.title});
+
+  final String title;
+
+  @override
+  Widget build(BuildContext context) => Padding(
+    padding: const EdgeInsets.fromLTRB(24, 16, 24, 8),
+    child: Semantics(header: true, child: Text(title, style: SettingsSection.titleStyle(context))),
+  );
 }
