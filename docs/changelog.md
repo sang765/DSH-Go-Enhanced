@@ -3,6 +3,20 @@
 每个版本先中文、后英文。发版时把对应版本的正文（不含版本标题）作为 Release 正文，见 `docs/release.md`。
 
 
+## 1.2.5 · 2026-11-20
+
+### 中文
+
+- **宠物拖拽自由了。** 按住宠物拖动时，它会沿着整行自由左右移动、跟着手指越过胶囊之间的间隙，不再被绑在拖动开始的那颗胶囊上；松手时落在脚下的胶囊上——脚在间隙里时落最近的一颗——永远不会落到空白处悬空。
+- **同步上游。** 合入上游：远程网页视图、会话备份、语音通话、后台保护。
+- **验证情况。** 改动通过 GitHub Actions 全量 CI（分析、测试、编译均绿）；真机尚未完整验证。
+
+### English
+
+- **The pet's drag is free.** While held, the pet slides freely along the row, following the finger across the gaps between the capsules instead of being tied to the pill the drag started on; on release it lands on the pill under its foot — the nearest one when the foot is over a gap — and never settles over empty space.
+- **Upstream sync.** Merged upstream: the remote web view, session backup, voice call, and background protection.
+- **Testing.** The changes pass GitHub Actions' full CI (analysis, tests and builds all green); not yet fully verified on a real device.
+
 ## 1.2.4 · 2026-11-19
 
 ### 中文
