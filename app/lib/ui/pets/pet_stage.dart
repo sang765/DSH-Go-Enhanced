@@ -322,10 +322,7 @@ class PetLayerState extends ConsumerState<PetLayer> with TickerProviderStateMixi
 
   // ── Held ──
   bool _dragging = false;
-
-  /// The foot's x on the stage while held: free along the row, under the
-  /// finger; null whenever it is not held.
-  double? _dragGx;
+  double _dragFoot = 0;
   double _lift = 0;
   late final AnimationController _drop = AnimationController(vsync: this, value: 1)..addListener(_tick);
   double _dropFrom = 0;
@@ -443,71 +440,39 @@ class PetLayerState extends ConsumerState<PetLayer> with TickerProviderStateMixi
     for (final s in spots) {
       if (top == null || s.rect.top < top.rect.top - 0.5) top = s;
     }
-    // Co-topped perches (each pill of the capsule row is its own): stay on
-    // the one under the foot, else the nearest — the gaps between pills are
-    // no ground to stand on.
-    if (top != null && _lastFoot != null) {
-      final same = [
-        for (final s in spots)
-          if ((s.rect.top - top.rect.top).abs() <= 0.5) s,
-      ];
-      if (same.length > 1) {
-        final fx = _lastFoot!.dx;
-        double gap(PerchSpot s) =>
-            fx < s.rect.left ? s.rect.left - fx : fx > s.rect.right ? fx - s.rect.right : 0.0;
-        top = same.reduce((a, b) => gap(a) <= gap(b) ? a : b);
-      }
-    }
     final avoid = [for (final r in widget.registry.avoids(stage)) r.inflate(PetMetrics.avoidGap)];
     final covered = widget.registry.covered;
     final global = stage.localToGlobal(Offset.zero);
-    final movedBooks =
+    final old = _spot;
+    final moved = top?.perch != old?.perch;
+    final changed =
+        moved ||
+        (top != null &&
+            old != null &&
+            ((top.rect.width - old.rect.width).abs() > 0.25 || (top.rect.left - old.rect.left).abs() > 0.25)) ||
         stage.size != _stage ||
         (global - _stageGlobal).distance > 0.01 ||
         covered != _covered ||
         !_sameRects(avoid, _avoid);
-    // A drag owns its perch: the finger moves within one pill, so the poll
-    // never re-picks or hops under it — that tug-of-war jittered the pet
-    // back and forth and never let it settle. The layer link still carries
-    // a pill sliding under the foot (the band scrolling) without a re-pick.
-    if (_dragging) {
-      if (movedBooks) {
-        setState(() {
-          _stage = stage.size;
-          _stageGlobal = global;
-          _avoid = avoid;
-          _covered = covered;
-        });
+    if (moved && top != null && old != null && _lastFoot != null) {
+      // Hop from where it stood to the new perch.
+      _spot = top;
+      _hopFrom = _lastFoot! - (top.rect.topLeft + Offset(_footX(top), 0));
+      if (AppMotion.reduced(context) || _hopFrom.distance < 1 || !_visible) {
+        _hop.value = 1;
+      } else {
+        _hop.duration = PetMetrics.hop;
+        unawaited(_hop.forward(from: 0));
       }
-    } else {
-      final old = _spot;
-      final moved = top?.perch != old?.perch;
-      final changed =
-          moved ||
-          (top != null &&
-              old != null &&
-              ((top.rect.width - old.rect.width).abs() > 0.25 || (top.rect.left - old.rect.left).abs() > 0.25)) ||
-          movedBooks;
-      if (moved && top != null && old != null && _lastFoot != null) {
-        // Hop from where it stood to the new perch.
+    }
+    if (changed) {
+      setState(() {
         _spot = top;
-        _hopFrom = _lastFoot! - (top.rect.topLeft + Offset(_footX(top), 0));
-        if (AppMotion.reduced(context) || _hopFrom.distance < 1 || !_visible) {
-          _hop.value = 1;
-        } else {
-          _hop.duration = PetMetrics.hop;
-          unawaited(_hop.forward(from: 0));
-        }
-      }
-      if (changed) {
-        setState(() {
-          _spot = top;
-          _stage = stage.size;
-          _stageGlobal = global;
-          _avoid = avoid;
-          _covered = covered;
-        });
-      }
+        _stage = stage.size;
+        _stageGlobal = global;
+        _avoid = avoid;
+        _covered = covered;
+      });
     }
     final spot = _spot;
     _lastFoot = spot == null ? null : spot.rect.topLeft + Offset(_footX(spot), 0);
@@ -589,42 +554,13 @@ class PetLayerState extends ConsumerState<PetLayer> with TickerProviderStateMixi
     return x.clamp(lo, hi);
   }
 
-  /// Where the foot stands along [spot]: free under the finger while held
-  /// (it may reach past the pill, over the row's gaps), otherwise the saved
-  /// position and the walk, kept on the pill.
-  ///
-  /// The saved position is a share of the STAGE, not of the perch: a pill is
-  /// only a couple of hundred px wide, so a screen-wide drag stored against
-  /// one clamps to 1 and the pet snapped back to that pill's right end.
+  /// Where the foot stands along [spot].
   double _footX(PerchSpot spot) {
-    if (_dragging) return _dragGx == null ? 0.0 : _dragGx! - spot.rect.left;
     final (lo, hi) = _range(spot);
+    if (_dragging) return _dragFoot.clamp(lo, hi);
     final prefs = ref.read(petPrefsProvider);
     final share = _walking ? _walkFrom + (_walkTo - _walkFrom) * _walk.value : (_roamed ?? prefs.position);
-    final stageX = share * _stage.width;
-    return _clear(spot, (stageX - spot.rect.left).clamp(lo, hi));
-  }
-
-  /// The stage share of a foot [x] on [spot].
-  double _shareOf(PerchSpot spot, double x) =>
-      _stage.width <= 0 ? 0.25 : ((spot.rect.left + x) / _stage.width).clamp(0.0, 1.0);
-
-  /// The co-topped perch under the stage x [gx] — the pill the foot is on,
-  /// nearest when it is over a gap; null when the row has no other pill.
-  PerchSpot? _pillUnder(PerchSpot spot, double gx) {
-    final stage = context.findRenderObject();
-    if (stage is! RenderBox || !stage.attached) return null;
-    PerchSpot? best;
-    var bestGap = double.infinity;
-    for (final s in widget.registry.spots(stage)) {
-      if (identical(s.perch, spot.perch) || (s.rect.top - spot.rect.top).abs() > 0.5) continue;
-      final gap = gx < s.rect.left ? s.rect.left - gx : gx > s.rect.right ? gx - s.rect.right : 0.0;
-      if (gap < bestGap) {
-        best = s;
-        bestGap = gap;
-      }
-    }
-    return best;
+    return _clear(spot, (share * spot.rect.width).clamp(lo, hi));
   }
 
   bool get _visible {
@@ -757,7 +693,7 @@ class PetLayerState extends ConsumerState<PetLayer> with TickerProviderStateMixi
               .clamp(0.0, 1.0);
     // Not into an area it keeps out of, not past the perch's ends.
     final (lo, hi) = _range(spot);
-    final endX = _clear(spot, (to * _stage.width - spot.rect.left).clamp(lo, hi));
+    final endX = _clear(spot, (to * spot.rect.width).clamp(lo, hi));
     final startX = _footX(spot);
     final distance = (endX - startX).abs();
     if (distance < 4) {
@@ -765,8 +701,8 @@ class PetLayerState extends ConsumerState<PetLayer> with TickerProviderStateMixi
       return;
     }
     setState(() {
-      _walkFrom = _shareOf(spot, startX);
-      _walkTo = _shareOf(spot, endX);
+      _walkFrom = startX / spot.rect.width;
+      _walkTo = endX / spot.rect.width;
       _walkRight = endX > startX;
       _walking = true;
       _variant = null;
@@ -854,9 +790,8 @@ class PetLayerState extends ConsumerState<PetLayer> with TickerProviderStateMixi
     _roamTimer?.cancel();
     _idleTimer?.cancel();
     _walk.stop();
-    // The stage x before `_dragging` flips: `_footX` reads the free one then.
-    _dragGx = spot.rect.left + _footX(spot);
     setState(() {
+      _dragFoot = _footX(spot);
       _dragging = true;
       _walking = false;
       _roamed = null;
@@ -869,17 +804,10 @@ class PetLayerState extends ConsumerState<PetLayer> with TickerProviderStateMixi
 
   void _onDragUpdate(DragUpdateDetails details) {
     final spot = _spot;
-    if (spot == null || !_dragging || _dragGx == null) return;
-    // The drag is free along the row: the foot follows the finger across
-    // the pills and their gaps, kept only on the stage. The perch stays
-    // the one it started on (same top edge everywhere on the row); the
-    // drop picks the pill under the foot.
-    final pack = _pack;
-    final (left, right) = pack == null ? (0.0, 0.0) : _extents(pack, _scale);
-    final lo = PetMetrics.inset + left;
-    final hi = math.max(lo, _stage.width - PetMetrics.inset - right);
+    if (spot == null || !_dragging) return;
+    final (lo, hi) = _range(spot);
     setState(() {
-      _dragGx = (_dragGx! + details.delta.dx).clamp(lo, hi);
+      _dragFoot = (_dragFoot + details.delta.dx).clamp(lo, hi);
       // Held up a little; pulling up lifts it further, with some give.
       _lift = (_lift + details.delta.dy * 0.4).clamp(-PetMetrics.dragLift * 4, -PetMetrics.dragLift * 0.5);
     });
@@ -888,19 +816,14 @@ class PetLayerState extends ConsumerState<PetLayer> with TickerProviderStateMixi
   void _onDragEnd([DragEndDetails? _]) {
     final spot = _spot;
     if (!_dragging || spot == null) return;
-    // Let go: it lands on the pill under the foot — the nearest co-topped
-    // one when the foot is over a gap — never on the row's empty stretch.
-    final gx = _dragGx ?? spot.rect.left + _footX(spot);
-    final target = _pillUnder(spot, gx) ?? spot;
-    final x = _clear(target, gx - target.rect.left);
+    // Let go: it settles on the perch, out of any area it keeps out of.
+    final x = _clear(spot, _dragFoot);
     setState(() {
-      _spot = target;
       _dragging = false;
-      _dragGx = null;
       _dropFrom = _lift;
       _lift = 0;
     });
-    unawaited(ref.read(petPrefsProvider.notifier).setPosition(_shareOf(target, x)));
+    unawaited(ref.read(petPrefsProvider.notifier).setPosition(x / spot.rect.width));
     final drop = AppMotion.of(context, AppMotion.standard);
     if (drop == Duration.zero) {
       _drop.value = 1;

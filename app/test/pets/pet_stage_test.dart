@@ -125,18 +125,12 @@ void main() {
   tearDown(PetSheets.instance.clear);
 
   group('perch geometry', () {
-    testWidgets('stands on the composer: foot line on its top edge, a quarter along the stage', (tester) async {
+    testWidgets('stands on the composer: foot line on its top edge, a quarter along', (tester) async {
       await pumpPet(tester);
       final composer = composerRect(tester);
-      final stage = stageRect(tester);
       expect(petLayer(tester).perch, PerchKind.composer);
       expect((footY(tester, deepy) - composer.top).abs(), lessThanOrEqualTo(0.5));
-      // The saved share is of the stage, kept inside the perch's ends.
-      final s = petScaleOn(tester, deepy);
-      final lo = PetMetrics.inset + (deepy.anchorX - deepy.contentBox.left) * s;
-      final hi = composer.width - PetMetrics.inset - (deepy.contentBox.right - deepy.anchorX) * s;
-      final want = (stage.left + stage.width / 4 - composer.left).clamp(lo, hi);
-      expect(footX(tester, deepy) - composer.left, closeTo(want, 0.5));
+      expect((footX(tester, deepy) - (composer.left + composer.width / 4)).abs(), lessThanOrEqualTo(0.5));
       expect(container.read(petLayerShownProvider), isTrue);
       expect(container.read(petHeadroomProvider), closeTo((48 - 26) * petScaleOn(tester, deepy), 0.5));
     });
@@ -165,7 +159,11 @@ void main() {
       await tester.pump(const Duration(milliseconds: 400));
       expect(petLayer(tester).hopping, isFalse);
       expect((footY(tester, deepy) - strip.top).abs(), lessThanOrEqualTo(0.5));
-      expect((footX(tester, deepy) - before).abs(), lessThanOrEqualTo(0.5), reason: 'same share along');
+      expect(
+        (footX(tester, deepy) - (strip.left + strip.width / 4)).abs(),
+        lessThanOrEqualTo(0.5),
+        reason: 'same share along',
+      );
       expect(before, isNot(0));
       await rebuild(tester);
       await tester.pump();
@@ -241,8 +239,7 @@ void main() {
       expect((footY(tester, deepy) - composer.top).abs(), lessThanOrEqualTo(0.5));
       expect(footX(tester, deepy) - start, closeTo(100, 1));
       final share = container.read(petPrefsProvider).position;
-      final stage = stageRect(tester);
-      expect(share, closeTo((start + 100) / stage.width, 0.005));
+      expect(share, closeTo((start + 100 - composer.left) / composer.width, 0.005));
     });
 
     testWidgets('the jump-to-bottom key is a keep-out area', (tester) async {
