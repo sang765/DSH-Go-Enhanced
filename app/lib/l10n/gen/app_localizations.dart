@@ -26318,30 +26318,6 @@ abstract class L10n {
   /// **'插件'**
   String get pluginsTitle;
 
-  /// No description provided for @pluginsTranslate.
-  ///
-  /// In zh, this message translates to:
-  /// **'翻译名称和描述'**
-  String get pluginsTranslate;
-
-  /// No description provided for @pluginsTranslating.
-  ///
-  /// In zh, this message translates to:
-  /// **'翻译中…'**
-  String get pluginsTranslating;
-
-  /// No description provided for @pluginsTranslated.
-  ///
-  /// In zh, this message translates to:
-  /// **'已翻译'**
-  String get pluginsTranslated;
-
-  /// No description provided for @pluginsTranslateFailed.
-  ///
-  /// In zh, this message translates to:
-  /// **'翻译失败，显示原文'**
-  String get pluginsTranslateFailed;
-
   /// No description provided for @pluginsRefresh.
   ///
   /// In zh, this message translates to:
@@ -27517,6 +27493,30 @@ abstract class L10n {
   /// In zh, this message translates to:
   /// **'请在这台主机上查看引擎日志。'**
   String get pluginsLoadRemoteLogs;
+
+  /// No description provided for @pluginsTranslate.
+  ///
+  /// In zh, this message translates to:
+  /// **'翻译名称和描述'**
+  String get pluginsTranslate;
+
+  /// No description provided for @pluginsTranslating.
+  ///
+  /// In zh, this message translates to:
+  /// **'翻译中…'**
+  String get pluginsTranslating;
+
+  /// No description provided for @pluginsTranslated.
+  ///
+  /// In zh, this message translates to:
+  /// **'已翻译'**
+  String get pluginsTranslated;
+
+  /// No description provided for @pluginsTranslateFailed.
+  ///
+  /// In zh, this message translates to:
+  /// **'翻译失败，显示原文'**
+  String get pluginsTranslateFailed;
 
   /// No description provided for @plugslotsSurfaceComposerTools.
   ///

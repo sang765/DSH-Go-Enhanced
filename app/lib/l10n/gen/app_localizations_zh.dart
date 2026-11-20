@@ -14238,18 +14238,6 @@ class L10nZh extends L10n {
   String get pluginsTitle => '插件';
 
   @override
-  String get pluginsTranslate => '翻译名称和描述';
-
-  @override
-  String get pluginsTranslating => '翻译中…';
-
-  @override
-  String get pluginsTranslated => '已翻译';
-
-  @override
-  String get pluginsTranslateFailed => '翻译失败，显示原文';
-
-  @override
   String get pluginsRefresh => '刷新';
 
   @override
@@ -14907,6 +14895,18 @@ class L10nZh extends L10n {
 
   @override
   String get pluginsLoadRemoteLogs => '请在这台主机上查看引擎日志。';
+
+  @override
+  String get pluginsTranslate => '翻译名称和描述';
+
+  @override
+  String get pluginsTranslating => '翻译中…';
+
+  @override
+  String get pluginsTranslated => '已翻译';
+
+  @override
+  String get pluginsTranslateFailed => '翻译失败，显示原文';
 
   @override
   String get plugslotsSurfaceComposerTools => '加号面板';

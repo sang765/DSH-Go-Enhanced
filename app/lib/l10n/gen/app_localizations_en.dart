@@ -14979,18 +14979,6 @@ class L10nEn extends L10n {
   String get pluginsTitle => 'Plugins';
 
   @override
-  String get pluginsTranslate => 'Translate name and description';
-
-  @override
-  String get pluginsTranslating => 'Translating…';
-
-  @override
-  String get pluginsTranslated => 'Translated';
-
-  @override
-  String get pluginsTranslateFailed => "Couldn't translate; showing the original";
-
-  @override
   String get pluginsRefresh => 'Refresh';
 
   @override
@@ -15690,6 +15678,18 @@ class L10nEn extends L10n {
 
   @override
   String get pluginsLoadRemoteLogs => 'Check the engine logs on this host.';
+
+  @override
+  String get pluginsTranslate => 'Translate name and description';
+
+  @override
+  String get pluginsTranslating => 'Translating…';
+
+  @override
+  String get pluginsTranslated => 'Translated';
+
+  @override
+  String get pluginsTranslateFailed => 'Couldn\'t translate; showing the original';
 
   @override
   String get plugslotsSurfaceComposerTools => 'Plus panel tools';
