@@ -3,6 +3,22 @@
 每个版本先中文、后英文。发版时把对应版本的正文（不含版本标题）作为 Release 正文，见 `docs/release.md`。
 
 
+## 1.2.9 · 2026-11-21
+
+### 中文
+
+- **插件名称与描述可一键翻译。** 在已安装插件和插件市场的详情页，名称和描述旁多了翻译按钮；界面为英文且原文含中文时才会出现。点按后通过免费翻译接口取回英文，同一段文本只请求一次，失败或断网时保留原文，不改动插件自己的元数据。
+- **插件市场显示 README。** 详情页会从 npm 读取插件的 README，用 App 自带的 Markdown 渲染（表格、任务列表、代码块、图片、折叠块都支持），并把相对图片/链接指向插件仓库的默认分支。
+- **「关于」页面重做。** 加了品牌卡片（启动图标、版本、fork 标记，配色跟随当前壁纸），分组标题带色点、每行配图标，页脚分隔更清楚。
+- **验证情况。** 改动通过 GitHub Actions 全量 CI（分析、测试、编译均绿），并重新生成了「关于」页的截图基线；真机尚未完整验证。
+
+### English
+
+- **Translate plugin names and descriptions on demand.** Installed-plugin and market detail sheets now show a translate button beside the name and description, only when the UI is in English and the source contains Chinese. It fetches English through a free translation endpoint, caches each text, and keeps the original on failure or offline; plugin metadata itself is never rewritten.
+- **Plugin READMEs in the market.** The detail sheet reads a plugin's README from npm and renders it with the app's own Markdown (tables, task lists, code blocks, images and collapsible sections), resolving relative links and images against the plugin repository's default branch.
+- **About page refreshed.** A brand hero (launcher tile, version and fork chips, wallpaper-driven colours), tinted group headings, icons on every row and a clearer footer.
+- **Testing.** The changes pass GitHub Actions' full CI (analysis, tests and builds all green), and the About page golden images were regenerated; not yet fully verified on a real device.
+
 ## 1.2.8 · 2026-11-20
 
 ### 中文
