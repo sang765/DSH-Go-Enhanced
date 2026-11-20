@@ -3,6 +3,20 @@
 每个版本先中文、后英文。发版时把对应版本的正文（不含版本标题）作为 Release 正文，见 `docs/release.md`。
 
 
+## 1.2.8 · 2026-11-20
+
+### 中文
+
+- **更新时可选本机其他安装器。** 安装包下载并校验完成后，更新面板会自动找出这台手机上所有能打开 APK 的应用（Morphe Manager、InstallerX、Mixplorer、Usagi 等），以按钮列出；点按即把同一个已校验的安装包交给该应用处理，安装仍需它自己确认。应用由 Android 的 intent 查询自动发现，新增安装器无需改代码。
+- **同步上游。** 合入上游：酒馆续写 / 重试 / 切换分支时不再重播到场动画，以及按回合隔离的聊天图片快照修复（含相关测试）。
+- **验证情况。** 改动通过 GitHub Actions 全量 CI（分析、测试、编译均绿）；真机尚未完整验证。
+
+### English
+
+- **Pick another installer on this phone when updating.** Once the APK is downloaded and verified, the update sheet discovers every app on this phone that can open an APK (Morphe Manager, InstallerX, Mixplorer, Usagi, ...) and lists them as buttons; tapping one hands the same verified package over to it, with installation still confirmed by that app. Apps are discovered through Android's intent resolution, so new installers need no code change.
+- **Upstream sync.** Merged upstream: no replayed arrival animation on Tavern continue/retry/branch switches, and per-turn chat image snapshot fixes (with tests).
+- **Testing.** The changes pass GitHub Actions' full CI (analysis, tests and builds all green); not yet fully verified on a real device.
+
 ## 1.2.7 · 2026-11-20
 
 ### 中文
