@@ -3,6 +3,20 @@
 每个版本先中文、后英文。发版时把对应版本的正文（不含版本标题）作为 Release 正文，见 `docs/release.md`。
 
 
+## 1.2.7 · 2026-11-20
+
+### 中文
+
+- **宠物交互回到上游原版。** 1.2.5–1.2.6 尝试让宠物站在每颗胶囊上、并改写拖拽的落点逻辑，但在真机上放开宠物时它会弹回原位；这三个改动整体回退，宠物层恢复为上游的版本（整行一个落脚点、拖拽沿整行自由移动），同时带入上游最近的宠物修复。
+- **同步上游。** 合入上游：悬浮窗扇形菜单按自身行数重排等宠物修复，以及夜间的远端网页视图、会话备份、语音通话、后台保护等一批改动。
+- **验证情况。** 改动通过 GitHub Actions 全量 CI（分析、测试、编译均绿）；真机尚未完整验证。
+
+### English
+
+- **The pet interaction is back to upstream's own.** The 1.2.5–1.2.6 attempts — standing on every capsule and a rewritten drag landing — made the pet snap back on release on a real device; all three are reverted wholesale, restoring the pet layer exactly as upstream ships it (one perch for the row, a drag free along it) and bringing in upstream's own recent pet fixes with it.
+- **Upstream sync.** Merged upstream: the floating window's radial menu laid out by its own row count among other pet fixes, plus the overnight remote web view, session backup, voice call, and background protection changes.
+- **Testing.** The changes pass GitHub Actions' full CI (analysis, tests and builds all green); not yet fully verified on a real device.
+
 ## 1.2.6 · 2026-11-20
 
 ### 中文
