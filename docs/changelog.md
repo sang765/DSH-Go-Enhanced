@@ -3,6 +3,18 @@
 每个版本先中文、后英文。发版时把对应版本的正文（不含版本标题）作为 Release 正文，见 `docs/release.md`。
 
 
+## 1.2.6 · 2026-11-20
+
+### 中文
+
+- **放开宠物后不再弹回右下角。** 位置原先是按所站胶囊自身宽度的比例保存的，而胶囊只有一百多像素宽、拖拽却能横跨整屏：比例一旦超过 1 就被夹到 1，松手时宠物便弹回那颗胶囊的右端（1.2.5 引入）。现在位置按整屏宽度的比例保存、再换算成脚下的位置，拖到哪里松手就停在哪里；脚下是空隙时落到最近的一颗胶囊上。
+- **验证情况。** 改动通过 GitHub Actions 全量 CI（分析、测试、编译均绿）；真机尚未完整验证。
+
+### English
+
+- **Releasing the pet no longer snaps it back to the bottom-right.** Its position was stored as a share of the standing pill's own width, but a pill is barely a hundred px wide while a drag spans the whole screen: past a share of 1 it clamped to 1 and the pet jumped to that pill's right end (introduced in 1.2.5). The position is a share of the screen width now, converted to the foot per pill, so it stays where it is let go; over a gap it lands on the nearest pill.
+- **Testing.** The changes pass GitHub Actions' full CI (analysis, tests and builds all green); not yet fully verified on a real device.
+
 ## 1.2.5 · 2026-11-20
 
 ### 中文

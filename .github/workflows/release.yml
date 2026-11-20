@@ -12,7 +12,7 @@ on:
       tag:
         description: 'Existing release tag to build and upload to, e.g. v1.2.0'
         required: true
-        default: 'v1.2.5'
+        default: 'v1.2.6'
   push:
     tags:
       - 'v*'
