@@ -424,7 +424,7 @@ class _UpdateSheetState extends ConsumerState<UpdateSheet> {
             for (final handler in handlers)
               ActionChip(
                 key: ValueKey('update-handler-${handler.package}'),
-                avatar: const Icon(Icons.open_in_new, size: 16),
+                avatar: const Icon(AppIcons.openExternal, size: 16),
                 label: Text(handler.label),
                 onPressed: () async {
                   final messenger = ScaffoldMessenger.maybeOf(context);

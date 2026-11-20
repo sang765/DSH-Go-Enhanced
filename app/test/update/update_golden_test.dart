@@ -18,6 +18,7 @@ import 'package:dsh_app/ui/theme/app_icons.dart';
 import 'package:dsh_app/ui/update/update_launch_check.dart';
 import 'package:dsh_app/ui/update/update_tiles.dart';
 import 'package:dsh_app/update/release.dart';
+import 'package:dsh_app/update/installer.dart';
 import 'package:dsh_app/update/version.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/misc.dart' show Override;
