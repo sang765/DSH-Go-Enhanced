@@ -124,7 +124,9 @@ jobs:
           # The runner may pre-set ANDROID_NDK_HOME to an older NDK; tawcroot
           # reads that first, so pin it to the version its sources demand.
           export ANDROID_NDK_HOME="$ANDROID_HOME/ndk/$NDK_VERSION"
-          tooling/build-apk.sh -- --dart-define=DSH_STAR_PROMPT=true
+          # The licensed companion pack stays out of the repo and no CI secret
+          # carries it: build without it, as every release of this fork has.
+          tooling/build-apk.sh --no-companion -- --dart-define=DSH_STAR_PROMPT=true
 
       - name: Verify the signature (no debug certs)
         run: |
