@@ -49,7 +49,7 @@ Uri? _githubRawBase(String? repositoryUrl) {
 /// A few HTML tags GitHub READMEs use that the Markdown renderer would
 /// otherwise show as literal text. Everything else (tables, task lists,
 /// fenced code, `<details>`) is already handled by the renderer itself.
-final _htmlImage = RegExp(r'<img\s[^>]*?src\s*=\s*["\']([^"\']+)["\'][^>]*>', caseSensitive: false);
+final _htmlImage = RegExp(r"""<img\s[^>]*?src\s*=\s*["']([^"']+)["'][^>]*>""", caseSensitive: false);
 final _htmlBreak = RegExp(r'<br\s*/?>', caseSensitive: false);
 final _htmlHeading = RegExp(r'<h([1-6])\b[^>]*>(.*?)</h\1>', caseSensitive: false, dotAll: true);
 final _htmlWrapper = RegExp(r'</?(?:p|div|span|center|strong|b|em|i)\b[^>]*>', caseSensitive: false);
