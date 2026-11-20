@@ -239,7 +239,8 @@ void main() {
       expect((footY(tester, deepy) - composer.top).abs(), lessThanOrEqualTo(0.5));
       expect(footX(tester, deepy) - start, closeTo(100, 1));
       final share = container.read(petPrefsProvider).position;
-      expect(share, closeTo((start + 100 - composer.left) / composer.width, 0.005));
+      final stage = stageRect(tester);
+      expect(share, closeTo((start + 100) / stage.width, 0.005));
     });
 
     testWidgets('the jump-to-bottom key is a keep-out area', (tester) async {

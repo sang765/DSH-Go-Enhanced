@@ -592,13 +592,22 @@ class PetLayerState extends ConsumerState<PetLayer> with TickerProviderStateMixi
   /// Where the foot stands along [spot]: free under the finger while held
   /// (it may reach past the pill, over the row's gaps), otherwise the saved
   /// position and the walk, kept on the pill.
+  ///
+  /// The saved position is a share of the STAGE, not of the perch: a pill is
+  /// only a couple of hundred px wide, so a screen-wide drag stored against
+  /// one clamps to 1 and the pet snapped back to that pill's right end.
   double _footX(PerchSpot spot) {
     if (_dragging) return _dragGx == null ? 0.0 : _dragGx! - spot.rect.left;
     final (lo, hi) = _range(spot);
     final prefs = ref.read(petPrefsProvider);
     final share = _walking ? _walkFrom + (_walkTo - _walkFrom) * _walk.value : (_roamed ?? prefs.position);
-    return _clear(spot, (share * spot.rect.width).clamp(lo, hi));
+    final stageX = share * _stage.width;
+    return _clear(spot, (stageX - spot.rect.left).clamp(lo, hi));
   }
+
+  /// The stage share of a foot [x] on [spot].
+  double _shareOf(PerchSpot spot, double x) =>
+      _stage.width <= 0 ? 0.25 : ((spot.rect.left + x) / _stage.width).clamp(0.0, 1.0);
 
   /// The co-topped perch under the stage x [gx] — the pill the foot is on,
   /// nearest when it is over a gap; null when the row has no other pill.
@@ -748,7 +757,7 @@ class PetLayerState extends ConsumerState<PetLayer> with TickerProviderStateMixi
               .clamp(0.0, 1.0);
     // Not into an area it keeps out of, not past the perch's ends.
     final (lo, hi) = _range(spot);
-    final endX = _clear(spot, (to * spot.rect.width).clamp(lo, hi));
+    final endX = _clear(spot, (to * _stage.width - spot.rect.left).clamp(lo, hi));
     final startX = _footX(spot);
     final distance = (endX - startX).abs();
     if (distance < 4) {
@@ -756,8 +765,8 @@ class PetLayerState extends ConsumerState<PetLayer> with TickerProviderStateMixi
       return;
     }
     setState(() {
-      _walkFrom = startX / spot.rect.width;
-      _walkTo = endX / spot.rect.width;
+      _walkFrom = _shareOf(spot, startX);
+      _walkTo = _shareOf(spot, endX);
       _walkRight = endX > startX;
       _walking = true;
       _variant = null;
@@ -891,7 +900,7 @@ class PetLayerState extends ConsumerState<PetLayer> with TickerProviderStateMixi
       _dropFrom = _lift;
       _lift = 0;
     });
-    unawaited(ref.read(petPrefsProvider.notifier).setPosition(x / target.rect.width));
+    unawaited(ref.read(petPrefsProvider.notifier).setPosition(_shareOf(target, x)));
     final drop = AppMotion.of(context, AppMotion.standard);
     if (drop == Duration.zero) {
       _drop.value = 1;

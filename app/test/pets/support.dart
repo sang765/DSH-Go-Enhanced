@@ -323,6 +323,9 @@ PetLayerState petLayer(WidgetTester tester) => tester.state<PetLayerState>(find.
 /// The pet's canvas on screen.
 Rect petCanvas(WidgetTester tester) => tester.getRect(find.byKey(const ValueKey('pet-body')));
 
+/// The stage the pet stands in (saved positions are shares of its width).
+Rect stageRect(WidgetTester tester) => tester.getRect(find.byType(PetStage));
+
 /// Logical px per art px at [size] on the test view.
 double petScaleOn(WidgetTester tester, PetPack pack, [PetSize size = PetSize.medium]) {
   final dpr = tester.view.devicePixelRatio;
