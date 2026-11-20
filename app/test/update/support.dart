@@ -141,6 +141,19 @@ class FakeInstaller implements UpdateInstaller {
     installed.add(path);
     return systemInstallerOpens;
   }
+
+  /// Detected installer apps; the sheet and the hand-off use these.
+  List<ApkHandler> apkHandlers = const [];
+
+  @override
+  Future<List<ApkHandler>> queryApkHandlers() async => apkHandlers;
+
+  @override
+  Future<bool> openWithInstaller(String path, String package) async {
+    calls.add('openWithInstaller:$package');
+    installed.add(path);
+    return true;
+  }
 }
 
 Uint8List _u64(int value) => (ByteData(8)..setUint64(0, value)).buffer.asUint8List();

@@ -32564,6 +32564,18 @@ abstract class L10n {
   /// **'只有确认系统已不在安装时才结束等待。清除本次记录不等于取消系统安装；不会自动重试或切换路线，仍需再次原生确认。'**
   String get selfUpdateEndWaitingNote;
 
+  /// No description provided for @selfUpdateOtherInstallers.
+  ///
+  /// In zh, this message translates to:
+  /// **'本机其他安装器'**
+  String get selfUpdateOtherInstallers;
+
+  /// No description provided for @selfUpdateOtherInstallersHint.
+  ///
+  /// In zh, this message translates to:
+  /// **'这些应用可以在本机打开已校验的安装包。点按即把同一个包交给它处理，安装仍需该应用自身确认。'**
+  String get selfUpdateOtherInstallersHint;
+
   /// No description provided for @backupRecordFailed.
   ///
   /// In zh, this message translates to:

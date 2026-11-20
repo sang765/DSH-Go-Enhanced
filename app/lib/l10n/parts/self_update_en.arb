@@ -50,5 +50,7 @@
     }
   },
   "selfUpdateEndWaiting": "End this wait",
-  "selfUpdateEndWaitingNote": "End this wait only after confirming the system is no longer installing. Clearing the record does not cancel a system installation or retry/switch routes. Native confirmation is required again."
+  "selfUpdateEndWaitingNote": "End this wait only after confirming the system is no longer installing. Clearing the record does not cancel a system installation or retry/switch routes. Native confirmation is required again.",
+  "selfUpdateOtherInstallers": "Other installed installers",
+  "selfUpdateOtherInstallersHint": "These apps can open the verified APK on this phone. Tapping one hands the same package over to it; installation still needs that app's own confirmation."
 }

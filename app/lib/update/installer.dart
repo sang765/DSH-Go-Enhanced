@@ -1,4 +1,26 @@
+import 'package:flutter/foundation.dart' show immutable;
 import 'package:flutter/services.dart';
+
+/// An app on this phone that can open (and therefore install) an APK.
+/// Discovered by Android's own intent resolution, not a hard-coded list.
+@immutable
+class ApkHandler {
+  const ApkHandler({required this.package, required this.label});
+
+  factory ApkHandler.fromMap(Map<Object?, Object?> map) => ApkHandler(
+    package: map['package'] as String? ?? '',
+    label: map['label'] as String? ?? '',
+  );
+
+  final String package;
+  final String label;
+
+  @override
+  bool operator ==(Object other) => other is ApkHandler && other.package == package && other.label == label;
+
+  @override
+  int get hashCode => Object.hash(package, label);
+}
 
 /// What the native side knows about the installed app.
 class InstalledApp {
@@ -137,6 +159,12 @@ abstract interface class UpdateInstaller {
 
   /// Opens the package in the system's own installer; false when it couldn't.
   Future<bool> openWithSystemInstaller(String path);
+
+  /// Every app on this phone that can open an APK (empty when unavailable).
+  Future<List<ApkHandler>> queryApkHandlers();
+
+  /// Hands the verified APK to a specific installer app; false when it couldn't.
+  Future<bool> openWithInstaller(String path, String package);
 }
 
 class ChannelUpdateInstaller implements UpdateInstaller {
@@ -165,4 +193,17 @@ class ChannelUpdateInstaller implements UpdateInstaller {
   @override
   Future<bool> openWithSystemInstaller(String path) async =>
       await _channel.invokeMethod<bool>('openWithSystem', {'path': path}) ?? false;
+
+  @override
+  Future<List<ApkHandler>> queryApkHandlers() async {
+    final list = await _channel.invokeListMethod<Object>('queryApkHandlers') ?? const <Object>[];
+    return [
+      for (final item in list)
+        if (item is Map) ApkHandler.fromMap(item.cast<Object?, Object?>()),
+    ];
+  }
+
+  @override
+  Future<bool> openWithInstaller(String path, String package) async =>
+      await _channel.invokeMethod<bool>('openWithInstaller', {'path': path, 'package': package}) ?? false;
 }

@@ -106,6 +106,16 @@ class _UpdateSheetState extends ConsumerState<UpdateSheet> {
   final _adbPort = TextEditingController();
 
   @override
+  void initState() {
+    super.initState();
+    // Discover third-party installers once when the offer sheet opens. The
+    // native query is cheap and needs no permission or transport setup.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) unawaited(ref.read(appUpdateProvider.notifier).refreshApkHandlers());
+    });
+  }
+
+  @override
   void dispose() {
     _adbPort.dispose();
     super.dispose();
@@ -259,6 +269,10 @@ class _UpdateSheetState extends ConsumerState<UpdateSheet> {
                       update.task == UpdateTaskPhase.failed && _systemInstallerHelps.contains(update.problem))) ...[
                     _routeControls(context, update),
                     const SizedBox(height: 16),
+                    if (update.apkHere) ...[
+                      _apkHandlers(context, update),
+                      const SizedBox(height: 16),
+                    ],
                   ],
                   Padding(
                     padding: const EdgeInsets.fromLTRB(4, 8, 4, 8),
@@ -380,6 +394,47 @@ class _UpdateSheetState extends ConsumerState<UpdateSheet> {
             child: Text(l10n.selfUpdateRefresh),
           ),
         ],
+      ],
+    );
+  }
+
+  /// Apps on this phone that can open the verified APK, discovered from
+  /// Android's own intent resolution. Each one is a hand-off: the same file
+  /// and digest, opened in that app instead of ours.
+  Widget _apkHandlers(BuildContext context, AppUpdateState update) {
+    final l10n = context.l10n;
+    final theme = Theme.of(context);
+    final colors = DshColors.of(context);
+    final handlers = update.apkHandlers;
+    if (handlers.isEmpty) return const SizedBox.shrink();
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Text(l10n.selfUpdateOtherInstallers, style: SettingsSection.titleStyle(context)),
+        const SizedBox(height: 8),
+        Text(
+          l10n.selfUpdateOtherInstallersHint,
+          style: theme.textTheme.bodySmall?.copyWith(color: colors.textTertiary),
+        ),
+        const SizedBox(height: 8),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            for (final handler in handlers)
+              ActionChip(
+                key: ValueKey('update-handler-${handler.package}'),
+                avatar: const Icon(Icons.open_in_new, size: 16),
+                label: Text(handler.label),
+                onPressed: () async {
+                  final messenger = ScaffoldMessenger.maybeOf(context);
+                  final ok = await ref.read(appUpdateProvider.notifier).installWithApkHandler(handler);
+                  if (!mounted) return;
+                  if (!ok) messenger?.showSnackBar(SnackBar(content: Text(l10n.updateSystemInstallerFailed)));
+                },
+              ),
+          ],
+        ),
       ],
     );
   }

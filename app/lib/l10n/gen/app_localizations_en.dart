@@ -18633,6 +18633,13 @@ class L10nEn extends L10n {
       'End this wait only after confirming the system is no longer installing. Clearing the record does not cancel a system installation or retry/switch routes. Native confirmation is required again.';
 
   @override
+  String get selfUpdateOtherInstallers => 'Other installed installers';
+
+  @override
+  String get selfUpdateOtherInstallersHint =>
+      'These apps can open the verified APK on this phone. Tapping one hands the same package over to it; installation still needs that app\'s own confirmation.';
+
+  @override
   String get backupRecordFailed =>
       'The phone could not save the restore record. Keep the conversation ID above and check the target; do not import again.';
 

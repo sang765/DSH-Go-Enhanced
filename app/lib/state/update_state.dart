@@ -109,6 +109,7 @@ class AppUpdateState {
     this.selfUpdate = const SelfUpdatePending(),
     this.privilegedErrorCode,
     this.loadingInstallStatus = false,
+    this.apkHandlers = const [],
   });
 
   /// Preferences were read; nothing automatic runs before that.
@@ -171,6 +172,10 @@ class AppUpdateState {
   final String? privilegedErrorCode;
   final bool loadingInstallStatus;
 
+  /// Installer apps discovered on this phone (Morphe, InstallerX, ...), read
+  /// from Android's intent resolution — empty until refreshed or unavailable.
+  final List<ApkHandler> apkHandlers;
+
   bool get hasSelfUpdateResult => selfUpdate.state != SelfUpdatePendingState.none;
   bool get hasUpdate => latest != null;
   /// The same release from another source counts: the API's `1.2.0` is the manifest's
@@ -221,6 +226,7 @@ class AppUpdateState {
     SelfUpdatePending? selfUpdate,
     String? Function()? privilegedErrorCode,
     bool? loadingInstallStatus,
+    List<ApkHandler>? apkHandlers,
   }) => AppUpdateState(
     loaded: loaded ?? this.loaded,
     installable: installable ?? this.installable,
@@ -246,6 +252,7 @@ class AppUpdateState {
     selfUpdate: selfUpdate ?? this.selfUpdate,
     privilegedErrorCode: privilegedErrorCode == null ? this.privilegedErrorCode : privilegedErrorCode(),
     loadingInstallStatus: loadingInstallStatus ?? this.loadingInstallStatus,
+    apkHandlers: apkHandlers ?? this.apkHandlers,
   );
 }
 
@@ -968,6 +975,29 @@ class AppUpdateController extends Notifier<AppUpdateState> {
     // The file check can outlive this owner, package or install attempt.
     if (!ref.mounted || run != _run || state.busy || !identical(_apk, apk) || !apk.isFor(state)) return false;
     return _installer.openWithSystemInstaller(apk.file.path);
+  }
+
+  /// Discovers the installer apps on this phone through Android's own intent
+  /// resolution — no hard-coded package list — for the sheet's hand-off list.
+  Future<void> refreshApkHandlers() async {
+    if (_noticeOnly || state.busy) return;
+    try {
+      final handlers = await _installer.queryApkHandlers();
+      if (ref.mounted) state = state.copyWith(apkHandlers: handlers);
+    } on MissingPluginException {
+      // Desktop / OHOS: no Android installer apps to discover.
+    }
+  }
+
+  /// Hands the verified download to one discovered installer app. The file
+  /// and its digest are the same ones the whole update flow validated.
+  Future<bool> installWithApkHandler(ApkHandler handler) async {
+    if (_noticeOnly || handler.package.isEmpty) return false;
+    final apk = _apk;
+    final run = _run;
+    if (!ref.mounted || apk == null || state.busy || !apk.isFor(state) || !await apk.file.exists()) return false;
+    if (!ref.mounted || run != _run || state.busy || !identical(_apk, apk) || !apk.isFor(state)) return false;
+    return _installer.openWithInstaller(apk.file.path, handler.package);
   }
 
   /// 「导出安装包」: copies the verified download into `Download/DSH-Go`, so it can

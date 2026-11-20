@@ -77,6 +77,15 @@ class FakeUpdate extends AppUpdateController {
   @override
   Future<void> onAppResumed({Duration confirmGrace = Duration.zero}) async => calls.add('resumed');
 
+  @override
+  Future<void> refreshApkHandlers() async {}
+
+  @override
+  Future<bool> installWithApkHandler(ApkHandler handler) async {
+    calls.add('installWithApkHandler:${handler.package}');
+    return true;
+  }
+
   /// What [installWithSystem] answers.
   bool systemInstallerOpens = true;
 

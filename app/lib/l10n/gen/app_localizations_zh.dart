@@ -17698,6 +17698,12 @@ class L10nZh extends L10n {
   String get selfUpdateEndWaitingNote => '只有确认系统已不在安装时才结束等待。清除本次记录不等于取消系统安装；不会自动重试或切换路线，仍需再次原生确认。';
 
   @override
+  String get selfUpdateOtherInstallers => '本机其他安装器';
+
+  @override
+  String get selfUpdateOtherInstallersHint => '这些应用可以在本机打开已校验的安装包。点按即把同一个包交给它处理，安装仍需该应用自身确认。';
+
+  @override
   String get backupRecordFailed => '手机未能保存恢复记录。请记下上面的对话 ID 并检查目标主机，不要重复导入。';
 
   @override

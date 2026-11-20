@@ -364,5 +364,11 @@
         <intent>
             <action android:name="android.intent.action.TTS_SERVICE"/>
         </intent>
+        <!-- In-app update: discover third-party APK installers (Morphe, InstallerX,
+             Mixplorer, Usagi, ...) that can be handed the verified download. -->
+        <intent>
+            <action android:name="android.intent.action.VIEW"/>
+            <data android:mimeType="application/vnd.android.package-archive"/>
+        </intent>
     </queries>
 </manifest>

@@ -3,6 +3,8 @@ package io.github.ccch1mneyyy.dsh_app.update
 import android.app.Activity
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
+import android.os.Build
 import android.os.Handler
 import android.os.Looper
 import androidx.core.content.FileProvider
@@ -102,6 +104,16 @@ class UpdatePlugin : FlutterPlugin, ActivityAware, MethodChannel.MethodCallHandl
             "openWithSystem" -> {
                 val apk = apkArgument(call, result) ?: return
                 result.success(openWithSystem(apk))
+            }
+            "queryApkHandlers" -> result.success(queryApkHandlers())
+            "openWithInstaller" -> {
+                val apk = apkArgument(call, result) ?: return
+                val pkg = call.argument<String>("package")
+                if (pkg.isNullOrBlank()) {
+                    result.success(false)
+                    return
+                }
+                result.success(openWith(apk, pkg))
             }
             else -> result.notImplemented()
         }
@@ -205,6 +217,42 @@ class UpdatePlugin : FlutterPlugin, ActivityAware, MethodChannel.MethodCallHandl
         val host = activity
         if (host != null) host.startActivity(intent) else appContext.startActivity(intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
     }.isSuccess
+
+    /**
+     * Hands the APK to one specific installer app (Morphe Manager, InstallerX, Mixplorer,
+     * Usagi, ...): same verified file and grant, only the target package is pinned.
+     */
+    private fun openWith(apk: File, pkg: String): Boolean = runCatching {
+        val uri = FileProvider.getUriForFile(appContext, "${appContext.packageName}.files", apk)
+        val intent = Intent(Intent.ACTION_VIEW)
+            .setDataAndType(uri, "application/vnd.android.package-archive")
+            .setPackage(pkg)
+            .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        val host = activity
+        if (host != null) host.startActivity(intent) else appContext.startActivity(intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+    }.isSuccess
+
+    /**
+     * Every app on this phone that can open an APK — discovered through the system's own
+     * intent resolution, not a hard-coded package list, so third-party installers appear
+     * without a release. Each entry: `{package, label}`; our own package is excluded.
+     */
+    private fun queryApkHandlers(): List<Map<String, String>> {
+        val probe = Intent(Intent.ACTION_VIEW).setType("application/vnd.android.package-archive")
+        val flags = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) PackageManager.MATCH_DEFAULT_ONLY else 0
+        val seen = LinkedHashMap<String, String>()
+        for (info in appContext.packageManager.queryIntentActivities(probe, flags)) {
+            val pkg = info.activityInfo.packageName ?: continue
+            if (pkg == appContext.packageName || seen.containsKey(pkg)) continue
+            val label = runCatching { info.loadLabel(appContext.packageManager).toString() }
+                .getOrDefault(pkg)
+                .take(48)
+            seen[pkg] = label.ifBlank { pkg }
+        }
+        return seen.entries.sortedBy { it.value.lowercase() }
+            .take(16)
+            .map { mapOf("package" to it.key, "label" to it.value) }
+    }
 
     private fun apkArgument(call: MethodCall, result: MethodChannel.Result): File? {
         val path = call.argument<String>("path")
