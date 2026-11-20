@@ -12,6 +12,7 @@ import 'package:dsh_app/state/commands_state.dart';
 import 'package:dsh_app/state/connection_state.dart';
 import 'package:dsh_app/state/features_state.dart' show agentPresetsProvider, permissionStateProvider;
 import 'package:dsh_app/state/models_state.dart';
+import 'package:dsh_app/state/plugins/plugin_readme.dart';
 import 'package:dsh_app/state/sessions_state.dart';
 import 'package:dsh_app/state/settings_state.dart';
 import 'package:dsh_app/state/usage_state.dart';
@@ -49,7 +50,12 @@ void usePhoneView(WidgetTester tester) {
 
 Widget testApp(Widget home, {Brightness brightness = Brightness.light, List<Override> overrides = const []}) {
   return ProviderScope(
-    overrides: [accountWalletBalanceProvider.overrideWithValue(null), ...overrides],
+    overrides: [
+      accountWalletBalanceProvider.overrideWithValue(null),
+      // Market sheets must not reach the network in tests.
+      pluginReadmeProvider.overrideWith((ref, name) async => null),
+      ...overrides,
+    ],
     child: MaterialApp(
       debugShowCheckedModeBanner: false,
       theme: testTheme(Brightness.light),

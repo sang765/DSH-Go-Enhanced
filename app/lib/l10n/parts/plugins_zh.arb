@@ -827,6 +827,10 @@
   "pluginsLoadUnreported": "状态未报告",
   "pluginsLoadNoRuntimeDetail": "主机未返回运行时错误详情，请查看引擎日志。",
   "pluginsLoadRemoteLogs": "请在这台主机上查看引擎日志。",
+  "pluginsTranslate": "翻译名称和描述",
+  "pluginsTranslating": "翻译中…",
+  "pluginsTranslated": "已翻译",
+  "pluginsTranslateFailed": "翻译失败，显示原文",
   "@pluginsLoadRunningCount": {
     "placeholders": {
       "running": {

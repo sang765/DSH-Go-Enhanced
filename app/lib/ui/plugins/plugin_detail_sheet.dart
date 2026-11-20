@@ -12,11 +12,14 @@ import '../../share_code/plugin_share.dart' show sharedPluginFromBundle;
 import '../../state/plugin_config/plugin_config_state.dart';
 import '../../links/plugin_links.dart' show marketPluginLink;
 import '../../state/plugins_state.dart';
+import '../../state/plugin_translation_state.dart';
+import '../../state/plugins/plugin_readme.dart';
 import '../../state/runtime_capabilities_state.dart';
 import '../../update/version.dart';
 import '../common/app_sheet.dart';
 import '../common/list_page_row.dart';
 import '../common/sheet_navigator.dart';
+import '../chat/render/markdown_body.dart';
 import '../engine_settings/engine_settings_page.dart';
 import '../share_code/plugin_share_sheet.dart';
 import '../theme/app_icons.dart';
@@ -111,6 +114,11 @@ class MarketPluginSheet extends ConsumerWidget {
     final blocked = marketBlockedInstall(entry, installed);
     final title = entry.title(locale);
     final description = entry.summary(locale);
+    final translation = ref.watch(pluginTranslationProvider);
+    final shownTitle = translation.of(title) ?? title;
+    final shownDescription = description == null ? null : translation.of(description) ?? description;
+    final translatable = [title, ?description].where((text) => pluginNeedsTranslation(text, locale)).toList();
+    final readme = ref.watch(pluginReadmeProvider(plugin.name));
 
     Widget? jobView;
     if (job != null && job.isActive) {
@@ -150,8 +158,8 @@ class MarketPluginSheet extends ConsumerWidget {
             padding: const EdgeInsets.fromLTRB(20, 4, 20, 16),
             children: [
               PluginHero(
-                avatar: PluginAvatar(name: plugin.name, title: title, icon: plugin.icon, size: 64),
-                title: title,
+                avatar: PluginAvatar(name: plugin.name, title: shownTitle, icon: plugin.icon, size: 64),
+                title: shownTitle,
                 subtitle: [?plugin.author, ?entry.categoryTitleIn(locale)].join(' · '),
                 badges: [
                   ...marketEntryBadges(context, entry),
@@ -160,6 +168,7 @@ class MarketPluginSheet extends ConsumerWidget {
                   if (entry.featured) PluginBadge(l10n.hubPluginFeatured, tone: PluginBadgeTone.featured),
                   if (entry.webOnly) PluginBadge(l10n.hubPluginWebOnly),
                 ],
+                action: translatable.isEmpty ? null : _TranslateButton(texts: translatable),
               ),
               const SizedBox(height: 20),
               PluginStats([
@@ -184,11 +193,24 @@ class MarketPluginSheet extends ConsumerWidget {
                 const SizedBox(height: 20),
                 MarketScreenshots(urls: listing.screenshots),
               ],
-              if (description != null) ...[
+              if (shownDescription != null) ...[
                 const SizedBox(height: 16),
-                SelectableText(description, style: theme.textTheme.bodyMedium?.copyWith(height: 1.7)),
+                SelectableText(shownDescription, style: theme.textTheme.bodyMedium?.copyWith(height: 1.7)),
               ],
               if (listing != null) ...[const SizedBox(height: 24), MarketRiskCard(listing: listing)],
+              if (readme.isLoading) ...[
+                const SizedBox(height: 24),
+                const Center(child: CircularProgressIndicator()),
+              ] else if (readme.value case final String? text when text != null) ...[
+                const SizedBox(height: 24),
+                _ReadmeSection(
+                  text: resolveReadmeUrls(
+                    normalizeReadme(text),
+                    repositoryUrl: plugin.repositoryUrl ?? plugin.homepage,
+                    directory: plugin.repositoryDirectory,
+                  ),
+                ),
+              ],
               const SizedBox(height: 20),
               ListPageCard(
                 margin: EdgeInsets.zero,
@@ -426,6 +448,11 @@ class BundleSheet extends ConsumerWidget {
     // The plugin's name for people (its native title, else the bundle's);
     // the package name stays as the quiet line under it.
     final display = ref.watch(nativePluginTitleProvider(bundle.name));
+    final locale = Localizations.localeOf(context).languageCode;
+    final translation = ref.watch(pluginTranslationProvider);
+    final shownDisplay = translation.of(display) ?? display;
+    final shownSummary = summary == null ? null : translation.of(summary) ?? summary;
+    final translatable = [display, ?summary].where((text) => pluginNeedsTranslation(text, locale)).toList();
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -440,23 +467,24 @@ class BundleSheet extends ConsumerWidget {
             padding: const EdgeInsets.fromLTRB(20, 4, 20, 16),
             children: [
               PluginHero(
-                avatar: PluginAvatar(name: bundle.name, title: display, icon: bundle.meta?.icon, size: 64),
-                title: display,
-                subtitle: display == bundle.name ? '' : bundle.name,
+                avatar: PluginAvatar(name: bundle.name, title: shownDisplay, icon: bundle.meta?.icon, size: 64),
+                title: shownDisplay,
+                subtitle: shownDisplay == bundle.name ? '' : bundle.name,
                 monoSubtitle: true,
                 badges: [
                   if (bundle.official) PluginBadge(l10n.hubPluginOfficial, tone: PluginBadgeTone.official),
                   if (update != null) PluginBadge(l10n.marketUpdateAvailable, tone: PluginBadgeTone.official),
                 ],
+                action: translatable.isEmpty ? null : _TranslateButton(texts: translatable),
               ),
               if (blocked) ...[
                 const SizedBox(height: 16),
                 // 卸载 is this sheet's own button.
                 MarketBlockedBox(version: bundle.version!),
               ],
-              if (summary != null) ...[
+              if (shownSummary != null) ...[
                 const SizedBox(height: 16),
-                SelectableText(summary, style: theme.textTheme.bodyMedium?.copyWith(height: 1.7)),
+                SelectableText(shownSummary, style: theme.textTheme.bodyMedium?.copyWith(height: 1.7)),
               ],
               if (error.isNotEmpty) ...[
                 const SizedBox(height: 16),
@@ -703,6 +731,69 @@ class BundleSheet extends ConsumerWidget {
 List<PluginBundleRow> bundleSettingsRows(PluginBundle bundle, PluginConfigState? config) =>
     bundleConfigRows(bundle, config);
 
+/// A plugin's npm README, rendered with the app's own GitHub-flavoured
+/// Markdown (tables, task lists, code, images, details…) rather than a web
+/// view: it stays inside the sheet and inherits the app's theme.
+class _ReadmeSection extends StatelessWidget {
+  const _ReadmeSection({required this.text});
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Text('README', style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w600)),
+        const SizedBox(height: 10),
+        ListPageCard(
+          margin: EdgeInsets.zero,
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: MarkdownBody(text: text),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+}
+
+/// Translates a sheet's name and description in place; the originals stay
+/// underneath the cache and come back the moment the sheet is reopened.
+class _TranslateButton extends ConsumerWidget {
+  const _TranslateButton({required this.texts});
+
+  final List<String> texts;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = context.l10n;
+    final translation = ref.watch(pluginTranslationProvider);
+    final pending = texts.any(translation.isPending);
+    final translated = texts.isNotEmpty && texts.every((text) => translation.of(text) != null);
+    return IconButton(
+      icon: pending
+          ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2))
+          : Icon(AppIcons.translate, size: 20),
+      tooltip: pending ? l10n.pluginsTranslating : translated ? l10n.pluginsTranslated : l10n.pluginsTranslate,
+      onPressed: pending
+          ? null
+          : () async {
+              for (final text in texts) {
+                await ref.read(pluginTranslationProvider.notifier).translate(text, from: 'zh-CN', to: 'en');
+              }
+              final state = ref.read(pluginTranslationProvider);
+              if (texts.any(state.hasFailed) && context.mounted) {
+                ScaffoldMessenger.maybeOf(context)?.showSnackBar(SnackBar(content: Text(l10n.pluginsTranslateFailed)));
+              }
+            },
+    );
+  }
+}
+
 /// The detail sheet's head: the big icon, the name (two lines at most), one
 /// quiet line, then the tags.
 class PluginHero extends StatelessWidget {
@@ -714,6 +805,7 @@ class PluginHero extends StatelessWidget {
     this.subtitleMaxLines = 1,
     this.monoSubtitle = false,
     this.badges = const [],
+    this.action,
   });
 
   final Widget avatar;
@@ -722,6 +814,7 @@ class PluginHero extends StatelessWidget {
   final int subtitleMaxLines;
   final bool monoSubtitle;
   final List<Widget> badges;
+  final Widget? action;
 
   @override
   Widget build(BuildContext context) {
@@ -757,6 +850,7 @@ class PluginHero extends StatelessWidget {
             ],
           ),
         ),
+        if (action != null) action!,
       ],
     );
   }
