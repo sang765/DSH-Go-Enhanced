@@ -87,7 +87,6 @@ class AboutPage extends ConsumerWidget {
               AppInfo.authorBilibiliUrl,
               icon: AppIcons.web,
               tint: 4,
-              tinted: false,
             ),
             _authorLink(
               context,
@@ -98,7 +97,6 @@ class AboutPage extends ConsumerWidget {
               AppInfo.authorXUrl,
               icon: AppIcons.community,
               tint: 3,
-              tinted: false,
             ),
             _authorLink(
               context,
@@ -109,7 +107,6 @@ class AboutPage extends ConsumerWidget {
               AppInfo.authorGithubUrl,
               icon: AppIcons.code,
               tint: 0,
-              tinted: false,
             ),
           ],
         ),
@@ -125,7 +122,6 @@ class AboutPage extends ConsumerWidget {
               AppInfo.forkUrl,
               icon: AppIcons.code,
               tint: 6,
-              tinted: false,
             ),
           ],
         ),
