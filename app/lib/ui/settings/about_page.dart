@@ -39,6 +39,7 @@ class AboutPage extends ConsumerWidget {
       title: l10n.hubAbout,
       children: [
         _AboutHero(version: version),
+        const SizedBox(height: 8),
         SettingsSection(
           children: [
             SettingsTile(
@@ -210,7 +211,7 @@ class _AboutHero extends StatelessWidget {
     final theme = Theme.of(context);
     final short = version.split(' ').first;
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 4, 16, 6),
+      padding: const EdgeInsets.fromLTRB(16, 4, 16, 12),
       child: GlassSurface(
         tier: GlassTier.card,
         borderRadius: AppShape.radiusLg,
@@ -226,26 +227,30 @@ class _AboutHero extends StatelessWidget {
                   ),
                 ),
               ),
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 20),
-                child: Column(
-                  children: [
-                    const BrandMark(size: 64, tile: true),
-                    const SizedBox(height: 12),
-                    Text(
-                      AppInfo.name,
-                      style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w700),
-                    ),
-                    const SizedBox(height: 12),
-                    Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        _HeroChip(icon: AppIcons.info, label: short),
-                        const SizedBox(width: 8),
-                        _HeroChip(icon: AppIcons.code, label: '@${AppInfo.forkAuthor}'),
-                      ],
-                    ),
-                  ],
+              // Fill the Stack before centring: a plain Padding child is sized
+              // to its content and would sit at the Stack's top-left corner.
+              Positioned.fill(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 20),
+                  child: Column(
+                    children: [
+                      const BrandMark(size: 64, tile: true),
+                      const SizedBox(height: 12),
+                      Text(
+                        AppInfo.name,
+                        style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w700),
+                      ),
+                      const SizedBox(height: 12),
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          _HeroChip(icon: AppIcons.info, label: short),
+                          const SizedBox(width: 8),
+                          _HeroChip(icon: AppIcons.code, label: '@${AppInfo.forkAuthor}'),
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ],
