@@ -293,6 +293,9 @@ void main() {
   });
 
   testWidgets('hide sign-in prompt toggle is stored', (tester) async {
+    tester.view.devicePixelRatio = 2;
+    tester.view.physicalSize = const Size(390 * 2, 2060 * 2);
+    addTearDown(tester.view.reset);
     final container = ProviderContainer(overrides: _overrides(wallpaper: _wallpaperBlue));
     addTearDown(container.dispose);
     await tester.pumpWidget(
