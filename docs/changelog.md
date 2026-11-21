@@ -3,6 +3,20 @@
 每个版本先中文、后英文。发版时把对应版本的正文（不含版本标题）作为 Release 正文，见 `docs/release.md`。
 
 
+## 1.2.11 · 2026-11-21
+
+### 中文
+
+- **可隐藏「登录 DeepSeek」提示。** 设置 › 外观新增开关；开启后，未登录且没有 API Key 时，设置首页不再显示登录行，改由本机引擎占用整张概览卡（图标、状态、DSH 版本更大更清楚）。已登录或已填 Key 时不受影响，开关默认关闭。
+- **「关于」页品牌卡修正。** 卡片内的图标与文字改为真正居中，并与下方卡片留出间距（之前因为 Stack 的子部件没有撑满，整体贴在了左边）。
+- **验证情况。** 改动通过 GitHub Actions 全量 CI（分析、测试、编译均绿），并重新生成了外观与关于页的截图基线；真机尚未完整验证。
+
+### English
+
+- **Hide the "Sign in to DeepSeek" prompt.** A new switch in Settings › Appearance: when on and the user is signed out with no API key, the settings hub replaces the sign-in row with a full overview card for the local engine (icon, status and DSH version in the large row). Signed-in users and API-key users are unaffected; the switch is off by default.
+- **About page hero fixed.** The launcher tile and texts are now truly centred in the card, with breathing room before the card below (the old Stack child was shrink-wrapped and pinned everything left).
+- **Testing.** The changes pass GitHub Actions' full CI (analysis, tests and builds all green), and the Appearance/About golden images were regenerated; not yet fully verified on a real device.
+
 ## 1.2.10 · 2026-11-21
 
 ### 中文
