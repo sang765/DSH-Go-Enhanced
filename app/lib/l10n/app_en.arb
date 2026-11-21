@@ -5332,6 +5332,7 @@
   "searchKwDarkMode": "dark,light,dark mode,night,theme,system,appearance",
   "searchKwAccent": "color,colour,accent,palette,wallpaper",
   "searchKwTileStyle": "icon style,tiles",
+  "searchKwHideSignIn": "hide sign in,login prompt,sign in prompt,account",
   "searchKwAppIcon": "launcher icon,icon",
   "searchKwPetSize": "pet size",
   "searchKwPetQuiet": "quiet,pet quiet",

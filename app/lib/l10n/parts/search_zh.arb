@@ -58,6 +58,7 @@
   "searchKwDarkMode": "深色,浅色,暗色,夜间,深色模式,跟随系统,外观",
   "searchKwAccent": "颜色,主题色,强调色,壁纸,取色",
   "searchKwTileStyle": "图标风格,磁贴",
+  "searchKwHideSignIn": "隐藏登录,登录提示,账号,登录",
   "searchKwAppIcon": "启动图标,App 图标,图标",
   "searchKwPetSize": "宠物大小,宠物尺寸",
   "searchKwPetQuiet": "安静,宠物安静",

@@ -32084,6 +32084,12 @@ abstract class L10n {
   /// **'图标风格,磁贴'**
   String get searchKwTileStyle;
 
+  /// No description provided for @searchKwHideSignIn.
+  ///
+  /// In zh, this message translates to:
+  /// **'隐藏登录,登录提示,账号,登录'**
+  String get searchKwHideSignIn;
+
   /// No description provided for @searchKwAppIcon.
   ///
   /// In zh, this message translates to:

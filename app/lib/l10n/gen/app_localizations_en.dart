@@ -18375,6 +18375,9 @@ class L10nEn extends L10n {
   String get searchKwTileStyle => 'icon style,tiles';
 
   @override
+  String get searchKwHideSignIn => 'hide sign in,login prompt,sign in prompt,account';
+
+  @override
   String get searchKwAppIcon => 'launcher icon,icon';
 
   @override

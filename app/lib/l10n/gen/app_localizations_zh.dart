@@ -17449,6 +17449,9 @@ class L10nZh extends L10n {
   String get searchKwTileStyle => '图标风格,磁贴';
 
   @override
+  String get searchKwHideSignIn => '隐藏登录,登录提示,账号,登录';
+
+  @override
   String get searchKwAppIcon => '启动图标,App 图标,图标';
 
   @override

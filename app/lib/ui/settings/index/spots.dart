@@ -852,6 +852,7 @@ abstract final class Spots {
     'hide-sign-in-prompt',
     page: SettingsPageId.appearance,
     title: (l) => l.hubSettingsHideSignIn,
+    keywords: (l) => l.searchKwHideSignIn,
   );
   static final appIcon = SettingSpot(
     'app-icon',
