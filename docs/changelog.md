@@ -3,6 +3,20 @@
 每个版本先中文、后英文。发版时把对应版本的正文（不含版本标题）作为 Release 正文，见 `docs/release.md`。
 
 
+## 1.2.12 · 2026-11-21
+
+### 中文
+
+- **自己发的消息也能渲染 Markdown。** 在聊天里贴代码块、标题或 Markdown 链接时，消息气泡会自动识别并排版；不想看排版可以随时切回原文。复制、编辑、引用拿到的仍是原始文本，秘密信息依旧会被遮住。
+- **插件面板不再闪、重名行能分清。** 面板式插件加载时不再反复闪 shimmer；标题相同的插件会在副标题里显示包名，方便分辨。
+- **验证情况。** 改动通过 GitHub Actions 全量 CI（分析、测试、编译均绿），截图基线无变化；真机尚未完整验证。
+
+### English
+
+- **Markdown renders in your own messages.** Code blocks, headings and Markdown links pasted into chat are auto-detected and formatted in the bubble; you can switch back to raw text anytime. Copy, edit and quote still use the original text, and secrets stay masked.
+- **Plugin panel no longer flickers; duplicate rows are distinguishable.** Panel islands no longer replay the shimmer on load; plugins sharing a title now show their package name as a subtitle.
+- **Testing.** The changes pass GitHub Actions' full CI (analysis, tests and builds all green), with no golden-image changes; not yet fully verified on a real device.
+
 ## 1.2.11 · 2026-11-21
 
 ### 中文
