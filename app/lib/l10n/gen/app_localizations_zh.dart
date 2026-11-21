@@ -9087,6 +9087,12 @@ class L10nZh extends L10n {
   String get hubSettingsOrApiKey => '或填写 API Key';
 
   @override
+  String get hubSettingsHideSignIn => '隐藏登录提示';
+
+  @override
+  String get hubSettingsHideSignInHint => '未登录时让引擎占用整张卡片';
+
+  @override
   String get hubPluginShare => '分享插件';
 
   @override

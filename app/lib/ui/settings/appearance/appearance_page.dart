@@ -74,6 +74,7 @@ class AppearancePage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = context.l10n;
     final appearance = ref.watch(appearanceProvider);
+    final settings = ref.watch(settingsProvider);
     final wallpaper = ref.watch(wallpaperAccentProvider).value;
     // A picture as a launcher shortcut: Android and HarmonyOS, not iOS.
     final pictureShortcut = ref.watch(operatingSystemProvider) != 'ios';
@@ -95,6 +96,18 @@ class AppearancePage extends ConsumerWidget {
         SettingsSection(
           title: l10n.pluginsFeatureIcons,
           children: [SpotAnchor(spot: Spots.tileStyle, child: const TileStylePicker())],
+        ),
+        SettingsSection(
+          title: l10n.hubSettingsInterface,
+          children: [
+            SettingsSwitchTile(
+              icon: AppIcons.account,
+              title: l10n.hubSettingsHideSignIn,
+              subtitle: l10n.hubSettingsHideSignInHint,
+              value: settings.hideSignInPrompt,
+              onChanged: (value) => unawaited(ref.read(settingsProvider.notifier).setHideSignInPrompt(value)),
+            ),
+          ],
         ),
         SettingsSection(
           title: l10n.pluginsAppIcon,

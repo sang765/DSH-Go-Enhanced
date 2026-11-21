@@ -5430,6 +5430,8 @@
   "hubSettingsApiKeyHint": "填写 Key 后即可对话",
   "hubSettingsSignInAccount": "登录 DeepSeek 账号",
   "hubSettingsOrApiKey": "或填写 API Key",
+  "hubSettingsHideSignIn": "隐藏登录提示",
+  "hubSettingsHideSignInHint": "未登录时让引擎占用整张卡片",
   "hubPluginShare": "分享插件",
   "hubPluginDetails": "插件详情",
   "hubPluginFeatured": "dshfind 推荐",

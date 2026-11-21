@@ -9584,6 +9584,12 @@ class L10nEn extends L10n {
   String get hubSettingsOrApiKey => 'Or add an API key';
 
   @override
+  String get hubSettingsHideSignIn => 'Hide sign-in prompt';
+
+  @override
+  String get hubSettingsHideSignInHint => 'When signed out, let the engine use the whole card';
+
+  @override
   String get hubPluginShare => 'Share plugin';
 
   @override

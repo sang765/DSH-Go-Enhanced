@@ -13,6 +13,7 @@ import 'package:dsh_app/state/settings_state.dart';
 import 'package:dsh_app/state/tile_style_state.dart';
 import 'package:dsh_app/ui/settings/appearance/appearance_page.dart';
 import 'package:dsh_app/ui/settings/appearance/tile_style_picker.dart';
+import 'package:dsh_app/ui/settings/settings_widgets.dart';
 import 'package:dsh_app/ui/theme/theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -289,6 +290,23 @@ void main() {
     await tester.pumpAndSettle();
     expect(tester.takeException(), isNull);
     expect(find.byType(HueSlider), findsOneWidget);
+  });
+
+  testWidgets('hide sign-in prompt toggle is stored', (tester) async {
+    final container = ProviderContainer(overrides: _overrides(wallpaper: _wallpaperBlue));
+    addTearDown(container.dispose);
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: MaterialApp(theme: buildLightTheme(), home: const AppearancePage()),
+      ),
+    );
+    await tester.pumpAndSettle();
+    final tile = find.ancestor(of: find.text('隐藏登录提示'), matching: find.byType(SettingsSwitchTile));
+    expect(tile, findsOneWidget);
+    await tester.tap(find.descendant(of: tile, matching: find.byType(Switch)));
+    await tester.pumpAndSettle();
+    expect(container.read(settingsProvider).hideSignInPrompt, isTrue);
   });
 
   // ── Goldens ────────────────────────────────────────────────────────────

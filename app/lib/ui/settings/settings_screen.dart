@@ -465,6 +465,23 @@ class _SettingsOverviewState extends ConsumerState<SettingsOverview> {
         subtitle = l10n.hubSettingsOrApiKey;
     }
     final dsh = runtime.status.dshVersion;
+    // With the prompt hidden, the engine takes the whole card instead of the
+    // thin footer under a row that says "Sign in".
+    final engineOnly = settings.hideSignInPrompt &&
+        !settings.hasApiKey &&
+        !remoteOnly &&
+        (account.phase == AccountPhase.signedOut || account.phase == AccountPhase.unknown);
+    if (engineOnly) {
+      return SpotAnchor(
+        spot: SettingsIndex.entry(SettingsPageId.account),
+        child: OverviewCard(
+          leading: const OverviewGlyph(AppIcons.engine, tint: 5),
+          title: Text(l10n.hubSettingsEngine),
+          subtitle: Text([engine.label, if (dsh != null) 'DSH $dsh'].join(' · ')),
+          onTap: () => _push(const EngineScreen()),
+        ),
+      );
+    }
     // The card is 账号's way in (its title is whoever is signed in).
     return SpotAnchor(
       spot: SettingsIndex.entry(SettingsPageId.account),

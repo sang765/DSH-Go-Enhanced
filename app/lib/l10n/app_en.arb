@@ -2795,6 +2795,8 @@
   "hubSettingsApiKeyHint": "Add an API key to start chatting",
   "hubSettingsSignInAccount": "Sign in to DeepSeek",
   "hubSettingsOrApiKey": "Or add an API key",
+  "hubSettingsHideSignIn": "Hide sign-in prompt",
+  "hubSettingsHideSignInHint": "When signed out, let the engine use the whole card",
   "hubPluginShare": "Share plugin",
   "hubPluginDetails": "Plugin details",
   "hubPluginFeatured": "Featured on dshfind",

@@ -16862,6 +16862,18 @@ abstract class L10n {
   /// **'或填写 API Key'**
   String get hubSettingsOrApiKey;
 
+  /// No description provided for @hubSettingsHideSignIn.
+  ///
+  /// In zh, this message translates to:
+  /// **'隐藏登录提示'**
+  String get hubSettingsHideSignIn;
+
+  /// No description provided for @hubSettingsHideSignInHint.
+  ///
+  /// In zh, this message translates to:
+  /// **'未登录时让引擎占用整张卡片'**
+  String get hubSettingsHideSignInHint;
+
   /// No description provided for @hubPluginShare.
   ///
   /// In zh, this message translates to:
