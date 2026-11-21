@@ -13,13 +13,20 @@ import '../../features/feature_widgets.dart' show openSessionInChat;
 import '../islands/island_view.dart';
 
 class SeatIslandView extends ConsumerWidget {
-  const SeatIslandView({super.key, required this.spec, required this.items, required this.fallback});
+  const SeatIslandView({
+    super.key,
+    required this.spec,
+    required this.items,
+    required this.fallback,
+    this.showSkeleton = true,
+  });
 
   final IslandSpec spec;
 
   /// The seat's items this island shows (one for a page island).
   final List<SeatItem> items;
   final WidgetBuilder fallback;
+  final bool showSkeleton;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -27,6 +34,7 @@ class SeatIslandView extends ConsumerWidget {
     return IslandView(
       spec: spec,
       fallback: fallback,
+      showSkeleton: showSkeleton,
       labels: seatIslandLabels(items, bridge),
       // A page island runs down to the screen's bottom edge: its last line
       // stays above the gesture bar.

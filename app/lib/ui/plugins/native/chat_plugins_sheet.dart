@@ -302,6 +302,14 @@ class _WebPluginsState extends ConsumerState<_WebPlugins> {
       final o = item.occupant;
       final bundle = seatBundleOf(bundles, o.package);
       final title = seatEntryTitle(o, bundle: bundle);
+      // Two plugins can name their tab the same ("Context"). Say whose it is
+      // instead of showing two identical rows.
+      final sameName = pages
+          .where(
+            (other) =>
+                seatEntryTitle(other.occupant, bundle: seatBundleOf(bundles, other.occupant.package)) == title,
+          )
+          .length;
       // Nothing native or on an island: the tab is the way to DSH Web.
       final onWeb = item.mode == SeatMode.webLink;
       return Builder(
@@ -309,6 +317,7 @@ class _WebPluginsState extends ConsumerState<_WebPlugins> {
         builder: (context) => ListPageRow(
           icon: AppIcons.plugin,
           title: title,
+          subtitle: sameName > 1 ? bundle?.title() ?? o.package : null,
           meta: onWeb ? l10n.commonWeb : null,
           chevron: true,
           onTap: () {

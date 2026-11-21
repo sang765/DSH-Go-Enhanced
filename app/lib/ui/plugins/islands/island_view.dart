@@ -61,10 +61,15 @@ class IslandView extends ConsumerStatefulWidget {
     this.insets = EdgeInsets.zero,
     this.onOpenSession,
     this.onReady,
+    this.showSkeleton = true,
   });
 
   final IslandSpec spec;
   final WidgetBuilder fallback;
+
+  /// Panel islands in a sheet can fall back to plain rows; skipping the shimmer
+  /// keeps that transition from flashing. Page islands keep theirs.
+  final bool showSkeleton;
 
   /// The occupant's labels (zh / en): how island.js finds a third-party
   /// settings section, panel or tab, which have no ids on screen.
@@ -336,7 +341,11 @@ class _IslandViewState extends ConsumerState<IslandView> {
 
   Widget _loading() => switch (widget.spec.form) {
     IslandForm.page => const IslandSkeleton(),
-    IslandForm.panel => const SizedBox(height: IslandPanelMetrics.minHeight * 2, child: IslandSkeleton(rows: 2)),
+    // A panel island can fail its recipe and hand the rows below it. A shimmer
+    // that only exists for a moment reads as a flicker on a low-end phone.
+    IslandForm.panel => widget.showSkeleton
+        ? const SizedBox(height: IslandPanelMetrics.minHeight * 2, child: IslandSkeleton(rows: 2))
+        : const SizedBox.shrink(),
     IslandForm.overlay || IslandForm.probe => const SizedBox.shrink(),
   };
 
@@ -351,7 +360,7 @@ class _IslandViewState extends ConsumerState<IslandView> {
       ),
       IgnorePointer(
         child: AnimatedOpacity(
-          opacity: ready ? 0 : 1,
+          opacity: ready || !widget.showSkeleton ? 0 : 1,
           duration: AppMotion.of(context, AppMotion.standard),
           curve: AppMotion.std,
           child: Align(

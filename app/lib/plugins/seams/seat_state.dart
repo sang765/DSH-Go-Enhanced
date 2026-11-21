@@ -130,7 +130,14 @@ class SeatRenderers {
 /// opens DSH Web at the occupant.
 final seatRenderersProvider = Provider<SeatRenderers>(
   (ref) => SeatRenderers(
-    island: (context, spec, items, fallback) => SeatIslandView(spec: spec, items: items, fallback: fallback),
+    // A panel island sits above a list of ways in; a shimmer that vanishes
+    // into those rows is the flicker people see when a recipe isn't ready.
+    island: (context, spec, items, fallback) => SeatIslandView(
+      spec: spec,
+      items: items,
+      fallback: fallback,
+      showSkeleton: spec.form != IslandForm.panel,
+    ),
     webLink: (context, seat, item) => SeatWebLink(seat: seat, item: item),
   ),
 );
