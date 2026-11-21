@@ -3,7 +3,9 @@
 // See THIRD_PARTY_NOTICES.md.
 
 import 'package:flutter/material.dart';
+import 'package:gpt_markdown/gpt_markdown.dart' show InlinePattern;
 
+import '../../../l10n/l10n.dart';
 import '../../../state/composer_quote.dart' show splitQuote;
 import '../../common/expand_reveal.dart';
 import '../../theme/app_icons.dart';
@@ -11,10 +13,36 @@ import '../../theme/theme.dart';
 import '../media/generate_header.dart';
 import '../media/media_format.dart' show mediaParamsLine;
 import '../mention/mention_chip.dart';
+import '../mention/mention_syntax.dart' show MentionToken;
+import '../render/markdown_body.dart';
 import '../secret_mask.dart';
 import 'message_actions.dart';
 import 'message_selection.dart';
 import 'quote_chip.dart';
+
+/// A pasted block with fences, headings or links reads as Markdown instead of
+/// a wall of `**` and ```` ``` ````. Deliberately conservative: ordinary prose,
+/// prompts, commands and code fragments keep the plain bubble.
+final _mdFence = RegExp(r'^\s*(```|~~~)', multiLine: true);
+final _mdHeading = RegExp(r'^#{1,6}\s', multiLine: true);
+final _mdLink = RegExp(r'\[[^\]]+\]\(https?://[^)]+\)');
+bool looksLikeMarkdown(String text) =>
+    _mdFence.hasMatch(text) || _mdHeading.hasMatch(text) || _mdLink.hasMatch(text);
+
+/// Mentions stay chips inside a rendered message; credentials are masked
+/// before the Markdown parser sees them (with `•`, not `*`, so the mask
+/// cannot turn into emphasis).
+final _bubbleMentionPattern = InlinePattern(
+  pattern: RegExp(r'@[\p{L}\p{N}_.\-]+', unicode: true),
+  builder: (context, match, style) {
+    final token = MentionToken.fromRaw(match[0]!, 0);
+    if (token == null) return TextSpan(text: match[0], style: style);
+    return WidgetSpan(
+      alignment: PlaceholderAlignment.middle,
+      child: MentionChip(kind: token.kind, label: token.label, style: style),
+    );
+  },
+);
 
 /// 用户消息:**右对齐的软气泡**,比页面深一档,像"按进去"的。
 ///
@@ -27,10 +55,9 @@ import 'quote_chip.dart';
 /// 以引用块开头的消息(引用追问),引文画在气泡顶部([BubbleQuote]),
 /// 下面是正文;复制、选择文字、编辑拿到的仍是发出去的原文。
 ///
-/// 可识别的凭据(API Key、令牌、私钥、地址里的密码)只在屏幕上遮挡
-/// ([SecretText]);复制、选择文字、编辑拿到的都是原文。已发送的消息每段
-/// 带眼睛可以显示,乐观气泡只遮挡。
-class UserBubble extends StatelessWidget {
+/// 贴进来的 Markdown(代码围栏 / 标题 / 链接)按 [MarkdownBody] 画,旁边有
+/// 「查看原文」切回原样;遮挡凭据、chip @ 和原文操作都不受影响。
+class UserBubble extends StatefulWidget {
   const UserBubble({
     super.key,
     required this.text,
@@ -62,12 +89,19 @@ class UserBubble extends StatelessWidget {
   /// "引用" in the long-press menu (and in 选择文字); null leaves it out.
   final ValueChanged<String>? onQuote;
 
-  /// What the bubble shows: a generation request without its header.
-  String get _shown => GenerateHeader.parse(text)?.description ?? text;
+  @override
+  State<UserBubble> createState() => _UserBubbleState();
+}
+
+class _UserBubbleState extends State<UserBubble> {
+  /// The person can always flip back to the literal text of this message.
+  bool _raw = false;
+
+  String get _shown => GenerateHeader.parse(widget.text)?.description ?? widget.text;
 
   Future<void> _menu(BuildContext context) async {
-    final onEdit = this.onEdit;
-    final onQuote = this.onQuote;
+    final onEdit = widget.onEdit;
+    final onQuote = widget.onQuote;
     final action = await showMessageMenu(
       context,
       // 菜单顶部的预览也是显示,同样遮挡;预览会把 `**` 当粗体删掉,
@@ -99,17 +133,25 @@ class UserBubble extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final surfaces = DshSurfaces.of(context);
+    final theme = Theme.of(context);
     final style = AppType.chatBody(context, color: surfaces.onUserBubble);
     // A generation request (generation mode's parameter header on the first
     // line): the description is the bubble, the parameters a small line under
     // the bubble; the header itself is for the host's plugin.
-    final generate = GenerateHeader.parse(text);
-    final shown = generate?.description ?? text;
+    final generate = GenerateHeader.parse(widget.text);
+    final shown = generate?.description ?? widget.text;
     final (:quote, :body) = splitQuote(shown);
-    final interactive = pendingLabel == null;
+    final interactive = widget.pendingLabel == null;
+    final markdown = !_raw && looksLikeMarkdown(body);
     // Long-press selects in place. `@` references draw as chips; text with a
-    // credential stays a plain SecretText.
-    Widget content = ReferenceText(quote == null ? shown : body, style: style, interactive: interactive);
+    // credential stays a plain SecretText. In markdown mode the same two
+    // guarantees come from the masked text and the mention InlinePattern.
+    Widget content = markdown
+        ? MarkdownPatterns(
+            patterns: [_bubbleMentionPattern],
+            child: MarkdownBody(text: maskSecrets(body, mark: '•'), selectable: false),
+          )
+        : ReferenceText(quote == null ? shown : body, style: style, interactive: interactive);
     if (quote != null) {
       content = Column(
         mainAxisSize: MainAxisSize.min,
@@ -132,11 +174,12 @@ class UserBubble extends StatelessWidget {
         decoration: ShapeDecoration(color: surfaces.userBubble, shape: AppShape.bubble),
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          child: MessageSelection(text: _shown, onQuote: onQuote, onMore: () => _menu(context), child: content),
+          child: MessageSelection(text: _shown, onQuote: widget.onQuote, onMore: () => _menu(context), child: content),
         ),
       ),
     );
 
+    final canToggle = looksLikeMarkdown(body);
     return LayoutBuilder(
       builder: (context, constraints) {
         final maxWidth = constraints.maxWidth * 0.82;
@@ -147,19 +190,30 @@ class UserBubble extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
-              if (attachments case final a?)
+              if (widget.attachments case final a?)
                 ConstrainedBox(
                   constraints: BoxConstraints(maxWidth: maxWidth),
-                  child: pendingLabel == null ? a : Opacity(opacity: 0.72, child: a),
+                  child: widget.pendingLabel == null ? a : Opacity(opacity: 0.72, child: a),
                 ),
-              if (attachments != null && shown.trim().isNotEmpty) const SizedBox(height: 8),
+              if (widget.attachments != null && shown.trim().isNotEmpty) const SizedBox(height: 8),
               if (shown.trim().isNotEmpty)
                 ConstrainedBox(
                   constraints: BoxConstraints(maxWidth: maxWidth),
                   child: AnimatedOpacity(
-                    opacity: pendingLabel == null ? 1 : 0.72,
+                    opacity: widget.pendingLabel == null ? 1 : 0.72,
                     duration: AppMotion.of(context, AppMotion.quick),
                     child: bubble,
+                  ),
+                ),
+              if (canToggle)
+                Padding(
+                  padding: const EdgeInsets.only(top: 2, right: 4),
+                  child: GestureDetector(
+                    onTap: () => setState(() => _raw = !_raw),
+                    child: Text(
+                      _raw ? context.l10n.chatViewMarkdown : context.l10n.chatViewRaw,
+                      style: theme.textTheme.labelSmall?.copyWith(color: DshColors.of(context).textTertiary),
+                    ),
                   ),
                 ),
               if (generate case (:final header, description: _))
@@ -167,13 +221,13 @@ class UserBubble extends StatelessWidget {
                   constraints: BoxConstraints(maxWidth: maxWidth),
                   child: Padding(
                     padding: EdgeInsets.only(
-                      top: shown.trim().isEmpty && attachments == null ? 0 : GenerateParamsLine.gap,
+                      top: shown.trim().isEmpty && widget.attachments == null ? 0 : GenerateParamsLine.gap,
                       right: GenerateParamsLine.inset,
                     ),
                     child: GenerateParamsLine(header: header),
                   ),
                 ),
-              _PendingSlot(label: pendingLabel, icon: pendingIcon, actions: pendingActions),
+              _PendingSlot(label: widget.pendingLabel, icon: widget.pendingIcon, actions: widget.pendingActions),
             ],
           ),
         );

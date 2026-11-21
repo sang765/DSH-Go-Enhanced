@@ -1375,6 +1375,8 @@
   "chatRegenerate": "Regenerate",
   "chatBranchFromHere": "Branch here",
   "chatEditAndResend": "Edit and resend",
+  "chatViewRaw": "View original text",
+  "chatViewMarkdown": "Show as Markdown",
   "chatRegenerateHint": "Regenerate in a new chat. The original stays as is.",
   "chatBranchHint": "Continue in a new chat. The original stays as is.",
   "chatEditResendHint": "Rewrite in a new chat. Reattach images and files; the original stays as is.",

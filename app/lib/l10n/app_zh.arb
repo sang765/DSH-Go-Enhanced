@@ -2809,6 +2809,8 @@
   "chatRegenerate": "重新回答",
   "chatBranchFromHere": "从这里分叉",
   "chatEditAndResend": "编辑后重发",
+  "chatViewRaw": "查看原文",
+  "chatViewMarkdown": "以 Markdown 显示",
   "chatRegenerateHint": "在新对话中重新生成，原对话不变",
   "chatBranchHint": "在新对话中继续，原对话不变",
   "chatEditResendHint": "在新对话中改写，图片和文件需重新添加；原对话不变",

@@ -4794,6 +4794,12 @@ class L10nEn extends L10n {
   String get chatEditAndResend => 'Edit and resend';
 
   @override
+  String get chatViewRaw => 'View original text';
+
+  @override
+  String get chatViewMarkdown => 'Show as Markdown';
+
+  @override
   String get chatRegenerateHint => 'Regenerate in a new chat. The original stays as is.';
 
   @override

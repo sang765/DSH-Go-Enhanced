@@ -8342,6 +8342,18 @@ abstract class L10n {
   /// **'编辑后重发'**
   String get chatEditAndResend;
 
+  /// No description provided for @chatViewRaw.
+  ///
+  /// In zh, this message translates to:
+  /// **'查看原文'**
+  String get chatViewRaw;
+
+  /// No description provided for @chatViewMarkdown.
+  ///
+  /// In zh, this message translates to:
+  /// **'以 Markdown 显示'**
+  String get chatViewMarkdown;
+
   /// No description provided for @chatRegenerateHint.
   ///
   /// In zh, this message translates to:

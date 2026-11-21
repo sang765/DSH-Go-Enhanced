@@ -4514,6 +4514,12 @@ class L10nZh extends L10n {
   String get chatEditAndResend => '编辑后重发';
 
   @override
+  String get chatViewRaw => '查看原文';
+
+  @override
+  String get chatViewMarkdown => '以 Markdown 显示';
+
+  @override
   String get chatRegenerateHint => '在新对话中重新生成，原对话不变';
 
   @override
