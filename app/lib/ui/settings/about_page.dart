@@ -217,43 +217,35 @@ class _AboutHero extends StatelessWidget {
         borderRadius: AppShape.radiusLg,
         child: ClipRRect(
           borderRadius: AppShape.radiusLg,
-          child: Stack(
-            children: [
-              Positioned.fill(
-                child: CustomPaint(
-                  painter: _AboutHeroWash(
-                    scheme: theme.colorScheme,
-                    dark: theme.brightness == Brightness.dark,
+          // CustomPaint sizes itself to its child, so the wash fills the card
+          // without a Stack needing bounded height inside the sliver list.
+          child: CustomPaint(
+            painter: _AboutHeroWash(
+              scheme: theme.colorScheme,
+              dark: theme.brightness == Brightness.dark,
+            ),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 20),
+              child: Column(
+                children: [
+                  const BrandMark(size: 64, tile: true),
+                  const SizedBox(height: 12),
+                  Text(
+                    AppInfo.name,
+                    style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w700),
                   ),
-                ),
-              ),
-              // Fill the Stack before centring: a plain Padding child is sized
-              // to its content and would sit at the Stack's top-left corner.
-              Positioned.fill(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 20),
-                  child: Column(
+                  const SizedBox(height: 12),
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
                     children: [
-                      const BrandMark(size: 64, tile: true),
-                      const SizedBox(height: 12),
-                      Text(
-                        AppInfo.name,
-                        style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w700),
-                      ),
-                      const SizedBox(height: 12),
-                      Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          _HeroChip(icon: AppIcons.info, label: short),
-                          const SizedBox(width: 8),
-                          _HeroChip(icon: AppIcons.code, label: '@${AppInfo.forkAuthor}'),
-                        ],
-                      ),
+                      _HeroChip(icon: AppIcons.info, label: short),
+                      const SizedBox(width: 8),
+                      _HeroChip(icon: AppIcons.code, label: '@${AppInfo.forkAuthor}'),
                     ],
                   ),
-                ),
+                ],
               ),
-            ],
+            ),
           ),
         ),
       ),
