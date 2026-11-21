@@ -102,6 +102,7 @@ class AppearancePage extends ConsumerWidget {
           children: [
             SettingsSwitchTile(
               icon: AppIcons.account,
+              spot: Spots.hideSignInPrompt,
               title: l10n.hubSettingsHideSignIn,
               subtitle: l10n.hubSettingsHideSignInHint,
               value: settings.hideSignInPrompt,

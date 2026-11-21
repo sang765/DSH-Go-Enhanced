@@ -848,6 +848,11 @@ abstract final class Spots {
     title: (l) => l.pluginsFeatureIcons,
     keywords: (l) => l.searchKwTileStyle,
   );
+  static final hideSignInPrompt = SettingSpot(
+    'hide-sign-in-prompt',
+    page: SettingsPageId.appearance,
+    title: (l) => l.hubSettingsHideSignIn,
+  );
   static final appIcon = SettingSpot(
     'app-icon',
     page: SettingsPageId.appearance,
@@ -1263,6 +1268,7 @@ final _rows = <SettingSpot>[
   Spots.darkMode,
   Spots.accent,
   Spots.tileStyle,
+  Spots.hideSignInPrompt,
   Spots.appIcon,
   Spots.iconShortcut,
   Spots.launchScreen,
