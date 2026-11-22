@@ -90,6 +90,18 @@
         }
       }
     },
+    "empty-tool-name-replay.diff": {
+      "0.2.2-rc.1": {
+        "node_modules/@deepseek-ai/dsh-llm-deepseek/lib/index.js": {
+          "after": "be4a61018e474c03a1d5c7cca7d95369a0c9cbf5cc31ec5a198a98a1e97b59db",
+          "before": "2ef54c3220c6ff9ac3f7593efa7c3b3813f2d79bca43fefbc8dde7f9ddcfa457"
+        },
+        "node_modules/@deepseek-ai/dsh-llm-pi-ai/lib/index.js": {
+          "after": "817c2ca0d1496d19703c5074013757bcacc7b63cd685840642f24e1edf4a9395",
+          "before": "75cdc920286a5ef241add9473a7f24f9f138e14a113bbc2e985856bf49b25740"
+        }
+      }
+    },
     "fork-default-effort.diff": {
       "0.2.2-rc.1": {
         "node_modules/@deepseek-ai/dsh-api-session-controller/lib/index.js": {
@@ -172,6 +184,14 @@
         }
       }
     },
+    "messages-usage-evidence.diff": {
+      "0.2.2-rc.1": {
+        "node_modules/@deepseek-ai/dsh-llm-deepseek/lib/index.js": {
+          "after": "2ef54c3220c6ff9ac3f7593efa7c3b3813f2d79bca43fefbc8dde7f9ddcfa457",
+          "before": "0ace65d8cf477ebaeaeaaf3af7080ea4695d46f5cc8a34c7f92d5107715e08a9"
+        }
+      }
+    },
     "ohos-api-gateway-idle.diff": {
       "0.2.2-rc.1": {
         "node_modules/@deepseek-ai/dsh-api-gateway/lib/index.js": {
@@ -183,8 +203,8 @@
     "ohos-attachment-diagnostic.diff": {
       "0.2.2-rc.1": {
         "node_modules/@deepseek-ai/dsh-llm-pi-ai/lib/index.js": {
-          "after": "e762688357b87548e7616300de047b2646fd20fb5369be3353318972c00b6565",
-          "before": "a1132374286f00639bfee5e7cd65577871cd6d08dfd33d0401601603de9628d0"
+          "after": "3db3e61348dcd92892d8e86f5ce3a58aa8522d214d4e11d2c6736c1c9537287e",
+          "before": "817c2ca0d1496d19703c5074013757bcacc7b63cd685840642f24e1edf4a9395"
         }
       }
     },
@@ -323,16 +343,16 @@
     "ohos-piai-empty-models.diff": {
       "0.2.2-rc.1": {
         "node_modules/@deepseek-ai/dsh-llm-pi-ai/lib/index.js": {
-          "after": "acdbc0ac7e7f72768e02c89b451aea6e2b8c053429096fcf761a9f2336609229",
-          "before": "e762688357b87548e7616300de047b2646fd20fb5369be3353318972c00b6565"
+          "after": "3442295328e5154e8a021b2c633501d1d4e971cdafedbc2b0cdf88aa6e71ec70",
+          "before": "3db3e61348dcd92892d8e86f5ce3a58aa8522d214d4e11d2c6736c1c9537287e"
         }
       }
     },
     "ohos-piai-text-preabort.diff": {
       "0.2.2-rc.1": {
         "node_modules/@deepseek-ai/dsh-llm-pi-ai/lib/index.js": {
-          "after": "af7483f8c5f8b48f76e33e8df27af630093a78a446a086cc68085baadf5c4011",
-          "before": "acdbc0ac7e7f72768e02c89b451aea6e2b8c053429096fcf761a9f2336609229"
+          "after": "9ba6f7e9a95f0d4402604a0bd02935652000839256bacbf1d0f40169abb5b6aa",
+          "before": "3442295328e5154e8a021b2c633501d1d4e971cdafedbc2b0cdf88aa6e71ec70"
         }
       }
     },
@@ -387,8 +407,8 @@
     "ohos-provider-body-timeout.diff": {
       "0.2.2-rc.1": {
         "node_modules/@earendil-works/pi-ai/dist/api/openai-completions.js": {
-          "after": "d9eca90d93cba3585fa214373eff02628a1b53838659d88aee7e776468f9621c",
-          "before": "f10502eab12993c68c1f886e5de5d3aa707604f504660cb861fc1b45faffecaf"
+          "after": "56c8036e7fb7f580097b17f5257a5f6f1b149e25b68a6caae6d2712de624949a",
+          "before": "0f90990333c18d9470b3bb02148159cbcbe754e0e7238cba577da0c012d7ba8f"
         }
       }
     },
@@ -476,6 +496,14 @@
         }
       }
     },
+    "piai-bedrock-usage-evidence.diff": {
+      "0.2.2-rc.1": {
+        "node_modules/@deepseek-ai/dsh-llm-pi-ai/lib/index.js": {
+          "after": "75cdc920286a5ef241add9473a7f24f9f138e14a113bbc2e985856bf49b25740",
+          "before": "99a3183d5051ebc6d2c83d02345ff996113879172e72a87d92b8da9f464161c6"
+        }
+      }
+    },
     "piai-discovery-response-cancel.diff": {
       "0.2.2-rc.1": {
         "node_modules/@deepseek-ai/dsh-llm-pi-ai/lib/index.js": {
@@ -492,11 +520,35 @@
         }
       }
     },
+    "piai-mistral-openai-store.diff": {
+      "0.2.2-rc.1": {
+        "node_modules/@earendil-works/pi-ai/dist/api/openai-completions.js": {
+          "after": "0f90990333c18d9470b3bb02148159cbcbe754e0e7238cba577da0c012d7ba8f",
+          "before": "f10502eab12993c68c1f886e5de5d3aa707604f504660cb861fc1b45faffecaf"
+        }
+      }
+    },
     "piai-overflow-output-limit.diff": {
       "0.2.2-rc.1": {
         "node_modules/@earendil-works/pi-ai/dist/utils/overflow.js": {
           "after": "9607498e3da8815d4f52ae1193d4f1d70cb2708930233903f2b4db3c7088e0e4",
           "before": "bc0b743fdbf33fe3dd2bb69b1838166ac0b6957f74051213fcaf336c11d041a3"
+        }
+      }
+    },
+    "piai-tool-call-id.diff": {
+      "0.2.2-rc.1": {
+        "node_modules/@deepseek-ai/dsh-llm-pi-ai/lib/index.js": {
+          "after": "99a3183d5051ebc6d2c83d02345ff996113879172e72a87d92b8da9f464161c6",
+          "before": "85d595e540732b55dd448f12bc75dd96d6106ef54347b9547c6949b2de2991c9"
+        }
+      }
+    },
+    "piai-usage-evidence.diff": {
+      "0.2.2-rc.1": {
+        "node_modules/@deepseek-ai/dsh-llm-pi-ai/lib/index.js": {
+          "after": "85d595e540732b55dd448f12bc75dd96d6106ef54347b9547c6949b2de2991c9",
+          "before": "a1132374286f00639bfee5e7cd65577871cd6d08dfd33d0401601603de9628d0"
         }
       }
     },
@@ -2380,163 +2432,7 @@
       "install-log-redaction.diff",
       "piai-anthropic-opus55-thinking.diff",
       "piai-google-openai-store.diff",
-      "plugin-manager-active-run-guard.diff",
-      "plugin-manager-cancel-tree-confirmation.diff",
-      "preset-legacy-delegation.diff",
-      "route-guard.diff",
-      "client-hmr-closed-response.diff",
-      "schemastery-json-context.diff",
-      "session-title-word-prefix.diff",
-      "str-editor-view-prefix.diff",
-      "web-composer-mobile-newline.diff",
-      "z-plugin-install-log-utf8.diff",
-      "zz-direct-runtime.diff",
-      "zzz-config-editor-path.diff",
-      "zzz-fs-replace-all-count.diff",
-      "zzz-title-cache-refresh.diff",
-      "zzzz-plugin-config-readability.diff",
-      "zzzzz-plugin-config-bundles.diff",
-      "zzzzzz-session-deletion.diff",
-      "zzzzzzz-atomic-claim-write-failure.diff",
-      "zzzzzzz-atomic-lock-write-failure.diff",
-      "zzzzzzz-bundle-membership.diff",
-      "zzzzzzz-domain-owner-dispose.diff",
-      "zzzzzzz-file-query-normalization.diff",
-      "zzzzzzz-file-reference-owner-dispose.diff",
-      "zzzzzzz-grep-retention-preview.diff",
-      "zzzzzzz-input-recovery.diff",
-      "zzzzzzz-job-follow-removal.diff",
-      "zzzzzzz-job-ring-trim.diff",
-      "zzzzzzz-jsonl-root-check-retry.diff",
-      "zzzzzzz-mcp-resource-lookup.diff",
-      "zzzzzzz-piai-developer-tools.diff",
-      "zzzzzzz-plugin-list-index.diff",
-      "zzzzzzz-preset-owner-dispose.diff",
-      "zzzzzzz-prompt-tool-order.diff",
-      "zzzzzzz-query-open-retry.diff",
-      "zzzzzzz-reference-drop-size.diff",
-      "zzzzzzz-reference-encoding.diff",
-      "zzzzzzz-retainer-decode-copy.diff",
-      "zzzzzzz-settings-local-redaction.diff",
-      "zzzzzzz-skill-watcher-recheck.diff",
-      "zzzzzzz-spill-write-cleanup.diff",
-      "zzzzzzz-terminal-byte-length.diff",
-      "zzzzzzz-time-zone-dedup.diff",
-      "zzzzzzz-web-fetch-redirect-cleanup.diff",
-      "zzzzzzz-workspace-observation-queue.diff",
-      "zzzzzzzz-model-defaults.diff",
-      "zzzzzzzz-schedule-authorization.diff",
-      "zzzzzzzzz-credentials-disposal.diff",
-      "zzzzzzzzz-developer-header-lookup.diff",
-      "zzzzzzzzz-job-result-bytes.diff",
-      "zzzzzzzzz-materialize-temp.diff",
-      "zzzzzzzzz-plugin-detail-body-cancel.diff",
-      "zzzzzzzzz-plugin-manager-metadata-inventory.diff",
-      "zzzzzzzzz-prompt-admission.diff",
-      "zzzzzzzzz-schedule-run-cancel.diff",
-      "zzzzzzzzz-session-event-admission.diff",
-      "zzzzzzzzz-session-id-membership.diff",
-      "zzzzzzzzz-session-live-fingerprint.diff",
-      "zzzzzzzzz-stats-attempt-token.diff",
-      "zzzzzzzzz-subprocess-idle-read.diff",
-      "zzzzzzzzz-subprocess-utf8-cursor.diff",
-      "zzzzzzzzz-subprocess-zsingle-read.diff",
-      "zzzzzzzzz-subprocess-zzspill-write-all.diff",
-      "zzzzzzzzz-subprocess-zzzero-tail.diff",
-      "zzzzzzzzz-terminal-tail.diff",
-      "zzzzzzzzz-tool-history-lookup.diff",
-      "zzzzzzzzz-workspace-domain-close.diff",
-      "zzzzzzzzzz-agent-team-input-recovery.diff",
-      "zzzzzzzzzz-plugin-manager-log-write-all.diff",
-      "zzzzzzzzzz-plugin-update-selection.diff",
-      "zzzzzzzzzz-session-export-descendant-refs.diff",
-      "zzzzzzzzzz-terminal-readiness-clock.diff",
-      "zzzzzzzzzz-workspace-watch-error.diff",
-      "zzzzzzzzzzz-plugin-operations-log-utf8.diff",
-      "zzzzzzzzzzz-plugin-update-precondition.diff",
-      "zzzzzzzzzzzz-plan-pending-restore.diff",
-      "zzzzzzzzzzzz-plugin-update-hmr-selection.diff",
-      "zzzzzzzzzzzzz-plan-failed-command-pending.diff",
-      "zzzzzzzzzzzzz-plugin-update-hmr-precondition.diff",
-      "zzzzzzzzzzzzzz-plugin-manager-lock-lifetime.diff",
-      "zzzzzzzzzzzzzzz-read-line-surrogate.diff",
-      "zzzzzzzzzzzzzzz-workflow-result-unicode.diff",
-      "zzzzzzzzzzzzzzzz-read-line-cr-truncation.diff",
-      "zzzzzzzzzzzzzzzzz-web-fetch-unicode.diff",
-      "zzzzzzzzzzzzzzzzzz-skill-catalog-unicode.diff",
-      "zzzzzzzzzzzzzzzzzzz-fs-text-bom.diff",
-      "zzzzzzzzzzzzzzzzzzzz-session-list-isolation.diff",
-      "zzzzzzzzzzzzzzzzzzzzz-turn-outline-unicode.diff",
-      "zzzzzzzzzzzzzzzzzzzzzz-context-summary-unicode.diff",
-      "zzzzzzzzzzzzzzzzzzzzzzz-image-display-name-unicode.diff",
-      "zzzzzzzzzzzzzzzzzzzzzzzz-ralph-result-unicode.diff",
-      "zzzzzzzzzzzzzzzzzzzzzzzzz-repeat-json-own-key.diff",
-      "zzzzzzzzzzzzzzzzzzzzzzzzzz-repeat-preview-unicode.diff",
-      "zzzzzzzzzzzzzzzzzzzzzzzzzzz-json-equality-own-keys.diff",
-      "zzzzzzzzzzzzzzzzzzzzzzzzzzz-workspace-recovery-index.diff",
-      "zzzzzzzzzzzzzzzzzzzzzzzzzzzz-tool-result-codepoint-count.diff",
-      "zzzzzzzzzzzzzzzzzzzzzzzzzzzzz-attachment-staging-error.diff",
-      "zzzzzzzzzzzzzzzzzzzzzzzzzzzzzz-reference-retention-size.diff",
-      "zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz-search-snippet-window.diff",
-      "zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz-workspace-capture-recovery.diff",
-      "zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz-fs-parent-kind.diff",
-      "zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz-fs-line-style.diff",
-      "fs-create-link-denial.diff",
-      "fs-publication-short-names.diff",
-      "zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz-fs-patch-equal-width.diff",
-      "zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz-instruction-encoding-reuse.diff",
-      "zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz-str-editor-bom.diff",
-      "zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz-sqlite-document-count.diff",
-      "zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz-session-lifecycle-enumeration.diff",
-      "jsonl-materialize-rename.diff",
-      "jsonl-migration-link-fallback.diff",
-      "attachment-link-fallback.diff",
-      "zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz-session-cold-hint-stat.diff",
-      "zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz-session-preset-resume-errors.diff",
-      "zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz-loader-entry-lifecycle.diff",
-      "zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz-loader-group-own-key.diff",
-      "zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz-phone-caller-bundle.diff",
-      "zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz-storage-json-postpublish.diff",
-      "zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz-credentials-record-own-key.diff",
-      "zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz-piai-credential-wait-cancel.diff",
-      "piai-discovery-response-cancel.diff",
-      "attachment-direct-boundary.diff",
-      "zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz-companion-recall-gates.diff",
-      "zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz-phone-caller.diff",
-      "zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz-companion-signals.diff",
-      "zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz-phone-run-end.diff",
-      "zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz-phone-run-end-schema.diff",
-      "zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz-phone-run-end-retry.diff",
-      "zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz-phone-run-end-live-retry.diff",
-      "terminal-job-cancel.diff",
-      "provider-discovery-headers.diff",
-      "session-format-error.diff",
-      "session-queue-steer-deletion.diff",
-      "webserver-resource-abort.diff",
-      "rrule-negative-position-range.diff",
-      "rrule-weekly-first-period.diff",
-      "rrule-mixed-byday.diff",
-      "input-trigger-source-recovery.diff",
-      "web-preset-save-freshness.diff",
-      "web-search-key-write-result.diff",
-      "deepseek-attachment-error.diff",
-      "fork-default-effort.diff",
-      "config-editor-lock-order.diff",
-      "piai-overflow-output-limit.diff",
-      "schedule-authorization-availability.diff",
-      "deepseek-refusal.diff",
-      "deepseek-unnamed-stream-error.diff",
-      "discovery-capabilities.diff",
-      "web-empty-reply-notice.diff",
-      "profile-root-installation-precedence.diff"
-    ],
-    "ohos": [
-      "cordis-effect-dispose-completion.diff",
-      "credentials-decimal-refs.diff",
-      "fs-create-exclusive.diff",
-      "install-log-redaction.diff",
-      "piai-anthropic-opus55-thinking.diff",
-      "piai-google-openai-store.diff",
+      "piai-mistral-openai-store.diff",
       "plugin-manager-active-run-guard.diff",
       "plugin-manager-cancel-tree-confirmation.diff",
       "preset-legacy-delegation.diff",
@@ -2686,6 +2582,174 @@
       "discovery-capabilities.diff",
       "web-empty-reply-notice.diff",
       "profile-root-installation-precedence.diff",
+      "messages-usage-evidence.diff",
+      "piai-usage-evidence.diff",
+      "piai-tool-call-id.diff",
+      "piai-bedrock-usage-evidence.diff",
+      "empty-tool-name-replay.diff"
+    ],
+    "ohos": [
+      "cordis-effect-dispose-completion.diff",
+      "credentials-decimal-refs.diff",
+      "fs-create-exclusive.diff",
+      "install-log-redaction.diff",
+      "piai-anthropic-opus55-thinking.diff",
+      "piai-google-openai-store.diff",
+      "piai-mistral-openai-store.diff",
+      "plugin-manager-active-run-guard.diff",
+      "plugin-manager-cancel-tree-confirmation.diff",
+      "preset-legacy-delegation.diff",
+      "route-guard.diff",
+      "client-hmr-closed-response.diff",
+      "schemastery-json-context.diff",
+      "session-title-word-prefix.diff",
+      "str-editor-view-prefix.diff",
+      "web-composer-mobile-newline.diff",
+      "z-plugin-install-log-utf8.diff",
+      "zz-direct-runtime.diff",
+      "zzz-config-editor-path.diff",
+      "zzz-fs-replace-all-count.diff",
+      "zzz-title-cache-refresh.diff",
+      "zzzz-plugin-config-readability.diff",
+      "zzzzz-plugin-config-bundles.diff",
+      "zzzzzz-session-deletion.diff",
+      "zzzzzzz-atomic-claim-write-failure.diff",
+      "zzzzzzz-atomic-lock-write-failure.diff",
+      "zzzzzzz-bundle-membership.diff",
+      "zzzzzzz-domain-owner-dispose.diff",
+      "zzzzzzz-file-query-normalization.diff",
+      "zzzzzzz-file-reference-owner-dispose.diff",
+      "zzzzzzz-grep-retention-preview.diff",
+      "zzzzzzz-input-recovery.diff",
+      "zzzzzzz-job-follow-removal.diff",
+      "zzzzzzz-job-ring-trim.diff",
+      "zzzzzzz-jsonl-root-check-retry.diff",
+      "zzzzzzz-mcp-resource-lookup.diff",
+      "zzzzzzz-piai-developer-tools.diff",
+      "zzzzzzz-plugin-list-index.diff",
+      "zzzzzzz-preset-owner-dispose.diff",
+      "zzzzzzz-prompt-tool-order.diff",
+      "zzzzzzz-query-open-retry.diff",
+      "zzzzzzz-reference-drop-size.diff",
+      "zzzzzzz-reference-encoding.diff",
+      "zzzzzzz-retainer-decode-copy.diff",
+      "zzzzzzz-settings-local-redaction.diff",
+      "zzzzzzz-skill-watcher-recheck.diff",
+      "zzzzzzz-spill-write-cleanup.diff",
+      "zzzzzzz-terminal-byte-length.diff",
+      "zzzzzzz-time-zone-dedup.diff",
+      "zzzzzzz-web-fetch-redirect-cleanup.diff",
+      "zzzzzzz-workspace-observation-queue.diff",
+      "zzzzzzzz-model-defaults.diff",
+      "zzzzzzzz-schedule-authorization.diff",
+      "zzzzzzzzz-credentials-disposal.diff",
+      "zzzzzzzzz-developer-header-lookup.diff",
+      "zzzzzzzzz-job-result-bytes.diff",
+      "zzzzzzzzz-materialize-temp.diff",
+      "zzzzzzzzz-plugin-detail-body-cancel.diff",
+      "zzzzzzzzz-plugin-manager-metadata-inventory.diff",
+      "zzzzzzzzz-prompt-admission.diff",
+      "zzzzzzzzz-schedule-run-cancel.diff",
+      "zzzzzzzzz-session-event-admission.diff",
+      "zzzzzzzzz-session-id-membership.diff",
+      "zzzzzzzzz-session-live-fingerprint.diff",
+      "zzzzzzzzz-stats-attempt-token.diff",
+      "zzzzzzzzz-subprocess-idle-read.diff",
+      "zzzzzzzzz-subprocess-utf8-cursor.diff",
+      "zzzzzzzzz-subprocess-zsingle-read.diff",
+      "zzzzzzzzz-subprocess-zzspill-write-all.diff",
+      "zzzzzzzzz-subprocess-zzzero-tail.diff",
+      "zzzzzzzzz-terminal-tail.diff",
+      "zzzzzzzzz-tool-history-lookup.diff",
+      "zzzzzzzzz-workspace-domain-close.diff",
+      "zzzzzzzzzz-agent-team-input-recovery.diff",
+      "zzzzzzzzzz-plugin-manager-log-write-all.diff",
+      "zzzzzzzzzz-plugin-update-selection.diff",
+      "zzzzzzzzzz-session-export-descendant-refs.diff",
+      "zzzzzzzzzz-terminal-readiness-clock.diff",
+      "zzzzzzzzzz-workspace-watch-error.diff",
+      "zzzzzzzzzzz-plugin-operations-log-utf8.diff",
+      "zzzzzzzzzzz-plugin-update-precondition.diff",
+      "zzzzzzzzzzzz-plan-pending-restore.diff",
+      "zzzzzzzzzzzz-plugin-update-hmr-selection.diff",
+      "zzzzzzzzzzzzz-plan-failed-command-pending.diff",
+      "zzzzzzzzzzzzz-plugin-update-hmr-precondition.diff",
+      "zzzzzzzzzzzzzz-plugin-manager-lock-lifetime.diff",
+      "zzzzzzzzzzzzzzz-read-line-surrogate.diff",
+      "zzzzzzzzzzzzzzz-workflow-result-unicode.diff",
+      "zzzzzzzzzzzzzzzz-read-line-cr-truncation.diff",
+      "zzzzzzzzzzzzzzzzz-web-fetch-unicode.diff",
+      "zzzzzzzzzzzzzzzzzz-skill-catalog-unicode.diff",
+      "zzzzzzzzzzzzzzzzzzz-fs-text-bom.diff",
+      "zzzzzzzzzzzzzzzzzzzz-session-list-isolation.diff",
+      "zzzzzzzzzzzzzzzzzzzzz-turn-outline-unicode.diff",
+      "zzzzzzzzzzzzzzzzzzzzzz-context-summary-unicode.diff",
+      "zzzzzzzzzzzzzzzzzzzzzzz-image-display-name-unicode.diff",
+      "zzzzzzzzzzzzzzzzzzzzzzzz-ralph-result-unicode.diff",
+      "zzzzzzzzzzzzzzzzzzzzzzzzz-repeat-json-own-key.diff",
+      "zzzzzzzzzzzzzzzzzzzzzzzzzz-repeat-preview-unicode.diff",
+      "zzzzzzzzzzzzzzzzzzzzzzzzzzz-json-equality-own-keys.diff",
+      "zzzzzzzzzzzzzzzzzzzzzzzzzzz-workspace-recovery-index.diff",
+      "zzzzzzzzzzzzzzzzzzzzzzzzzzzz-tool-result-codepoint-count.diff",
+      "zzzzzzzzzzzzzzzzzzzzzzzzzzzzz-attachment-staging-error.diff",
+      "zzzzzzzzzzzzzzzzzzzzzzzzzzzzzz-reference-retention-size.diff",
+      "zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz-search-snippet-window.diff",
+      "zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz-workspace-capture-recovery.diff",
+      "zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz-fs-parent-kind.diff",
+      "zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz-fs-line-style.diff",
+      "fs-create-link-denial.diff",
+      "fs-publication-short-names.diff",
+      "zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz-fs-patch-equal-width.diff",
+      "zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz-instruction-encoding-reuse.diff",
+      "zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz-str-editor-bom.diff",
+      "zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz-sqlite-document-count.diff",
+      "zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz-session-lifecycle-enumeration.diff",
+      "jsonl-materialize-rename.diff",
+      "jsonl-migration-link-fallback.diff",
+      "attachment-link-fallback.diff",
+      "zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz-session-cold-hint-stat.diff",
+      "zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz-session-preset-resume-errors.diff",
+      "zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz-loader-entry-lifecycle.diff",
+      "zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz-loader-group-own-key.diff",
+      "zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz-phone-caller-bundle.diff",
+      "zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz-storage-json-postpublish.diff",
+      "zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz-credentials-record-own-key.diff",
+      "zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz-piai-credential-wait-cancel.diff",
+      "piai-discovery-response-cancel.diff",
+      "attachment-direct-boundary.diff",
+      "zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz-companion-recall-gates.diff",
+      "zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz-phone-caller.diff",
+      "zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz-companion-signals.diff",
+      "zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz-phone-run-end.diff",
+      "zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz-phone-run-end-schema.diff",
+      "zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz-phone-run-end-retry.diff",
+      "zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz-phone-run-end-live-retry.diff",
+      "terminal-job-cancel.diff",
+      "provider-discovery-headers.diff",
+      "session-format-error.diff",
+      "session-queue-steer-deletion.diff",
+      "webserver-resource-abort.diff",
+      "rrule-negative-position-range.diff",
+      "rrule-weekly-first-period.diff",
+      "rrule-mixed-byday.diff",
+      "input-trigger-source-recovery.diff",
+      "web-preset-save-freshness.diff",
+      "web-search-key-write-result.diff",
+      "deepseek-attachment-error.diff",
+      "fork-default-effort.diff",
+      "config-editor-lock-order.diff",
+      "piai-overflow-output-limit.diff",
+      "schedule-authorization-availability.diff",
+      "deepseek-refusal.diff",
+      "deepseek-unnamed-stream-error.diff",
+      "discovery-capabilities.diff",
+      "web-empty-reply-notice.diff",
+      "profile-root-installation-precedence.diff",
+      "messages-usage-evidence.diff",
+      "piai-usage-evidence.diff",
+      "piai-tool-call-id.diff",
+      "piai-bedrock-usage-evidence.diff",
+      "empty-tool-name-replay.diff",
       "ohos-attachment-publication.diff",
       "ohos-attachment-diagnostic.diff",
       "ohos-hap-native-libraries.diff",
