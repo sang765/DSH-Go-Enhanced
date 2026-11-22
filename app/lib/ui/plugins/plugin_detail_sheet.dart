@@ -782,8 +782,10 @@ class _TranslateButton extends ConsumerWidget {
       onPressed: pending
           ? null
           : () async {
+              final notifier = ref.read(pluginTranslationProvider.notifier);
               for (final text in texts) {
-                await ref.read(pluginTranslationProvider.notifier).translate(text, from: 'zh-CN', to: 'en');
+                await notifier.translate(text, from: 'zh-CN', to: 'en');
+                if (!context.mounted) return;
               }
               final state = ref.read(pluginTranslationProvider);
               if (texts.any(state.hasFailed) && context.mounted) {

@@ -13,7 +13,7 @@ import '../../theme/theme.dart';
 import '../media/generate_header.dart';
 import '../media/media_format.dart' show mediaParamsLine;
 import '../mention/mention_chip.dart';
-import '../mention/mention_syntax.dart' show MentionToken;
+import '../mention/mention_syntax.dart' show parseMessageMentions;
 import '../render/markdown_body.dart';
 import '../secret_mask.dart';
 import 'message_actions.dart';
@@ -23,7 +23,7 @@ import 'quote_chip.dart';
 /// A pasted block with fences, headings or links reads as Markdown instead of
 /// a wall of `**` and ```` ``` ````. Deliberately conservative: ordinary prose,
 /// prompts, commands and code fragments keep the plain bubble.
-final _mdFence = RegExp(r'^\s*(```|~~~)', multiLine: true);
+final _mdFence = RegExp(r'^[ \t]*(```|~~~)', multiLine: true);
 final _mdHeading = RegExp(r'^#{1,6}\s', multiLine: true);
 final _mdLink = RegExp(r'\[[^\]]+\]\(https?://[^)]+\)');
 bool looksLikeMarkdown(String text) =>
@@ -33,9 +33,12 @@ bool looksLikeMarkdown(String text) =>
 /// before the Markdown parser sees them (with `•`, not `*`, so the mask
 /// cannot turn into emphasis).
 final _bubbleMentionPattern = InlinePattern(
-  pattern: RegExp(r'@[\p{L}\p{N}_.\-]+', unicode: true),
+  // A mention starts at a token boundary. The canonical grammar then drops
+  // bare @words and emails — reuse it so the rendered bubble matches the
+  // plain one instead of making every @ into a file chip.
+  pattern: RegExp(r'(?<!\S)@[^\s]+'),
   builder: (context, match, style) {
-    final token = MentionToken.fromRaw(match[0]!, 0);
+    final token = parseMessageMentions(match[0]!).firstOrNull;
     if (token == null) return TextSpan(text: match[0], style: style);
     return WidgetSpan(
       alignment: PlaceholderAlignment.middle,

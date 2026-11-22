@@ -139,6 +139,36 @@ void main() {
       expect((await settled(c)).feed.tagline, '第二个源');
     });
 
+    test('a stale preferred source falls through to a newer fallback and does not become preferred', () async {
+      SharedPreferences.setMockInitialValues({'community.source': 'github'});
+      final c = container(
+        ScriptedHttp({
+          'https://raw.example/community.json': sampleFeed(revision: 2, tagline: '旧的'),
+          'https://cdn.example/community.json': sampleFeed(revision: 8, tagline: '新的'),
+        }),
+      );
+      final state = await settled(c);
+      expect(state.feed.tagline, '新的');
+      expect(state.origin, CommunityOrigin.network);
+      final prefs = await SharedPreferences.getInstance();
+      expect(prefs.getString('community.source'), 'jsdelivr');
+    });
+
+    test('stale sources still stamp the poll and keep the preferred source', () async {
+      SharedPreferences.setMockInitialValues({'community.source': 'github'});
+      final c = container(
+        ScriptedHttp({
+          'https://raw.example/community.json': sampleFeed(revision: 2, tagline: '旧的'),
+          'https://cdn.example/community.json': sampleFeed(revision: 3, tagline: '也不新'),
+        }),
+      );
+      final state = await settled(c);
+      expect(state.feed.revision, 1, reason: 'the bundled feed is the newest we have');
+      final prefs = await SharedPreferences.getInstance();
+      expect(prefs.getString('community.source'), 'github');
+      expect(prefs.getInt('community.fetchedAt'), now.millisecondsSinceEpoch);
+    });
+
     test('asks at most every six hours', () async {
       SharedPreferences.setMockInitialValues({
         'community.fetchedAt': now.subtract(const Duration(hours: 1)).millisecondsSinceEpoch,

@@ -153,35 +153,42 @@ class _IslandViewState extends ConsumerState<IslandView> {
     if (_acquiring) return;
     _acquiring = true;
     final generation = ++_generation;
-    final handle = await _host.acquire(
-      widget.spec,
-      url: url,
-      theme: _theme(context),
-      labels: widget.labels,
-      visible: _visible(context),
-    );
-    _acquiring = false;
-    if (!mounted || generation != _generation) {
-      if (handle != null) _host.detachView(handle);
-      return;
+    try {
+      final handle = await _host.acquire(
+        widget.spec,
+        url: url,
+        theme: _theme(context),
+        labels: widget.labels,
+        visible: _visible(context),
+      );
+      if (!mounted || generation != _generation) {
+        if (handle != null) _host.detachView(handle);
+        return;
+      }
+      if (handle == null) {
+        setState(() {
+          if (_host.hasRoomFor(widget.spec)) {
+            _none = true;
+          } else {
+            _noRoom = true;
+          }
+        });
+        return;
+      }
+      _handle = handle;
+      _url = url;
+      _host.setVisible(handle, _visible(context));
+      handle.addListener(_onHandle);
+      _requests = handle.requests.listen(_onRequest);
+      unawaited(handle.setInsets(widget.insets));
+      _onHandle();
+    } catch (_) {
+      // A broken recipe or a failed start must not pin the island in its
+      // skeleton forever: fall back like a missing handle would.
+      if (mounted && generation == _generation) setState(() => _none = true);
+    } finally {
+      _acquiring = false;
     }
-    if (handle == null) {
-      setState(() {
-        if (_host.hasRoomFor(widget.spec)) {
-          _none = true;
-        } else {
-          _noRoom = true;
-        }
-      });
-      return;
-    }
-    _handle = handle;
-    _url = url;
-    _host.setVisible(handle, _visible(context));
-    handle.addListener(_onHandle);
-    _requests = handle.requests.listen(_onRequest);
-    unawaited(handle.setInsets(widget.insets));
-    _onHandle();
   }
 
   void _release() {

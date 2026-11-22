@@ -50,6 +50,16 @@ class _HomeImportPageState extends ConsumerState<HomeImportPage> {
     messenger?.showSnackBar(SnackBar(content: Text(context.l10n.phoneHomeImportCopied)));
   }
 
+  /// A failed import must not leave the engine stopped: nothing else auto-starts
+  /// it after this page stopped it for the merge.
+  Future<void> _restartEngine(ProviderContainer container) async {
+    try {
+      await container.read(localRuntimeProvider.notifier).start();
+    } catch (_) {
+      // The status already reports the import failure; keep it visible.
+    }
+  }
+
   Future<void> _import() async {
     final l10n = context.l10n;
     final picked = await FilePicker.pickFile();
@@ -89,8 +99,10 @@ class _HomeImportPageState extends ConsumerState<HomeImportPage> {
       setState(() => _status = l10n.phoneHomeImportDone);
     } on PlatformException catch (error) {
       setState(() => _status = '${l10n.phoneHomeImportFailed}: ${error.message ?? error.code}');
+      await _restartEngine(container);
     } catch (_) {
       setState(() => _status = l10n.phoneHomeImportFailed);
+      await _restartEngine(container);
     } finally {
       if (mounted) setState(() => _busy = false);
     }

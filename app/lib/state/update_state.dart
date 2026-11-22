@@ -980,7 +980,7 @@ class AppUpdateController extends Notifier<AppUpdateState> {
   /// Discovers the installer apps on this phone through Android's own intent
   /// resolution — no hard-coded package list — for the sheet's hand-off list.
   Future<void> refreshApkHandlers() async {
-    if (_noticeOnly || state.busy) return;
+    if (_noticeOnly) return;
     try {
       final handlers = await _installer.queryApkHandlers();
       if (ref.mounted) state = state.copyWith(apkHandlers: handlers);

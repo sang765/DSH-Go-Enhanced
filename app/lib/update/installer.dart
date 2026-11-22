@@ -1,4 +1,4 @@
-import 'package:flutter/foundation.dart' show immutable;
+import 'package:flutter/foundation.dart' show debugPrint, immutable;
 import 'package:flutter/services.dart';
 
 /// An app on this phone that can open (and therefore install) an APK.
@@ -191,8 +191,16 @@ class ChannelUpdateInstaller implements UpdateInstaller {
   Future<InstallResult> install(String path) async => InstallResult.fromMap(await _map('install', {'path': path}));
 
   @override
-  Future<bool> openWithSystemInstaller(String path) async =>
-      await _channel.invokeMethod<bool>('openWithSystem', {'path': path}) ?? false;
+  Future<bool> openWithSystemInstaller(String path) async {
+    try {
+      return await _channel.invokeMethod<bool>('openWithSystem', {'path': path}) ?? false;
+    } on PlatformException catch (error) {
+      // The native side uses result.error("no_file") when the APK disappeared
+      // between discovery and the tap — a normal false, not an unhandled async.
+      debugPrint('openWithSystemInstaller: ${error.code} ${error.message}');
+      return false;
+    }
+  }
 
   @override
   Future<List<ApkHandler>> queryApkHandlers() async {
@@ -204,6 +212,12 @@ class ChannelUpdateInstaller implements UpdateInstaller {
   }
 
   @override
-  Future<bool> openWithInstaller(String path, String package) async =>
-      await _channel.invokeMethod<bool>('openWithInstaller', {'path': path, 'package': package}) ?? false;
+  Future<bool> openWithInstaller(String path, String package) async {
+    try {
+      return await _channel.invokeMethod<bool>('openWithInstaller', {'path': path, 'package': package}) ?? false;
+    } on PlatformException catch (error) {
+      debugPrint('openWithInstaller: ${error.code} ${error.message}');
+      return false;
+    }
+  }
 }

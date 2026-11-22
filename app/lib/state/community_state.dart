@@ -304,6 +304,7 @@ class CommunityController extends AsyncNotifier<CommunityState> {
     if (i > 0) sources.insert(0, sources.removeAt(i));
 
     var next = current.copyWith(refreshing: false);
+    var fetchedFrom = false;
     for (final source in sources) {
       try {
         final response = await http.get(
@@ -318,18 +319,27 @@ class CommunityController extends AsyncNotifier<CommunityState> {
         final text = await response.text(maxBytes: communityMaxBytes, timeout: const Duration(seconds: 15));
         final feed = CommunityFeed.parse(text);
         final now = ref.read(communityClockProvider)();
-        unawaited(prefs.setInt(_fetchedKey, now.millisecondsSinceEpoch));
-        unawaited(prefs.setString(_sourceKey, source.id));
-        next = next.copyWith(fetchedAt: now);
+        fetchedFrom = true;
         if (feed.revision > current.feed.revision ||
             (feed.revision == current.feed.revision && current.origin == CommunityOrigin.bundled)) {
+          unawaited(prefs.setInt(_fetchedKey, now.millisecondsSinceEpoch));
+          unawaited(prefs.setString(_sourceKey, source.id));
           unawaited(prefs.setString(_feedKey, text));
-          next = next.copyWith(feed: feed, origin: CommunityOrigin.network);
+          next = next.copyWith(feed: feed, origin: CommunityOrigin.network, fetchedAt: now);
+          break;
         }
-        break;
+        // A reachable but stale source must not end the loop or become
+        // preferred: a later source may carry a newer feed.
       } catch (_) {
         continue;
       }
+    }
+    if (fetchedFrom && next.fetchedAt == current.fetchedAt) {
+      // Every source was stale: keep the preferred source and cached feed,
+      // but still stamp the poll so the six-hour cooldown applies.
+      final now = ref.read(communityClockProvider)();
+      unawaited(prefs.setInt(_fetchedKey, now.millisecondsSinceEpoch));
+      next = next.copyWith(fetchedAt: now);
     }
     if (ref.mounted) state = AsyncData(next);
   }

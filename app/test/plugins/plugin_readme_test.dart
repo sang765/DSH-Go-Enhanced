@@ -30,6 +30,21 @@ void main() {
     expect(text, isNot(contains('<p')));
   });
 
+  test('an HTML src with a closing paren cannot inject Markdown', () {
+    final text = normalizeReadme('<img src="a) ![x](https://evil">');
+    expect(text, isNot(contains('![x]')));
+    expect(text, isNot(contains('https://evil')));
+  });
+
+  test('absolute remote and data images become links, relative ones stay images', () {
+    final text = normalizeReadme(
+      '<img src="https://tracker.example/pixel.png"> ![d](data:image/png;base64,AAAA) ![shot](docs/shot.png)',
+    );
+    expect(text, contains('[](https://tracker.example/pixel.png)'));
+    expect(text, contains('[d](data:image/png;base64,AAAA)'));
+    expect(text, contains('![](docs/shot.png)'));
+  });
+
   test('non-GitHub repositories leave the README alone', () {
     const md = '![x](img/x.png)';
     expect(resolveReadmeUrls(md, repositoryUrl: 'https://gitlab.com/a/b'), md);

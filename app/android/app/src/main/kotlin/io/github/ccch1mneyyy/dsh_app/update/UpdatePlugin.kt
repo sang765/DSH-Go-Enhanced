@@ -7,6 +7,7 @@ import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Handler
 import android.os.Looper
+import android.util.Log
 import androidx.core.content.FileProvider
 import io.github.ccch1mneyyy.dsh_app.R
 import io.github.ccch1mneyyy.dsh_app.i18n.AppStrings
@@ -105,7 +106,10 @@ class UpdatePlugin : FlutterPlugin, ActivityAware, MethodChannel.MethodCallHandl
                 val apk = apkArgument(call, result) ?: return
                 result.success(openWithSystem(apk))
             }
-            "queryApkHandlers" -> result.success(queryApkHandlers())
+            "queryApkHandlers" -> worker.execute {
+                val handlers = runCatching { queryApkHandlers() }.getOrDefault(emptyList())
+                main.post { result.success(handlers) }
+            }
             "openWithInstaller" -> {
                 val apk = apkArgument(call, result) ?: return
                 val pkg = call.argument<String>("package")
@@ -216,7 +220,10 @@ class UpdatePlugin : FlutterPlugin, ActivityAware, MethodChannel.MethodCallHandl
             .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
         val host = activity
         if (host != null) host.startActivity(intent) else appContext.startActivity(intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
-    }.isSuccess
+    }.getOrElse {
+        Log.w("UpdatePlugin", "openWithSystem failed: ${it.javaClass.simpleName}: ${it.message}")
+        false
+    }
 
     /**
      * Hands the APK to one specific installer app (Morphe Manager, InstallerX, Mixplorer,
@@ -230,7 +237,10 @@ class UpdatePlugin : FlutterPlugin, ActivityAware, MethodChannel.MethodCallHandl
             .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
         val host = activity
         if (host != null) host.startActivity(intent) else appContext.startActivity(intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
-    }.isSuccess
+    }.getOrElse {
+        Log.w("UpdatePlugin", "openWith $pkg failed: ${it.javaClass.simpleName}: ${it.message}")
+        false
+    }
 
     /**
      * Every app on this phone that can open an APK — discovered through the system's own
