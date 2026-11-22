@@ -42,7 +42,7 @@ void main() {
     );
     expect(text, contains('[](https://tracker.example/pixel.png)'));
     expect(text, contains('[d](data:image/png;base64,AAAA)'));
-    expect(text, contains('![](docs/shot.png)'));
+    expect(text, contains('![shot](docs/shot.png)'));
   });
 
   test('non-GitHub repositories leave the README alone', () {

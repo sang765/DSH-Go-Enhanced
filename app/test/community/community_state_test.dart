@@ -140,7 +140,10 @@ void main() {
     });
 
     test('a stale preferred source falls through to a newer fallback and does not become preferred', () async {
-      SharedPreferences.setMockInitialValues({'community.source': 'github'});
+      SharedPreferences.setMockInitialValues({
+        'community.source': 'github',
+        'community.feed': sampleFeed(revision: 5, tagline: '缓存'),
+      });
       final c = container(
         ScriptedHttp({
           'https://raw.example/community.json': sampleFeed(revision: 2, tagline: '旧的'),
@@ -155,7 +158,10 @@ void main() {
     });
 
     test('stale sources still stamp the poll and keep the preferred source', () async {
-      SharedPreferences.setMockInitialValues({'community.source': 'github'});
+      SharedPreferences.setMockInitialValues({
+        'community.source': 'github',
+        'community.feed': sampleFeed(revision: 5, tagline: '缓存'),
+      });
       final c = container(
         ScriptedHttp({
           'https://raw.example/community.json': sampleFeed(revision: 2, tagline: '旧的'),
@@ -163,7 +169,7 @@ void main() {
         }),
       );
       final state = await settled(c);
-      expect(state.feed.revision, 1, reason: 'the bundled feed is the newest we have');
+      expect(state.feed.revision, 5, reason: 'the cached feed is still the newest we have');
       final prefs = await SharedPreferences.getInstance();
       expect(prefs.getString('community.source'), 'github');
       expect(prefs.getInt('community.fetchedAt'), now.millisecondsSinceEpoch);
