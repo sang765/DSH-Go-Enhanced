@@ -220,6 +220,7 @@ class UpdatePlugin : FlutterPlugin, ActivityAware, MethodChannel.MethodCallHandl
             .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
         val host = activity
         if (host != null) host.startActivity(intent) else appContext.startActivity(intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+        true
     }.getOrElse {
         Log.w("UpdatePlugin", "openWithSystem failed: ${it.javaClass.simpleName}: ${it.message}")
         false
@@ -237,6 +238,7 @@ class UpdatePlugin : FlutterPlugin, ActivityAware, MethodChannel.MethodCallHandl
             .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
         val host = activity
         if (host != null) host.startActivity(intent) else appContext.startActivity(intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+        true
     }.getOrElse {
         Log.w("UpdatePlugin", "openWith $pkg failed: ${it.javaClass.simpleName}: ${it.message}")
         false
