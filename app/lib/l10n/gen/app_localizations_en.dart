@@ -1929,6 +1929,25 @@ class L10nEn extends L10n {
       'The outcome could not be confirmed. Verify it first; never automatically retry a dispatched command.';
 
   @override
+  String get androidBackgroundProtectionTitle => 'Enhanced background protection';
+
+  @override
+  String get androidBackgroundProtectionAudioHint =>
+      'Plays silent audio while local tasks run in the background. May use more battery.';
+
+  @override
+  String get androidBackgroundProtectionLocationHint =>
+      'Uses approximate location and may use more battery. Coordinates are not saved or sent. Turning it off stops location updates without revoking system access.';
+
+  @override
+  String get androidBackgroundProtectionNeedsLocation =>
+      'Location access hasn’t been granted. Tap to open the app’s system settings and allow location under Permissions.';
+
+  @override
+  String get androidBackgroundProtectionNeedsAlways =>
+      'Background location is not active. Tap to open the app’s system settings and choose “Allow all the time” for Location under Permissions.';
+
+  @override
   String get backgroundProtectionDescription =>
       'Off by default. Protection is attempted only while local tasks are active and the app is in the background; the system may still pause them.';
 
@@ -5385,6 +5404,10 @@ class L10nEn extends L10n {
   String get companionSendFailed => 'That didn\'t get through. Say it again?';
 
   @override
+  String get companionAgentRetryClosed =>
+      'I may have already started on that, and I don\'t want to do it twice. Take a look in Tasks, then tell me whether to carry on?';
+
+  @override
   String get companionLogTitle => 'Log';
 
   @override
@@ -8529,6 +8552,22 @@ class L10nEn extends L10n {
 
   @override
   String get engineProvidersOfficial => 'Official';
+
+  @override
+  String get engineProvidersChatGptOfficial => 'Official ChatGPT subscription';
+
+  @override
+  String get engineSubscriptionReconnectAccount => 'Sign in to previous account';
+
+  @override
+  String get engineSubscriptionUseAnotherAccount => 'Use another account';
+
+  @override
+  String get engineSubscriptionPlanNotEnabled => 'This grant does not allow ChatGPT subscription models.';
+
+  @override
+  String get engineSubscriptionRevocationUnconfirmed =>
+      'Signed out on this phone, but OpenAI revocation could not be confirmed.';
 
   @override
   String get engineProvidersSubscription => 'Subscriptions';
@@ -25153,6 +25192,13 @@ class L10nEn extends L10n {
   String get tavernIslandNoScripts => 'No card scripts in those pages';
 
   @override
+  String get tavernSPresetExternal => 'Presets load their own SPreset';
+
+  @override
+  String get tavernSPresetExternalSubtitle =>
+      'By default the built-in SPreset runs and nothing is loaded from the preset author’s site; turn on to let the preset load its own';
+
+  @override
   String get tavernIslandNoScriptsSubtitle =>
       'The card\'s own JavaScript doesn\'t run; status bars that need it stay still';
 
@@ -26735,6 +26781,14 @@ class L10nEn extends L10n {
   @override
   String tavernDeepSeekTaken(int count) {
     return '$count chats brought over; the rest are in the chat list';
+  }
+
+  @override
+  String get tavernIslandStoryWaiting => 'Loading this message’s data…';
+
+  @override
+  String tavernIslandStoryFailed(String reason) {
+    return 'Could not read this message’s data: $reason';
   }
 
   @override
