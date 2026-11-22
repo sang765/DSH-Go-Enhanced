@@ -29,6 +29,24 @@ import 'provider_catalog_sheet.dart';
 import 'provider_model_page.dart';
 import 'provider_widgets.dart';
 
+/// What a model added here starts as: most current models take images and
+/// think. 模型设置 keeps both editable per model.
+const List<String> _newModelInput = ['text', 'image'];
+const Map<String, String?> _newModelEfforts = {'off': null, 'low': 'low', 'medium': 'medium', 'high': 'high'};
+
+/// [spec] with the defaults above for what it leaves unsaid (an endpoint's
+/// own input list wins).
+ProviderModelSpec _withModelDefaults(ProviderModelSpec spec) => ProviderModelSpec(
+  id: spec.id,
+  name: spec.name,
+  contextWindow: spec.contextWindow,
+  maxTokens: spec.maxTokens,
+  input: (spec.input?.isEmpty ?? true) ? _newModelInput : spec.input!,
+  extra: spec.extra.containsKey('reasoningEfforts')
+      ? spec.extra
+      : {...spec.extra, 'reasoningEfforts': _newModelEfforts},
+);
+
 /// Protocol choices, in the adapter's order. 「兼容」 lives in the field label
 /// so all three labels fit one capsule without shrinking.
 const _protocols = [
@@ -306,7 +324,7 @@ class _ProviderFormPageState extends ConsumerState<ProviderFormPage> with FieldP
       final picked = await showModelPicker(context, candidates: result.models, added: {for (final m in _models) m.id});
       if (picked == null || picked.isEmpty || !isCurrent()) return;
       setState(() {
-        _models = [..._models, for (final m in picked) _specFor(m)];
+        _models = [..._models, for (final m in picked) _withModelDefaults(_specFor(m))];
         _errors = {..._errors}..remove(_F.models);
       });
     } catch (error) {
@@ -354,7 +372,7 @@ class _ProviderFormPageState extends ConsumerState<ProviderFormPage> with FieldP
     );
     if (id == null || !mounted) return;
     setState(() {
-      _models = [..._models, ProviderModelSpec(id: id)];
+      _models = [..._models, _withModelDefaults(ProviderModelSpec(id: id))];
       _errors = {..._errors}..remove(_F.models);
     });
   }
