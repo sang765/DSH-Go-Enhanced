@@ -3,6 +3,20 @@
 每个版本先中文、后英文。发版时把对应版本的正文（不含版本标题）作为 Release 正文，见 `docs/release.md`。
 
 
+## 1.2.13 · 2026-11-22
+
+### 中文
+
+- **修复夜间代码审查发现的 10 个问题。** 更新面板在下载/安装中打开时也能发现本机其他安装器；插件翻译在关闭面板后不再因异步引用报错；README 下载按流限量，远端与 `data:` 图片改为点击才打开；导入旧版引擎数据失败后会自动重启引擎；社区源内容过旧时会继续尝试下一个源，同时保留 6 小时轮询间隔；消息里的 `@` 提及改用与输入框一致的识别规则；查询 APK 安装器移出主线程；hand-off 失败在原生侧记录具体原因、Dart 侧不再抛出未处理异常；README 的 HTML 图片地址不再能注入 Markdown；插件 island 获取失败时会清掉标志并回退，不再永久卡在加载态。
+- **同步上游 79 个提交。** 包含主题包自定义与创意工坊接入、会话搜索异步读取、远程主机页面改进、动态统计与求 star 分档、Tavern/伙伴性能修正等；移植时保留了本 fork 的消息 Markdown 渲染与 `@` 提及逻辑。引擎补丁 `pins.json` 已按合并后的补丁链重新记录，Android / HarmonyOS 两条链均通过校验。
+- **验证情况。** GitHub Actions 全量 CI 与 OHOS 编译均绿；补丁链 33 项测试通过。真机尚未完整验证。
+
+### English
+
+- **Fixed 10 issues from the nightly code audit.** The update sheet now discovers other installers even when opened mid-download/install; plugin translation no longer errors after the sheet is closed; README downloads are stream-capped and remote/`data:` images open only on tap; a failed home-data import restarts the engine; a stale community feed falls through to the next source while keeping the 6-hour poll; `@` mentions in sent messages use the same grammar as the composer; APK-installer discovery runs off the main thread; hand-off failures log a concrete reason natively and no longer raise unhandled async errors in Dart; README HTML image targets can no longer inject Markdown; a failed island acquire clears its flag and falls back instead of sticking in a loading state.
+- **Synced 79 upstream commits.** Theme-pack customisation with workshop integration, async local session search, remote-host page improvements, usage stats and tiered star prompts, Tavern/companion performance fixes and more. The fork's user-message Markdown rendering and `@` mention logic were kept during the merge, and the engine patch `pins.json` was re-recorded over the merged chain — both Android and HarmonyOS chains verify clean.
+- **Testing.** Full GitHub Actions CI and the OHOS compile are green; all 33 patch-chain tests pass. Not yet fully verified on a real device.
+
 ## 1.2.12 · 2026-11-21
 
 ### 中文
