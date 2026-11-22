@@ -203,7 +203,7 @@ class L10nZh extends L10n {
   String get accessPopupTitle => '允许后台弹出界面';
 
   @override
-  String get accessPopupWhy => '手机操控做完能回到 DSH Go Enhanced Enhanced';
+  String get accessPopupWhy => '手机操控做完能回到 DSH Go Enhanced';
 
   @override
   String accessVivoPopupPath(String app) {
@@ -7361,7 +7361,7 @@ class L10nZh extends L10n {
   String get engineAccountFinishInBrowser => '在浏览器中完成登录';
 
   @override
-  String get engineAccountReturnToDsh => '登录完成后回到 DSH Go Enhanced Enhanced';
+  String get engineAccountReturnToDsh => '登录完成后回到 DSH Go Enhanced';
 
   @override
   String get engineAccountFinishingSignIn => '正在完成登录';
@@ -10581,7 +10581,7 @@ class L10nZh extends L10n {
   String get hubTableTintNoneHint => '只剩网格线，最轻';
 
   @override
-  String get hubAbout => '关于 DSH Go Enhanced Enhanced';
+  String get hubAbout => '关于 DSH Go Enhanced';
 
   @override
   String get hubAboutAuthor => 'DSH Go 原作者';
@@ -12939,7 +12939,7 @@ class L10nZh extends L10n {
   String get phoneDndGrantShizukuHint => 'Shizuku 已在运行，还要给 DSH Go Enhanced 授权。';
 
   @override
-  String get phoneDndGrantShizuku => '授权给 DSH Go Enhanced Enhanced';
+  String get phoneDndGrantShizuku => '授权给 DSH Go Enhanced';
 
   @override
   String get phoneDndShizukuAllSet => 'Shizuku 已启动并授权，接下来连接后台屏。';
@@ -12951,7 +12951,7 @@ class L10nZh extends L10n {
   String get phoneDndShizukuRunning => 'Shizuku 正在运行';
 
   @override
-  String get phoneDndShizukuGranted => '已授权给 DSH Go Enhanced Enhanced';
+  String get phoneDndShizukuGranted => '已授权给 DSH Go Enhanced';
 
   @override
   String get phoneDndShizukuCompatibility => '这版 Android 与官方版 Shizuku 存在兼容问题。';
@@ -13059,7 +13059,7 @@ class L10nZh extends L10n {
   String get phoneOpenAccessibilityFailed => '打不开系统设置，请到「设置 → 无障碍」里找到 DSH';
 
   @override
-  String get phoneOpenAppInfoFailed => '打不开应用信息，请到「设置 → 应用」里找到 DSH Go Enhanced Enhanced';
+  String get phoneOpenAppInfoFailed => '打不开应用信息，请到「设置 → 应用」里找到 DSH Go Enhanced';
 
   @override
   String get phoneStopFailed => '没能停止，可以点悬浮条或通知上的「停止」';
@@ -13800,7 +13800,7 @@ class L10nZh extends L10n {
   String get phoneControlEnabledPending => '已开启，引擎启动后生效';
 
   @override
-  String get phoneReturnAfterDone => '完成后返回 DSH Go Enhanced Enhanced';
+  String get phoneReturnAfterDone => '完成后返回 DSH Go Enhanced';
 
   @override
   String get phoneReturnAfterDoneHint => '收起悬浮条，回到对话看结果';
@@ -26068,7 +26068,7 @@ class L10nZh extends L10n {
   String get usageStatsTitle => '发送匿名使用统计';
 
   @override
-  String get usageStatsSection => '改进 DSH Go Enhanced Enhanced';
+  String get usageStatsSection => '改进 DSH Go Enhanced';
 
   @override
   String get usageStatsFooter =>

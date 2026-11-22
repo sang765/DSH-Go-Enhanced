@@ -11196,7 +11196,7 @@ class L10nEn extends L10n {
   String get hubTableTintNoneHint => 'Grid lines only, the lightest';
 
   @override
-  String get hubAbout => 'About DSH Go Enhanced Enhanced';
+  String get hubAbout => 'About DSH Go Enhanced';
 
   @override
   String get hubAboutAuthor => 'Original author of DSH Go';
@@ -12017,7 +12017,7 @@ class L10nEn extends L10n {
   String get liveUnsupported => 'This phone\'s system doesn\'t support live activities yet';
 
   @override
-  String get liveBlockedTitle => 'Live activities are off for DSH Go Enhanced Enhanced';
+  String get liveBlockedTitle => 'Live activities are off for DSH Go Enhanced';
 
   @override
   String get liveBlockedText =>
@@ -12041,7 +12041,7 @@ class L10nEn extends L10n {
   String get liveIosUnsupported => 'Needs iOS 16.2 or later';
 
   @override
-  String get liveIosBlockedText => 'Turn on Live Activities in Settings → DSH Go Enhanced Enhanced';
+  String get liveIosBlockedText => 'Turn on Live Activities in Settings → DSH Go Enhanced';
 
   @override
   String get localeTitle => 'Language';
@@ -13636,7 +13636,7 @@ class L10nEn extends L10n {
   String get phoneDndGrantShizukuHint => 'Shizuku is running. Allow DSH Go Enhanced to use it next.';
 
   @override
-  String get phoneDndGrantShizuku => 'Allow DSH Go Enhanced Enhanced';
+  String get phoneDndGrantShizuku => 'Allow DSH Go Enhanced';
 
   @override
   String get phoneDndShizukuAllSet => 'Shizuku is running and authorized. Connect the background screen next.';
@@ -15381,7 +15381,7 @@ class L10nEn extends L10n {
   String get phoneUnlockOwnApp => 'DSH Go Enhanced itself';
 
   @override
-  String get phoneUnlockOwnAppHint => 'Tap and type inside DSH Go Enhanced Enhanced';
+  String get phoneUnlockOwnAppHint => 'Tap and type inside DSH Go Enhanced';
 
   @override
   String get phoneUnlockBusy => 'Can’t turn on while a task is running';
@@ -27483,7 +27483,7 @@ class L10nEn extends L10n {
   String get usageStatsTitle => 'Send anonymous usage stats';
 
   @override
-  String get usageStatsSection => 'Improve DSH Go Enhanced Enhanced';
+  String get usageStatsSection => 'Improve DSH Go Enhanced';
 
   @override
   String get usageStatsFooter =>
@@ -28586,7 +28586,7 @@ class L10nEn extends L10n {
   }
 
   @override
-  String get viewShareFileHint => 'Replay and continue in DSH Go Enhanced Enhanced';
+  String get viewShareFileHint => 'Replay and continue in DSH Go Enhanced';
 
   @override
   String get viewShareWebHint => 'Opens in any browser, even offline';
