@@ -9776,6 +9776,72 @@ abstract class L10n {
   /// **'她记得的事'**
   String get companionMemoryTitle;
 
+  /// No description provided for @companionMemoryCard.
+  ///
+  /// In zh, this message translates to:
+  /// **'卡片'**
+  String get companionMemoryCard;
+
+  /// No description provided for @companionMemoryPerson.
+  ///
+  /// In zh, this message translates to:
+  /// **'人物档案'**
+  String get companionMemoryPerson;
+
+  /// No description provided for @companionMemoryDiary.
+  ///
+  /// In zh, this message translates to:
+  /// **'日记'**
+  String get companionMemoryDiary;
+
+  /// No description provided for @companionMemoryImpression.
+  ///
+  /// In zh, this message translates to:
+  /// **'她对你的印象'**
+  String get companionMemoryImpression;
+
+  /// No description provided for @companionMemorySearchTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'记忆检索'**
+  String get companionMemorySearchTitle;
+
+  /// No description provided for @companionMemorySearchDescription.
+  ///
+  /// In zh, this message translates to:
+  /// **'下载约24 MB的模型，用手机本地查找意思相近的记忆。'**
+  String get companionMemorySearchDescription;
+
+  /// No description provided for @companionMemorySearchDownload.
+  ///
+  /// In zh, this message translates to:
+  /// **'下载模型'**
+  String get companionMemorySearchDownload;
+
+  /// No description provided for @companionMemorySearchReady.
+  ///
+  /// In zh, this message translates to:
+  /// **'本地模型已就绪'**
+  String get companionMemorySearchReady;
+
+  /// No description provided for @companionMemorySearchDownloading.
+  ///
+  /// In zh, this message translates to:
+  /// **'正在下载…'**
+  String get companionMemorySearchDownloading;
+
+  /// No description provided for @companionMemorySearchFailed.
+  ///
+  /// In zh, this message translates to:
+  /// **'暂时无法准备本地模型。可以重试下载。'**
+  String get companionMemorySearchFailed;
+
+  /// No description provided for @companionMemorySearchUnavailable.
+  ///
+  /// In zh, this message translates to:
+  /// **'此设备暂不支持本地记忆检索。'**
+  String get companionMemorySearchUnavailable;
+
   /// No description provided for @companionMemoryScope.
   ///
   /// In zh, this message translates to:
@@ -10151,26 +10217,38 @@ abstract class L10n {
   /// No description provided for @companionBond0.
   ///
   /// In zh, this message translates to:
-  /// **'刚认识'**
+  /// **'初识'**
   String get companionBond0;
 
   /// No description provided for @companionBond1.
   ///
   /// In zh, this message translates to:
-  /// **'渐渐熟悉'**
+  /// **'熟悉'**
   String get companionBond1;
 
   /// No description provided for @companionBond2.
   ///
   /// In zh, this message translates to:
-  /// **'熟起来了'**
+  /// **'朋友'**
   String get companionBond2;
 
   /// No description provided for @companionBond3.
   ///
   /// In zh, this message translates to:
-  /// **'很亲近'**
+  /// **'亲近'**
   String get companionBond3;
+
+  /// No description provided for @companionBond4.
+  ///
+  /// In zh, this message translates to:
+  /// **'很亲'**
+  String get companionBond4;
+
+  /// No description provided for @companionBond5.
+  ///
+  /// In zh, this message translates to:
+  /// **'离不开'**
+  String get companionBond5;
 
   /// No description provided for @companionCloser1.
   ///
@@ -10189,6 +10267,18 @@ abstract class L10n {
   /// In zh, this message translates to:
   /// **'以后也要常来哦，我会想你的。'**
   String get companionCloser3;
+
+  /// No description provided for @companionCloser4.
+  ///
+  /// In zh, this message translates to:
+  /// **'你在的时候，连安静待着都很开心。'**
+  String get companionCloser4;
+
+  /// No description provided for @companionCloser5.
+  ///
+  /// In zh, this message translates to:
+  /// **'不知不觉，已经很习惯有你在了。'**
+  String get companionCloser5;
 
   /// No description provided for @companionPatClose.
   ///
@@ -13151,6 +13241,12 @@ abstract class L10n {
   /// In zh, this message translates to:
   /// **'此前约定写出的表已找到；新的约定尚未完成。'**
   String get companionReceiptPriorResult;
+
+  /// No description provided for @companionLegacyConversation.
+  ///
+  /// In zh, this message translates to:
+  /// **'旧对话（角色未记录）'**
+  String get companionLegacyConversation;
 
   /// No description provided for @automaticDiagnosticsRecover.
   ///
@@ -25722,6 +25818,18 @@ abstract class L10n {
   /// **'收成小球，点按展开'**
   String get phoneAutoCollapseHint;
 
+  /// No description provided for @phoneEdgeGlow.
+  ///
+  /// In zh, this message translates to:
+  /// **'屏幕边缘光效'**
+  String get phoneEdgeGlow;
+
+  /// No description provided for @phoneEdgeGlowHint.
+  ///
+  /// In zh, this message translates to:
+  /// **'操控时屏幕四周的流光'**
+  String get phoneEdgeGlowHint;
+
   /// No description provided for @phoneDeveloperOptions.
   ///
   /// In zh, this message translates to:
@@ -34517,6 +34625,12 @@ abstract class L10n {
   /// In zh, this message translates to:
   /// **'悬浮条,收起,悬浮球'**
   String get searchKwPhoneAutoCollapse;
+
+  /// No description provided for @searchKwPhoneEdgeGlow.
+  ///
+  /// In zh, this message translates to:
+  /// **'边缘光,光效,流光,特效,边框'**
+  String get searchKwPhoneEdgeGlow;
 
   /// No description provided for @searchKwPhoneReturn.
   ///
