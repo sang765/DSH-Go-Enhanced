@@ -38,7 +38,8 @@ final _bubbleMentionPattern = InlinePattern(
   // plain one instead of making every @ into a file chip.
   pattern: RegExp(r'(?<!\S)@[^\s]+'),
   builder: (context, match, style) {
-    final token = parseMessageMentions(match[0]!).firstOrNull;
+    final tokens = parseMessageMentions(match[0]!);
+    final token = tokens.isEmpty ? null : tokens.first;
     if (token == null) return TextSpan(text: match[0], style: style);
     return WidgetSpan(
       alignment: PlaceholderAlignment.middle,

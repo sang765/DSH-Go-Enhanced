@@ -69,6 +69,9 @@ Uri? _githubRawBase(String? repositoryUrl) {
 /// fenced code, `<details>`) is already handled by the renderer itself.
 // A `)` in the src would close the Markdown image early and inject markup.
 final _htmlImage = RegExp(r"""<img\s[^>]*?src\s*=\s*["']([^"'\s)]+)["'][^>]*>""", caseSensitive: false);
+// A malformed `<img>` (e.g. a `)` inside src) is not converted above: drop it
+// whole rather than letting the renderer interpret its attributes as Markdown.
+final _strayImageTag = RegExp(r'<img\b[^>]*>', caseSensitive: false);
 // A README is untrusted: an absolute remote image would be fetched silently
 // (IP/tracking leak, uncapped download) and `data:` decodes on the UI thread.
 // Keep relative images — resolveReadmeUrls points them at the repo's raw host —
@@ -80,6 +83,7 @@ final _htmlWrapper = RegExp(r'</?(?:p|div|span|center|strong|b|em|i)\b[^>]*>', c
 
 String normalizeReadme(String text) => text
     .replaceAllMapped(_htmlImage, (m) => '![](${m.group(1)})')
+    .replaceAll(_strayImageTag, '')
     .replaceAll(_htmlBreak, '\n')
     .replaceAllMapped(_htmlHeading, (m) => '${'#' * int.parse(m.group(1)!)} ${m.group(2)}')
     .replaceAll(_htmlWrapper, '')
