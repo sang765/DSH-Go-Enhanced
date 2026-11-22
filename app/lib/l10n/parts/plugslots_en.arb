@@ -104,7 +104,8 @@
       }
     }
   },
-  "plugslotsIssueNeedsApp": "Needs DSH Go {version} or later",
+  "plugslotsIssueNeedsApp": "Needs DSH Go Enhanced {version} or later",
+
   "@plugslotsIssueNeedsApp": {
     "placeholders": {
       "version": {

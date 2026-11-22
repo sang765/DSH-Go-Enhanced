@@ -14,7 +14,7 @@ App 以 APK 分发、不上商店，更新靠 App 自己查 GitHub Releases、�
 
 | 项 | 约定 | 例子 |
 |---|---|---|
-| 版本名 | `app/pubspec.yaml` 的 `version: X.Y.Z[-pre]`，即 versionName；后面的 `+1` 只是占位 | `1.2.0` |
+| 版本名 | `app/pubspec.yaml` 的 `version: <上游版本>-sub.<序号>+1`，即 versionName；后面的 `+1` 只是占位。上游版本跟 `ccch1mneyyy/dsh-Go` 对齐，同一个上游版本每发一次版序号加一，用 `python3 tooling/sub_version.py --next` 查下一个号、`--write` 改好两个文件 | `1.3.0-sub.1` |
 | 构建号 | Android versionCode，由 `tooling/build-apk.sh` 按构建时间生成，见「构建号」 | `10251234` |
 | tag | `v` + 版本名（不带 `+N`） | `v1.2.0`、`v1.3.0-beta.1` |
 | APK | `dsh-go-<版本名>-<flavor>.apk`，正式版 flavor 固定为 `arm64`；文件名不带 `+N`（GitHub 会改写 `+`） | `dsh-go-1.2.0-arm64.apk` |
@@ -78,7 +78,7 @@ versionCode = (年 - 2026) × 10^8 + MMDDhhmm      时钟固定按 UTC+8
 
 ## 发版步骤
 
-1. **改版本名**：`app/pubspec.yaml` 的 `version:`，版本名按 semver 升；`+1` 不动。之后打的开发包也带新版本名，不会被提示「更新」到这一版。
+1. **改版本名**：`python3 tooling/sub_version.py --write` 按现有 `v<上游版本>-sub.*` tag 把 `app/pubspec.yaml` 和 `app/lib/state/app_info.dart` 一起改成下一个 `<上游版本>-sub.<序号>+1`；`+1` 不动。上游大版本变了就先手动把 pubspec 里的上游版本部分改掉（例如 `1.3.0-sub.1+1` → `1.3.1-sub.1+1`），序号会从 1 重新开始。之后打的开发包也带新版本名，不会被提示「更新」到这一版。
    - **同步使用说明**：按本版界面改动更新 `docs/guide/`，把 `docs/guide/README.md` 的 `> dsh-go X.Y.Z` 改成新版本名，`python3 app/tool/guide_sync.py` 重新生成 App 内置技能，`python3 app/tool/guide_sync.py --check` 通过再打包（它核对入口路径、界面文字、页面链接与版本号）。
 2. **只打包 arm64 正式版**（运行时要先 `runtime/build-runtime.sh` 产出 `runtime/out/`）。x64 仅供必要的本地模拟器验证，不上传、不放入正式更新清单：
 

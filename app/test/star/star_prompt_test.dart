@@ -732,7 +732,7 @@ void main() {
     });
   });
 
-  group('设置 › 关于 DSH Go', () {
+  group('设置 › 关于 DSH Go Enhanced', () {
     testWidgets('给 DSH Go 点个 star opens GitHub and ends the prompt', (tester) async {
       usePhoneSurface(tester);
       final bench = _Bench(tester, MemoryStarStore(_due), TestClock());

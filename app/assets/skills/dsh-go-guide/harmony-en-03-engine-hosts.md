@@ -19,7 +19,7 @@ You can add DSH to this phone anytime: tap **Install runtime** on the engine pag
 
 - **Start**, **Stop**, **Restart**: stopping asks first; both stopping and restarting interrupt active chats.
 - If the engine fails to start, the page shows the cause and ways to fix it, such as retrying, **Enter Safe mode**, **Restore configuration** or viewing logs.
-- **Start when DSH Go opens**: on by default. As long as DSH is installed on this phone, opening the app starts it, even while you use a remote host. Turn it off if you don't need that.
+- **Start when DSH Go Enhanced opens**: on by default. As long as DSH is installed on this phone, opening the app starts it, even while you use a remote host. Turn it off if you don't need that.
 - **Start in Safe mode**: enter Safe mode by hand. It starts with the default configuration that comes with the app, without the plugins you installed. Your chats stay and your own configuration isn't changed, though a global patch or `.env` can still affect the start. Once fixed, tap **Return to normal mode**. If the engine has already started since the app opened, entering and leaving both reopen the app; the dialog says so.
 - Safe mode never starts by itself. After several unclean exits in a row the engine won't start on its own, and the failure card offers **Restore configuration**, **Enter Safe mode** and **Retry**.
 - **Logs**: the engine's live output.
@@ -69,7 +69,7 @@ With the defaults, chats, workspaces, plugins and settings are deleted, includin
 <!-- nav: commonSettings,hubSettingsEngine,localEnvUninstall -->
 `Settings › Local engine › Uninstall runtime`
 
-Deletes the unpacked runtime and local data. Chats, workspaces, plugins, settings, interface settings and skills on this phone are all deleted, the app reopens, and nothing is reinstalled. The copy of the runtime inside the app package stays; only uninstalling the app frees it. To use this phone's engine again, tap **Install runtime** on the same page. If you only need a break, stop the engine and turn off **Start when DSH Go opens**.
+Deletes the unpacked runtime and local data. Chats, workspaces, plugins, settings, interface settings and skills on this phone are all deleted, the app reopens, and nothing is reinstalled. The copy of the runtime inside the app package stays; only uninstalling the app frees it. To use this phone's engine again, tap **Install runtime** on the same page. If you only need a break, stop the engine and turn off **Start when DSH Go Enhanced opens**.
 
 ## Switch hosts
 

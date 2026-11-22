@@ -65,7 +65,7 @@ Adding the app's sign-in patch alone does not enable the services that headless 
 The top of the system actions page says where things stand:
 
 - **On, waiting for the local engine**: start the local engine.
-- **On, works once you're back in DSH Go**: the system doesn't let background apps do these, so come back to DSH Go.
+- **On, works once you're back in DSH Go Enhanced**: the system doesn't let background apps do these, so come back to DSH Go.
 - **On, can't connect right now, retrying**: give it a moment.
 - **Not available in this version**: this version doesn't support system actions.
 - **You're connected to a remote host**: switch to **This phone**.

@@ -590,7 +590,8 @@
       }
     }
   },
-  "tavernStorybookMadeWith": "用 DSH Go 酒馆写成",
+  "tavernStorybookMadeWith": "用 DSH Go Enhanced 酒馆写成",
+
   "tavernStorybookContents": "目录",
   "tavernStorybookChapter": "第 {n} 章",
   "@tavernStorybookChapter": {

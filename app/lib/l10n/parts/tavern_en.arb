@@ -590,7 +590,8 @@
       }
     }
   },
-  "tavernStorybookMadeWith": "Written in the DSH Go tavern",
+  "tavernStorybookMadeWith": "Written in the DSH Go Enhanced tavern",
+
   "tavernStorybookContents": "Contents",
   "tavernStorybookChapter": "Chapter {n}",
   "@tavernStorybookChapter": {

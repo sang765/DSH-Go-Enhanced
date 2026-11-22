@@ -104,7 +104,8 @@
       }
     }
   },
-  "plugslotsIssueNeedsApp": "需要 DSH Go {version} 或更新版本",
+  "plugslotsIssueNeedsApp": "需要 DSH Go Enhanced {version} 或更新版本",
+
   "@plugslotsIssueNeedsApp": {
     "placeholders": {
       "version": {

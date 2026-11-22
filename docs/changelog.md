@@ -3,6 +3,22 @@
 每个版本先中文、后英文。发版时把对应版本的正文（不含版本标题）作为 Release 正文，见 `docs/release.md`。
 
 
+## 1.3.0-sub.1 · 2026-11-22
+
+### 中文
+
+- **应用改名为 DSH Go Enhanced。** 桌面图标、系统设置/通知里的名称、通知标题与使用说明中本 App 的自称都改为新名字；指代原版 DSH Go 应用、上游桥接与项目主页的地方保持原样。
+- **版本命名改为跟随上游。** 版本名从本 fork 自增长的 `1.2.13` 改成 `<上游版本>-sub.<序号>`，首个版本是 `1.3.0-sub.1`。同一个上游版本每发一次版序号加一，由 `tooling/sub_version.py` 读取现有 tag 自动给出下一个号并同步 `pubspec.yaml` 与 `AppInfo`；构建号（versionCode、`+N`）仍是构建分钟，规则不变。
+- **同步上游 15 个提交。** 远程控制恢复（空 websocket close 视为瞬时错误、TURN 授权期间保留 relay、不重启健康隧道即可恢复 Control）、伙伴小屋的称呼识别与素材包重复打包修复等。
+- **验证情况。** GitHub Actions 全量 CI、OHOS 编译、iOS 编译与 iOS UI tour 均绿；补丁链 33 项测试通过。真机尚未完整验证。
+
+### English
+
+- **The app is now called DSH Go Enhanced.** The launcher label, system settings and notification names, notification titles and the app's own wording in the guide use the new name; mentions of the original DSH Go app, the upstream bridge and the upstream project home are unchanged.
+- **Version names now follow upstream.** The fork's own `1.2.13` sequence is replaced by `<upstream-version>-sub.<n>`; the first is `1.3.0-sub.1`. Each release against the same upstream base increments `<n>`; `tooling/sub_version.py` reads the existing tags and bumps both `pubspec.yaml` and `AppInfo`. The build number (versionCode, `+N`) is still the build minute and is unchanged.
+- **Synced 15 upstream commits.** Remote-control recovery (empty websocket close treated as transient, relay kept during TURN authorization, Control recovered without restarting healthy tunnels), companion recipient recognition and a companion asset-pack repackaging fix, among others.
+- **Testing.** Full GitHub Actions CI, OHOS compile, iOS compile and the iOS UI tour are green; all 33 patch-chain tests pass. Not yet fully verified on a real device.
+
 ## 1.2.13 · 2026-11-22
 
 ### 中文

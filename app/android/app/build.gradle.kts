@@ -77,7 +77,7 @@ android {
         // keep merging cleanly. shortcuts.xml's targetPackage must match this.
         applicationId = "io.github.sang765.dsh_app_enhanced"
         if (sideBuild) applicationIdSuffix = sideSuffix
-        manifestPlaceholders["appLabel"] = if (sideBuild) "DSH Go 测试" else "DSH Go"
+        manifestPlaceholders["appLabel"] = if (sideBuild) "DSH Go Enhanced 测试" else "DSH Go Enhanced"
         // java.nio.file (symlinks while unpacking the rootfs) needs API 26.
         minSdk = 26
         // Target 28 like Termux, so the API 29+ exec restriction on app-private
