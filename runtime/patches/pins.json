@@ -31,8 +31,8 @@
           "before": "be4a61018e474c03a1d5c7cca7d95369a0c9cbf5cc31ec5a198a98a1e97b59db"
         },
         "node_modules/@deepseek-ai/dsh-llm/lib/index.js": {
-          "after": "3810a30c8eeb73b69f8761ba4bded8f79135eadb2d940f3d6b5092f979a687c1",
-          "before": "a800e1c863e7d64f2fee292676b6e96c2184b8d6c73ffbd56a5fc89101893aaa"
+          "after": "06f138a7767b146ad9c64690a92b7e2e3996c5a64dbee2f9ce7051dab8cb508c",
+          "before": "9fa99eb60f0e20921e49a003e9f82fbab8905d85979c06af81e0b6cd3b6b4163"
         }
       }
     },
@@ -43,16 +43,16 @@
           "before": "ae6f429c694ac374b1721d7f7ececd0be429635b3fc46098377a0f6bc2bf4cb0"
         },
         "node_modules/@deepseek-ai/dsh-llm/lib/index.js": {
-          "after": "05f5df0b0a91f33788e9f84b8a7cbfc4d8f4778836f26c45c98b034d2bde8890",
-          "before": "3810a30c8eeb73b69f8761ba4bded8f79135eadb2d940f3d6b5092f979a687c1"
+          "after": "823a78d5be31c175269dfa0de486abe436369ce57fdb1fdea61884656bab3ae0",
+          "before": "06f138a7767b146ad9c64690a92b7e2e3996c5a64dbee2f9ce7051dab8cb508c"
         }
       }
     },
     "companion-compare-output-window.diff": {
       "0.2.2-rc.1": {
         "node_modules/@deepseek-ai/dsh-llm/lib/index.js": {
-          "after": "1531441767d72f938a63be7358efdb54f65e617c5a4b6ab514ff0fa74a14abd4",
-          "before": "4f659541a67d7b089cfd9980cbae25777c8419d7504f3bd8da947182f0c2726b"
+          "after": "c228c5f5336b63b4304d4714b99909f24f94633be983c14a8c2761048d69158e",
+          "before": "95d3255133eaa3880b005835d01ea6c6adce0aae897b3ae49f813c99d6e30a98"
         }
       }
     },
@@ -71,8 +71,8 @@
           "before": "467c6fe08886bb032315ee7783ba972b56c1fd1e8d303d767b7e362abb27c846"
         },
         "node_modules/@deepseek-ai/dsh-llm/lib/index.js": {
-          "after": "4f659541a67d7b089cfd9980cbae25777c8419d7504f3bd8da947182f0c2726b",
-          "before": "05f5df0b0a91f33788e9f84b8a7cbfc4d8f4778836f26c45c98b034d2bde8890"
+          "after": "95d3255133eaa3880b005835d01ea6c6adce0aae897b3ae49f813c99d6e30a98",
+          "before": "823a78d5be31c175269dfa0de486abe436369ce57fdb1fdea61884656bab3ae0"
         }
       }
     },
@@ -91,8 +91,8 @@
     "companion-phone-memory-request.diff": {
       "0.2.2-rc.1": {
         "node_modules/@deepseek-ai/dsh-llm/lib/index.js": {
-          "after": "a800e1c863e7d64f2fee292676b6e96c2184b8d6c73ffbd56a5fc89101893aaa",
-          "before": "e498311537374b963f955f57c9628961d55fdb518e9de77e86cc56f33f3562b3"
+          "after": "9fa99eb60f0e20921e49a003e9f82fbab8905d85979c06af81e0b6cd3b6b4163",
+          "before": "78d499972b3b1a86e52a937960e2269fb3502ae1c35f48ed4cb7bdafc2863f33"
         }
       }
     },
