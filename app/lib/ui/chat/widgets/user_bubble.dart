@@ -213,7 +213,7 @@ class _UserBubbleState extends State<UserBubble> {
           padding: themeStyle.pack == null
               ? const EdgeInsets.symmetric(horizontal: 16, vertical: 8)
               : EdgeInsets.symmetric(horizontal: themeStyle.shapes.bubblePadH, vertical: themeStyle.shapes.bubblePadV),
-          child: MessageSelection(text: _shown, onQuote: onQuote, onMore: () => _menu(context), child: content),
+          child: MessageSelection(text: _shown, onQuote: widget.onQuote, onMore: () => _menu(context), child: content),
         ),
       ),
     );
