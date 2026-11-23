@@ -14678,13 +14678,28 @@ class L10nEn extends L10n {
   String get phoneAutoCollapse => 'Collapse when idle';
 
   @override
-  String get phoneAutoCollapseHint => 'Shrinks to a ball; tap to open';
+  String get phoneAutoCollapseHint =>
+      'Left alone, the card closes and the bar shrinks to a ball; off, only when you tap';
 
   @override
   String get phoneEdgeGlow => 'Screen edge glow';
 
   @override
   String get phoneEdgeGlowHint => 'Light round the screen while DSH works';
+
+  @override
+  String get phoneSystemIsland => 'Show in the system island';
+
+  @override
+  String get phoneSystemIslandHint =>
+      'On HyperOS, ColorOS and MagicOS, progress goes into the system\'s own island instead of the floating bar';
+
+  @override
+  String get phoneSystemIslandOff =>
+      'Turn on Live activity in the notification settings first; until then the floating bar shows';
+
+  @override
+  String get phoneSystemIslandUnsupported => 'This phone has no system island to use; the floating bar shows';
 
   @override
   String get phoneDeveloperOptions => 'Developer options';
@@ -19891,6 +19906,9 @@ class L10nEn extends L10n {
 
   @override
   String get searchKwPhoneEdgeGlow => 'edge glow,glow,light,effect,border';
+
+  @override
+  String get searchKwPhoneSystemIsland => 'island,dynamic island,live updates,floating bar,capsule';
 
   @override
   String get searchKwPhoneReturn => 'return,come back';
@@ -29495,6 +29513,23 @@ class L10nEn extends L10n {
   String get wallpaperDim => 'Dim';
 
   @override
+  String get wallpaperGuard => 'Keep text readable';
+
+  @override
+  String get wallpaperGuardHint =>
+      'Off: blur and brightness follow the sliders exactly, and at 0 you get the original picture';
+
+  @override
+  String get wallpaperGuardMotionHint =>
+      'While an animation plays, only text colours are adjusted; nothing is laid over the picture';
+
+  @override
+  String get wallpaperPlay => 'Play animation';
+
+  @override
+  String get wallpaperPlayHint => 'Shows the first frame when motion is reduced';
+
+  @override
   String get wallpaperReplace => 'Replace picture';
 
   @override
@@ -29502,7 +29537,7 @@ class L10nEn extends L10n {
 
   @override
   String get wallpaperFooter =>
-      'Shown on home, in chats and in the drawer. Lighten applies in light mode, Dim in dark mode; text always stays clear. PNG, JPEG or WebP, up to 15 MB.';
+      'Shown on home, in chats and in the drawer. Lighten applies in light mode, Dim in dark mode. PNG, JPEG, WebP or GIF, up to 15 MB.';
 
   @override
   String get wallpaperChanged => 'Wallpaper changed';
@@ -29548,7 +29583,8 @@ class L10nEn extends L10n {
   String get wallpaperSampleTool => 'Checked 3 weather sources';
 
   @override
-  String get searchKwWallpaper => 'background,background image,chat background,custom background,backdrop,blur,photo';
+  String get searchKwWallpaper =>
+      'background,background image,chat background,custom background,backdrop,blur,photo,animated,gif,live wallpaper';
 
   @override
   String get webTitle => 'DSH Web';
@@ -30648,7 +30684,10 @@ class L10nEn extends L10n {
       'Supports JPEG, PNG, WebP and more, resized before upload. Without one, the first letter of the name is shown.';
 
   @override
-  String get workshopPublishCoverChosen => 'Your cover';
+  String get workshopPublishCoverGenerating => 'Generating a cover. You can also choose your own.';
+
+  @override
+  String get workshopPublishCoverChosen => 'Submission cover';
 
   @override
   String get workshopPublishCoverReplace => 'Replace';

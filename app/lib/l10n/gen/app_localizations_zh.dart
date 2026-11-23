@@ -13919,13 +13919,25 @@ class L10nZh extends L10n {
   String get phoneAutoCollapse => '闲置时自动收起';
 
   @override
-  String get phoneAutoCollapseHint => '收成小球，点按展开';
+  String get phoneAutoCollapseHint => '一会儿不碰就收起卡片、收成小球；关着时只在你点按时收起';
 
   @override
   String get phoneEdgeGlow => '屏幕边缘光效';
 
   @override
   String get phoneEdgeGlowHint => '操控时屏幕四周的流光';
+
+  @override
+  String get phoneSystemIsland => '用系统灵动岛显示';
+
+  @override
+  String get phoneSystemIslandHint => '小米超级岛、ColorOS 流体云、荣耀 MagicOS 上，操作进度放进系统的灵动岛，不再出悬浮条';
+
+  @override
+  String get phoneSystemIslandOff => '要先在通知设置里打开「实时活动」，没打开时仍用悬浮条';
+
+  @override
+  String get phoneSystemIslandUnsupported => '这台手机没有可用的系统灵动岛，用悬浮条';
 
   @override
   String get phoneDeveloperOptions => '开发者选项';
@@ -18875,6 +18887,9 @@ class L10nZh extends L10n {
 
   @override
   String get searchKwPhoneEdgeGlow => '边缘光,光效,流光,特效,边框';
+
+  @override
+  String get searchKwPhoneSystemIsland => '灵动岛,超级岛,流体云,胶囊,实时活动,悬浮条';
 
   @override
   String get searchKwPhoneReturn => '返回,完成后返回';
@@ -27960,13 +27975,28 @@ class L10nZh extends L10n {
   String get wallpaperDim => '压暗';
 
   @override
+  String get wallpaperGuard => '自动保证文字清晰';
+
+  @override
+  String get wallpaperGuardHint => '关闭后完全按上面的滑块，调到 0 就是原图';
+
+  @override
+  String get wallpaperGuardMotionHint => '播放动图时只调文字颜色，画面不加遮罩';
+
+  @override
+  String get wallpaperPlay => '播放动图';
+
+  @override
+  String get wallpaperPlayHint => '减少动效时只显示第一帧';
+
+  @override
   String get wallpaperReplace => '更换图片';
 
   @override
   String get wallpaperPreview => '预览';
 
   @override
-  String get wallpaperFooter => '用于首页、对话和抽屉。提亮在浅色模式、压暗在深色模式下各自生效，文字始终清晰。PNG、JPEG、WebP，15 MB 以内';
+  String get wallpaperFooter => '用于首页、对话和抽屉。提亮在浅色模式、压暗在深色模式下各自生效。PNG、JPEG、WebP、GIF，15 MB 以内';
 
   @override
   String get wallpaperChanged => '壁纸已更换';
@@ -28011,7 +28041,7 @@ class L10nZh extends L10n {
   String get wallpaperSampleTool => '查了 3 个天气来源';
 
   @override
-  String get searchKwWallpaper => '背景,背景图,聊天背景,自定义背景,换背景,模糊,壁纸图片';
+  String get searchKwWallpaper => '背景,背景图,聊天背景,自定义背景,换背景,模糊,壁纸图片,动图,动态壁纸,GIF';
 
   @override
   String get webTitle => 'DSH 网页版';
@@ -29073,7 +29103,10 @@ class L10nZh extends L10n {
   String get workshopPublishCoverHelper => '支持 JPEG、PNG、WebP 等，上传前自动缩小。不选就显示名字的第一个字。';
 
   @override
-  String get workshopPublishCoverChosen => '自选封面';
+  String get workshopPublishCoverGenerating => '正在生成封面，也可以自己选。';
+
+  @override
+  String get workshopPublishCoverChosen => '投稿封面';
 
   @override
   String get workshopPublishCoverReplace => '换一张';

@@ -19,6 +19,7 @@ import '../secret_mask.dart';
 import 'message_actions.dart';
 import 'message_selection.dart';
 import 'quote_chip.dart';
+import 'theme_role_tag.dart';
 
 /// A pasted block with fences, headings or links reads as Markdown instead of
 /// a wall of `**` and ```` ``` ````. Deliberately conservative: ordinary prose,
@@ -188,7 +189,7 @@ class _UserBubbleState extends State<UserBubble> {
             ThemeUserBubbleStyle.outlined => ShapeDecoration(
               color: surfaces.userBubble.withValues(alpha: 0.72),
               shape: themeStyle.bubbleShape(
-                scheme.outlineVariant,
+                themeStyle.userBubbleBorder ?? scheme.outlineVariant,
                 themeStyle.borderWidth.clamp(0.8, 2.0),
               ),
             ),
@@ -198,7 +199,7 @@ class _UserBubbleState extends State<UserBubble> {
             ),
             ThemeUserBubbleStyle.minimal => BoxDecoration(
               border: Border(
-                right: BorderSide(color: scheme.primary, width: 2.5),
+                right: BorderSide(color: themeStyle.rule ?? scheme.primary, width: 2.5),
               ),
             ),
           };
@@ -209,13 +210,16 @@ class _UserBubbleState extends State<UserBubble> {
       child: DecoratedBox(
         decoration: bubbleDecoration,
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          child: MessageSelection(text: _shown, onQuote: widget.onQuote, onMore: () => _menu(context), child: content),
+          padding: themeStyle.pack == null
+              ? const EdgeInsets.symmetric(horizontal: 16, vertical: 8)
+              : EdgeInsets.symmetric(horizontal: themeStyle.shapes.bubblePadH, vertical: themeStyle.shapes.bubblePadV),
+          child: MessageSelection(text: _shown, onQuote: onQuote, onMore: () => _menu(context), child: content),
         ),
       ),
     );
 
     final canToggle = looksLikeMarkdown(body);
+    final roleTag = themeStyle.pack == null ? null : themeRoleTag(context, themeStyle, user: true);
     return LayoutBuilder(
       builder: (context, constraints) {
         final maxWidth = constraints.maxWidth * 0.82;
@@ -226,6 +230,7 @@ class _UserBubbleState extends State<UserBubble> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
+              ?roleTag,
               if (widget.attachments case final a?)
                 ConstrainedBox(
                   constraints: BoxConstraints(maxWidth: maxWidth),

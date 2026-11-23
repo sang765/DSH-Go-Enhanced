@@ -25923,7 +25923,7 @@ abstract class L10n {
   /// No description provided for @phoneAutoCollapseHint.
   ///
   /// In zh, this message translates to:
-  /// **'收成小球，点按展开'**
+  /// **'一会儿不碰就收起卡片、收成小球；关着时只在你点按时收起'**
   String get phoneAutoCollapseHint;
 
   /// No description provided for @phoneEdgeGlow.
@@ -25937,6 +25937,30 @@ abstract class L10n {
   /// In zh, this message translates to:
   /// **'操控时屏幕四周的流光'**
   String get phoneEdgeGlowHint;
+
+  /// No description provided for @phoneSystemIsland.
+  ///
+  /// In zh, this message translates to:
+  /// **'用系统灵动岛显示'**
+  String get phoneSystemIsland;
+
+  /// No description provided for @phoneSystemIslandHint.
+  ///
+  /// In zh, this message translates to:
+  /// **'小米超级岛、ColorOS 流体云、荣耀 MagicOS 上，操作进度放进系统的灵动岛，不再出悬浮条'**
+  String get phoneSystemIslandHint;
+
+  /// No description provided for @phoneSystemIslandOff.
+  ///
+  /// In zh, this message translates to:
+  /// **'要先在通知设置里打开「实时活动」，没打开时仍用悬浮条'**
+  String get phoneSystemIslandOff;
+
+  /// No description provided for @phoneSystemIslandUnsupported.
+  ///
+  /// In zh, this message translates to:
+  /// **'这台手机没有可用的系统灵动岛，用悬浮条'**
+  String get phoneSystemIslandUnsupported;
 
   /// No description provided for @phoneDeveloperOptions.
   ///
@@ -34739,6 +34763,12 @@ abstract class L10n {
   /// In zh, this message translates to:
   /// **'边缘光,光效,流光,特效,边框'**
   String get searchKwPhoneEdgeGlow;
+
+  /// No description provided for @searchKwPhoneSystemIsland.
+  ///
+  /// In zh, this message translates to:
+  /// **'灵动岛,超级岛,流体云,胶囊,实时活动,悬浮条'**
+  String get searchKwPhoneSystemIsland;
 
   /// No description provided for @searchKwPhoneReturn.
   ///
@@ -51054,6 +51084,36 @@ abstract class L10n {
   /// **'压暗'**
   String get wallpaperDim;
 
+  /// No description provided for @wallpaperGuard.
+  ///
+  /// In zh, this message translates to:
+  /// **'自动保证文字清晰'**
+  String get wallpaperGuard;
+
+  /// No description provided for @wallpaperGuardHint.
+  ///
+  /// In zh, this message translates to:
+  /// **'关闭后完全按上面的滑块，调到 0 就是原图'**
+  String get wallpaperGuardHint;
+
+  /// No description provided for @wallpaperGuardMotionHint.
+  ///
+  /// In zh, this message translates to:
+  /// **'播放动图时只调文字颜色，画面不加遮罩'**
+  String get wallpaperGuardMotionHint;
+
+  /// No description provided for @wallpaperPlay.
+  ///
+  /// In zh, this message translates to:
+  /// **'播放动图'**
+  String get wallpaperPlay;
+
+  /// No description provided for @wallpaperPlayHint.
+  ///
+  /// In zh, this message translates to:
+  /// **'减少动效时只显示第一帧'**
+  String get wallpaperPlayHint;
+
   /// No description provided for @wallpaperReplace.
   ///
   /// In zh, this message translates to:
@@ -51069,7 +51129,7 @@ abstract class L10n {
   /// No description provided for @wallpaperFooter.
   ///
   /// In zh, this message translates to:
-  /// **'用于首页、对话和抽屉。提亮在浅色模式、压暗在深色模式下各自生效，文字始终清晰。PNG、JPEG、WebP，15 MB 以内'**
+  /// **'用于首页、对话和抽屉。提亮在浅色模式、压暗在深色模式下各自生效。PNG、JPEG、WebP、GIF，15 MB 以内'**
   String get wallpaperFooter;
 
   /// No description provided for @wallpaperChanged.
@@ -51159,7 +51219,7 @@ abstract class L10n {
   /// No description provided for @searchKwWallpaper.
   ///
   /// In zh, this message translates to:
-  /// **'背景,背景图,聊天背景,自定义背景,换背景,模糊,壁纸图片'**
+  /// **'背景,背景图,聊天背景,自定义背景,换背景,模糊,壁纸图片,动图,动态壁纸,GIF'**
   String get searchKwWallpaper;
 
   /// No description provided for @webTitle.
@@ -53208,10 +53268,16 @@ abstract class L10n {
   /// **'支持 JPEG、PNG、WebP 等，上传前自动缩小。不选就显示名字的第一个字。'**
   String get workshopPublishCoverHelper;
 
+  /// No description provided for @workshopPublishCoverGenerating.
+  ///
+  /// In zh, this message translates to:
+  /// **'正在生成封面，也可以自己选。'**
+  String get workshopPublishCoverGenerating;
+
   /// No description provided for @workshopPublishCoverChosen.
   ///
   /// In zh, this message translates to:
-  /// **'自选封面'**
+  /// **'投稿封面'**
   String get workshopPublishCoverChosen;
 
   /// No description provided for @workshopPublishCoverReplace.
