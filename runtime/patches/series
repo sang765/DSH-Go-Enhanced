@@ -1,6 +1,8 @@
 # One patch per line, in application order. Keep every .diff exactly once.
 cordis-effect-dispose-completion.diff
+cordis-effect-setup-retention.diff
 cordis-inspect-catalog-on-query.diff
+cordis-reflect-empty-notify.diff
 credentials-decimal-refs.diff
 fs-create-exclusive.diff
 install-log-redaction.diff
@@ -14,6 +16,7 @@ route-guard.diff
 client-hmr-closed-response.diff
 client-modules-combo-rebuild.diff
 client-modules-manifest-read.diff
+client-modules-combo-buffer.diff
 schemastery-json-context.diff
 session-title-word-prefix.diff
 str-editor-view-prefix.diff
@@ -178,6 +181,7 @@ profile-root-installation-precedence.diff
 plugin-compatibility-exact-version.diff
 profile-sibling-package-lookup.diff
 profile-runtime-version-validation.diff
+profile-runtime-version-preflight.diff
 messages-usage-evidence.diff
 piai-usage-evidence.diff
 piai-tool-call-id.diff
