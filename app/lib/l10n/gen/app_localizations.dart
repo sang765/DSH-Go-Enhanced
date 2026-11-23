@@ -10316,6 +10316,36 @@ abstract class L10n {
   /// **'她会提起什么'**
   String get companionMenuSignals;
 
+  /// No description provided for @companionAlwaysOn.
+  ///
+  /// In zh, this message translates to:
+  /// **'她一直在'**
+  String get companionAlwaysOn;
+
+  /// No description provided for @companionAlwaysOnHint.
+  ///
+  /// In zh, this message translates to:
+  /// **'离开小屋她也在。通知栏里留着她，可以直接回她一句'**
+  String get companionAlwaysOnHint;
+
+  /// No description provided for @companionAlwaysOnRunning.
+  ///
+  /// In zh, this message translates to:
+  /// **'她在通知栏里陪着你'**
+  String get companionAlwaysOnRunning;
+
+  /// No description provided for @companionAlwaysOnNoNotify.
+  ///
+  /// In zh, this message translates to:
+  /// **'通知被关了，打开后才能在通知栏里回她'**
+  String get companionAlwaysOnNoNotify;
+
+  /// No description provided for @companionAlwaysOnFailed.
+  ///
+  /// In zh, this message translates to:
+  /// **'这次没能留下来，再开一次试试'**
+  String get companionAlwaysOnFailed;
+
   /// No description provided for @companionSignalsHint.
   ///
   /// In zh, this message translates to:
@@ -13247,6 +13277,84 @@ abstract class L10n {
   /// In zh, this message translates to:
   /// **'旧对话（角色未记录）'**
   String get companionLegacyConversation;
+
+  /// No description provided for @companionScreen.
+  ///
+  /// In zh, this message translates to:
+  /// **'陪你看屏幕'**
+  String get companionScreen;
+
+  /// No description provided for @companionScreenHint.
+  ///
+  /// In zh, this message translates to:
+  /// **'隔一会儿看一眼屏幕，有值得说的才开口；看到的不会记下来'**
+  String get companionScreenHint;
+
+  /// No description provided for @companionScreenNeedsAccess.
+  ///
+  /// In zh, this message translates to:
+  /// **'要先打开手机操控的无障碍，或者允许她录屏'**
+  String get companionScreenNeedsAccess;
+
+  /// No description provided for @companionScreenAllowProjection.
+  ///
+  /// In zh, this message translates to:
+  /// **'允许录屏'**
+  String get companionScreenAllowProjection;
+
+  /// No description provided for @companionScreenFrequency.
+  ///
+  /// In zh, this message translates to:
+  /// **'多久开口'**
+  String get companionScreenFrequency;
+
+  /// No description provided for @companionScreenQuiet.
+  ///
+  /// In zh, this message translates to:
+  /// **'安静'**
+  String get companionScreenQuiet;
+
+  /// No description provided for @companionScreenQuietHint.
+  ///
+  /// In zh, this message translates to:
+  /// **'很少开口，只说要紧的'**
+  String get companionScreenQuietHint;
+
+  /// No description provided for @companionScreenNormal.
+  ///
+  /// In zh, this message translates to:
+  /// **'正常'**
+  String get companionScreenNormal;
+
+  /// No description provided for @companionScreenNormalHint.
+  ///
+  /// In zh, this message translates to:
+  /// **'看到有意思的会说一句'**
+  String get companionScreenNormalHint;
+
+  /// No description provided for @companionScreenChatty.
+  ///
+  /// In zh, this message translates to:
+  /// **'话多'**
+  String get companionScreenChatty;
+
+  /// No description provided for @companionScreenChattyHint.
+  ///
+  /// In zh, this message translates to:
+  /// **'多陪你聊几句'**
+  String get companionScreenChattyHint;
+
+  /// No description provided for @companionScreenUsageAccess.
+  ///
+  /// In zh, this message translates to:
+  /// **'让她知道你在用哪个 App'**
+  String get companionScreenUsageAccess;
+
+  /// No description provided for @companionScreenCost.
+  ///
+  /// In zh, this message translates to:
+  /// **'今天大概花了 ¥{amount}'**
+  String companionScreenCost(String amount);
 
   /// No description provided for @automaticDiagnosticsRecover.
   ///
@@ -53097,7 +53205,7 @@ abstract class L10n {
   /// No description provided for @workshopPublishCoverHelper.
   ///
   /// In zh, this message translates to:
-  /// **'PNG，每边不超过 512 像素，不超过 2 MB。不选就显示名字的第一个字。'**
+  /// **'支持 JPEG、PNG、WebP 等，上传前自动缩小。不选就显示名字的第一个字。'**
   String get workshopPublishCoverHelper;
 
   /// No description provided for @workshopPublishCoverChosen.
@@ -53121,19 +53229,19 @@ abstract class L10n {
   /// No description provided for @workshopPublishCoverBadSize.
   ///
   /// In zh, this message translates to:
-  /// **'这张图是空的或超过 2 MB，换一张试试。'**
+  /// **'图片为空或超过 32 MB，换一张试试。'**
   String get workshopPublishCoverBadSize;
 
   /// No description provided for @workshopPublishCoverBadPng.
   ///
   /// In zh, this message translates to:
-  /// **'这不是一张完整的 PNG 图片，换一张试试。'**
+  /// **'图片损坏或格式不支持，换一张试试。'**
   String get workshopPublishCoverBadPng;
 
   /// No description provided for @workshopPublishCoverBadDimensions.
   ///
   /// In zh, this message translates to:
-  /// **'这张图太大了，每边最多 512 像素。缩小后再选。'**
+  /// **'图片分辨率过高，缩小后再选。'**
   String get workshopPublishCoverBadDimensions;
 
   /// No description provided for @workshopPublishCoverUnreadable.

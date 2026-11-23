@@ -5905,6 +5905,21 @@ class L10nEn extends L10n {
   String get companionMenuSignals => 'What she brings up';
 
   @override
+  String get companionAlwaysOn => 'Stay with me';
+
+  @override
+  String get companionAlwaysOnHint => 'She stays when you leave the room, in a notification you can reply to';
+
+  @override
+  String get companionAlwaysOnRunning => 'She\'s with you in the notifications';
+
+  @override
+  String get companionAlwaysOnNoNotify => 'Notifications are off; turn them on to reply to her there';
+
+  @override
+  String get companionAlwaysOnFailed => 'She couldn\'t stay this time; try turning it on again';
+
+  @override
   String get companionSignalsHint =>
       'These are said only to you, here in her room; nothing goes to the model. How often follows How often she speaks up, shared with invitations, and never late at night. On Quiet she says nothing.';
 
@@ -7574,6 +7589,49 @@ class L10nEn extends L10n {
 
   @override
   String get companionLegacyConversation => 'Earlier conversation (character not recorded)';
+
+  @override
+  String get companionScreen => 'Watch the screen with me';
+
+  @override
+  String get companionScreenHint =>
+      'She glances at the screen now and then and only speaks up when something is worth saying; nothing she sees is kept';
+
+  @override
+  String get companionScreenNeedsAccess =>
+      'Turn on phone control\'s accessibility service first, or let her record the screen';
+
+  @override
+  String get companionScreenAllowProjection => 'Allow screen recording';
+
+  @override
+  String get companionScreenFrequency => 'How often she speaks';
+
+  @override
+  String get companionScreenQuiet => 'Quiet';
+
+  @override
+  String get companionScreenQuietHint => 'Rarely, only when it matters';
+
+  @override
+  String get companionScreenNormal => 'Normal';
+
+  @override
+  String get companionScreenNormalHint => 'A word when something catches her eye';
+
+  @override
+  String get companionScreenChatty => 'Chatty';
+
+  @override
+  String get companionScreenChattyHint => 'Talks with you more often';
+
+  @override
+  String get companionScreenUsageAccess => 'Let her know which app you\'re using';
+
+  @override
+  String companionScreenCost(String amount) {
+    return 'About ¥$amount today';
+  }
 
   @override
   String get automaticDiagnosticsRecover => 'Recover local records';
@@ -30587,7 +30645,7 @@ class L10nEn extends L10n {
 
   @override
   String get workshopPublishCoverHelper =>
-      'PNG, up to 512 px a side and 2 MB. Without one, the first letter of the name is shown.';
+      'Supports JPEG, PNG, WebP and more, resized before upload. Without one, the first letter of the name is shown.';
 
   @override
   String get workshopPublishCoverChosen => 'Your cover';
@@ -30599,14 +30657,13 @@ class L10nEn extends L10n {
   String get workshopPublishCoverRemove => 'Remove';
 
   @override
-  String get workshopPublishCoverBadSize => 'This image is empty or larger than 2 MB. Try another.';
+  String get workshopPublishCoverBadSize => 'This image is empty or larger than 32 MB. Try another.';
 
   @override
-  String get workshopPublishCoverBadPng => 'This isn\'t an intact PNG image. Try another.';
+  String get workshopPublishCoverBadPng => 'This image is damaged or in an unsupported format. Try another.';
 
   @override
-  String get workshopPublishCoverBadDimensions =>
-      'This image is too large: 512 px a side at most. Shrink it and choose again.';
+  String get workshopPublishCoverBadDimensions => 'This image has too many pixels. Shrink it and choose again.';
 
   @override
   String get workshopPublishCoverUnreadable => 'Couldn\'t read this image. Try another.';
