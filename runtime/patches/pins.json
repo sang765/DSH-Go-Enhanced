@@ -152,6 +152,30 @@
         }
       }
     },
+    "companion-screen-image.diff": {
+      "0.2.2-rc.1": {
+        "node_modules/@deepseek-ai/dsh-llm-deepseek/lib/index.js": {
+          "after": "4bb17cac3768f19be0f9ea303cfdfb0ce78424003a12ab5a3179ee41b4aa0feb",
+          "before": "ecc4935b23db523a1f6bbd8c901bdf9fc36bc2da498f354fca7dd44485b42dee"
+        },
+        "node_modules/@deepseek-ai/dsh-llm/lib/index.js": {
+          "after": "395e3bb4bfa5b19e950ac0150c8cfc2fcecb2145cb329508bd7f5be2d2a608cb",
+          "before": "c228c5f5336b63b4304d4714b99909f24f94633be983c14a8c2761048d69158e"
+        }
+      }
+    },
+    "companion-screen-piai-image.diff": {
+      "0.2.2-rc.1": {
+        "node_modules/@deepseek-ai/dsh-llm-pi-ai/lib/index.js": {
+          "after": "d15a5360ee8c1f6d9790493b0feb2c7afffc608c23ec9dbc55a51ff5cf41aae4",
+          "before": "817c2ca0d1496d19703c5074013757bcacc7b63cd685840642f24e1edf4a9395"
+        },
+        "node_modules/@deepseek-ai/dsh-llm/lib/index.js": {
+          "after": "460fcaaa348f40ff5ebcf00c4c0acb73e6efce88ab04d592c3502fdc2ee7e7c9",
+          "before": "395e3bb4bfa5b19e950ac0150c8cfc2fcecb2145cb329508bd7f5be2d2a608cb"
+        }
+      }
+    },
     "companion-task-approval-cause.diff": {
       "0.2.2-rc.1": {
         "node_modules/@deepseek-ai/dsh-user-approval/lib/index.js": {
@@ -471,8 +495,8 @@
     "ohos-attachment-diagnostic.diff": {
       "0.2.2-rc.1": {
         "node_modules/@deepseek-ai/dsh-llm-pi-ai/lib/index.js": {
-          "after": "3db3e61348dcd92892d8e86f5ce3a58aa8522d214d4e11d2c6736c1c9537287e",
-          "before": "817c2ca0d1496d19703c5074013757bcacc7b63cd685840642f24e1edf4a9395"
+          "after": "7f47f3c34773c5d94e92e126af656d51fc2c5b53be67b58cbc572a76a44af7ad",
+          "before": "d15a5360ee8c1f6d9790493b0feb2c7afffc608c23ec9dbc55a51ff5cf41aae4"
         }
       }
     },
@@ -603,16 +627,16 @@
     "ohos-piai-empty-models.diff": {
       "0.2.2-rc.1": {
         "node_modules/@deepseek-ai/dsh-llm-pi-ai/lib/index.js": {
-          "after": "3442295328e5154e8a021b2c633501d1d4e971cdafedbc2b0cdf88aa6e71ec70",
-          "before": "3db3e61348dcd92892d8e86f5ce3a58aa8522d214d4e11d2c6736c1c9537287e"
+          "after": "e2efb75438bf2129ce48dea2ec6b2c554291aa8f9578002207113805370abb58",
+          "before": "7f47f3c34773c5d94e92e126af656d51fc2c5b53be67b58cbc572a76a44af7ad"
         }
       }
     },
     "ohos-piai-text-preabort.diff": {
       "0.2.2-rc.1": {
         "node_modules/@deepseek-ai/dsh-llm-pi-ai/lib/index.js": {
-          "after": "9ba6f7e9a95f0d4402604a0bd02935652000839256bacbf1d0f40169abb5b6aa",
-          "before": "3442295328e5154e8a021b2c633501d1d4e971cdafedbc2b0cdf88aa6e71ec70"
+          "after": "62dc42bdb2c5fd12f0223de24cdd8645ecbfbe0bbb8cc2de8b1cd1d6f475f478",
+          "before": "e2efb75438bf2129ce48dea2ec6b2c554291aa8f9578002207113805370abb58"
         }
       }
     },
@@ -1029,6 +1053,14 @@
         "node_modules/@deepseek-ai/dsh-tool-schedule/lib/index.js": {
           "after": "171aca26959573cd7906bcd90121d8cc2ae9016f01f64a60a36414f30cf2953c",
           "before": "42988ed17a706b69a190db1117b7acf067a6a0418d778353ce247f874b6e646b"
+        }
+      }
+    },
+    "schedule-private-scope.diff": {
+      "0.2.2-rc.1": {
+        "node_modules/@deepseek-ai/dsh-schedule/lib/index.js": {
+          "after": "b4869ba610457368a3b6875795c91e4e65c85729f37812a2bca79c8fcd118337",
+          "before": "a89c6b8a6aa0e087cbee8df5dcf792629d1452f6838cd16ff7ac813db114e099"
         }
       }
     },
@@ -3025,6 +3057,7 @@
       "piai-overflow-output-limit.diff",
       "schedule-authorization-availability.diff",
       "schedule-task-schema-on-demand.diff",
+      "schedule-private-scope.diff",
       "deepseek-refusal.diff",
       "deepseek-unnamed-stream-error.diff",
       "discovery-capabilities.diff",
@@ -3054,6 +3087,8 @@
       "companion-find-drafts-files.diff",
       "companion-read-file-capacity.diff",
       "companion-compare-output-window.diff",
+      "companion-screen-image.diff",
+      "companion-screen-piai-image.diff",
       "companion-receipt-file-bytes.diff",
       "web-table-pipes.diff",
       "ohos-web-converter-lazy.diff",
@@ -3240,6 +3275,7 @@
       "piai-overflow-output-limit.diff",
       "schedule-authorization-availability.diff",
       "schedule-task-schema-on-demand.diff",
+      "schedule-private-scope.diff",
       "deepseek-refusal.diff",
       "deepseek-unnamed-stream-error.diff",
       "discovery-capabilities.diff",
@@ -3269,6 +3305,8 @@
       "companion-find-drafts-files.diff",
       "companion-read-file-capacity.diff",
       "companion-compare-output-window.diff",
+      "companion-screen-image.diff",
+      "companion-screen-piai-image.diff",
       "companion-receipt-file-bytes.diff",
       "web-table-pipes.diff",
       "ohos-web-converter-lazy.diff",

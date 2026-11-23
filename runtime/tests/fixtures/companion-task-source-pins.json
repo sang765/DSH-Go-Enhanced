@@ -39,11 +39,11 @@
   "model_sources": {
     "android": {
       "@deepseek-ai/dsh-llm/lib/index.js": {
-        "sha256": "c228c5f5336b63b4304d4714b99909f24f94633be983c14a8c2761048d69158e",
+        "sha256": "460fcaaa348f40ff5ebcf00c4c0acb73e6efce88ab04d592c3502fdc2ee7e7c9",
         "destination": "dsh-llm/index.lookup-window.js"
       },
       "@deepseek-ai/dsh-llm-deepseek/lib/index.js": {
-        "sha256": "ecc4935b23db523a1f6bbd8c901bdf9fc36bc2da498f354fca7dd44485b42dee",
+        "sha256": "4bb17cac3768f19be0f9ea303cfdfb0ce78424003a12ab5a3179ee41b4aa0feb",
         "destination": "dsh-llm-deepseek/index.lookup-window.js"
       },
       "@deepseek-ai/dsh-agent/lib/index.js": {
@@ -73,11 +73,11 @@
     },
     "ohos": {
       "@deepseek-ai/dsh-llm/lib/index.js": {
-        "sha256": "c228c5f5336b63b4304d4714b99909f24f94633be983c14a8c2761048d69158e",
+        "sha256": "460fcaaa348f40ff5ebcf00c4c0acb73e6efce88ab04d592c3502fdc2ee7e7c9",
         "destination": "dsh-llm/index.lookup-window.js"
       },
       "@deepseek-ai/dsh-llm-deepseek/lib/index.js": {
-        "sha256": "ecc4935b23db523a1f6bbd8c901bdf9fc36bc2da498f354fca7dd44485b42dee",
+        "sha256": "4bb17cac3768f19be0f9ea303cfdfb0ce78424003a12ab5a3179ee41b4aa0feb",
         "destination": "dsh-llm-deepseek/index.lookup-window.js"
       },
       "@deepseek-ai/dsh-agent/lib/index.js": {
