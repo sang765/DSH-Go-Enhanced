@@ -39,7 +39,7 @@
   "model_sources": {
     "android": {
       "@deepseek-ai/dsh-llm/lib/index.js": {
-        "sha256": "460fcaaa348f40ff5ebcf00c4c0acb73e6efce88ab04d592c3502fdc2ee7e7c9",
+        "sha256": "a4186aebefa4f3f918a428891c13890ffb7e7bfffa6cc2fa1f52a7e233ac1336",
         "destination": "dsh-llm/index.lookup-window.js"
       },
       "@deepseek-ai/dsh-llm-deepseek/lib/index.js": {
@@ -73,7 +73,7 @@
     },
     "ohos": {
       "@deepseek-ai/dsh-llm/lib/index.js": {
-        "sha256": "460fcaaa348f40ff5ebcf00c4c0acb73e6efce88ab04d592c3502fdc2ee7e7c9",
+        "sha256": "a4186aebefa4f3f918a428891c13890ffb7e7bfffa6cc2fa1f52a7e233ac1336",
         "destination": "dsh-llm/index.lookup-window.js"
       },
       "@deepseek-ai/dsh-llm-deepseek/lib/index.js": {

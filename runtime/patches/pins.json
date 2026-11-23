@@ -56,6 +56,14 @@
         }
       }
     },
+    "companion-agent-model-call.diff": {
+      "0.2.2-rc.1": {
+        "node_modules/@deepseek-ai/dsh-llm/lib/index.js": {
+          "after": "a4186aebefa4f3f918a428891c13890ffb7e7bfffa6cc2fa1f52a7e233ac1336",
+          "before": "460fcaaa348f40ff5ebcf00c4c0acb73e6efce88ab04d592c3502fdc2ee7e7c9"
+        }
+      }
+    },
     "companion-auxiliary-single-request.diff": {
       "0.2.2-rc.1": {
         "node_modules/@deepseek-ai/dsh-llm-deepseek/lib/index.js": {
@@ -335,6 +343,14 @@
         "node_modules/@deepseek-ai/dsh-file-reference-local/lib/index.js": {
           "after": "6b9316d8cc57c228fabff1f2b8bbea612ff1a48a58781cf7ab014546ce741082",
           "before": "158927a41db5c86c781e9e03073f76e7e0c4fa6b69f7eb4ec4345021fbd26921"
+        }
+      }
+    },
+    "file-reference-ranked-page.diff": {
+      "0.2.2-rc.1": {
+        "node_modules/@deepseek-ai/dsh-file-reference-local/lib/index.js": {
+          "after": "d38a9bd0b98234315a9224a67c1357e5cce00a306c243641362a251e7f2692da",
+          "before": "3491e50c9cd4031027331dc21a3de6d84530c87b9d351dcee24d31875750263c"
         }
       }
     },
@@ -711,7 +727,7 @@
     "ohos-skill-root-events.diff": {
       "0.2.2-rc.1": {
         "node_modules/@deepseek-ai/dsh-skill-filesystem/lib/index.js": {
-          "after": "1850d4428432d2b0f1e0ddf237b800b4bf2087a8eed3a466475f56ac32b24ea4",
+          "after": "52d1c912ba87133162e23170c1f4a74f219dae8e4f1c62c7acfc6d556b961646",
           "before": "54d0833039aa6b5875338a259f8f7baa90d9365cd2458a6ce710364ae6ffd4ef"
         }
       }
@@ -785,6 +801,30 @@
         "node_modules/@deepseek-ai/dsh-otel/lib/index.js": {
           "after": "a0fc967c148bfa896a0252f19078a7c8f75731cc770afa8928028149e2f10e01",
           "before": "0728ddddf76c16193fc92a76d67863d4c0879e1d369e4b6ec4ded78efde53c70"
+        }
+      }
+    },
+    "otel-stable-attributes-imports.diff": {
+      "0.2.2-rc.1": {
+        "node_modules/@opentelemetry/core/build/src/platform/node/sdk-info.js": {
+          "after": "6d72b14827a35ea64d7a712dc4b0abeab379079ec105f996cae9bac153ffb79f",
+          "before": "653cee1e33ac6198c8dc794000224a7328288e9445abd82f915fecff39a32cd9"
+        },
+        "node_modules/@opentelemetry/resources/build/src/ResourceImpl.js": {
+          "after": "e05a077f05aa48d05362bc9c3bb9609baf7c9d71fa058d0693b51226caa912e6",
+          "before": "f6ce6fd1d68d8aac655dbfc26449fffa8f1c5351731eb5d136eae3381322d31f"
+        },
+        "node_modules/@opentelemetry/resources/build/src/detectors/EnvDetector.js": {
+          "after": "f4639c3781604ecf64771dd0197ce6cb1e786b70ccbfb99616287421562795cc",
+          "before": "069615dda8ece45208708cb49a5f682c81db77893b09e6e1b40763c6141761d3"
+        },
+        "node_modules/@opentelemetry/sdk-logs/build/src/LogRecordImpl.js": {
+          "after": "4ae740e0752a817cfe801e395a558ba4e417813ec4c3ab58da8218ba45d0e010",
+          "before": "525183b7b85f5b3e35f00248a76bb792272f24b59e70ac52935b18db8fe45d9d"
+        },
+        "node_modules/@opentelemetry/semantic-conventions/package.json": {
+          "after": "40463f0821a8b1900cce89a7c51cfa3cf2fe07e426ca5bd5add51b27776c5205",
+          "before": "c79fb41efe3195b401b2757c2907c54b0f05231dc78e3db53e9a778b66550844"
         }
       }
     },
@@ -1199,6 +1239,14 @@
         "node_modules/@deepseek-ai/dsh-tools/lib/shared-DTdn5dXO.js": {
           "after": "74d06fece2b46e0b9637a90f1c5682270a22ea743a37b753f5e869140ef83a71",
           "before": "d02f0d8f36878313b0dae3a1bba5b77f7db4cffc77a0b72772048a36bacf2cf0"
+        }
+      }
+    },
+    "tool-schema-local-intrinsic-identity.diff": {
+      "0.2.2-rc.1": {
+        "node_modules/@deepseek-ai/dsh-tools/lib/shared-DTdn5dXO.js": {
+          "after": "43d3e2794284f4506480172d44cf07daa3df44acae68e873ec22a0bb7698ae8f",
+          "before": "c5fcbb4478265adde30a0fd898c7c934cff8ee5886a7a8a14ea1352c2c352dee"
         }
       }
     },
@@ -2919,6 +2967,7 @@
       "zzzzzzz-grep-retention-preview.diff",
       "glob-card-source-retention.diff",
       "file-reference-basename-match.diff",
+      "file-reference-ranked-page.diff",
       "zzzzzzz-input-recovery.diff",
       "zzzzzzz-job-follow-removal.diff",
       "search-card-byte-budget.diff",
@@ -2935,6 +2984,7 @@
       "zzzzzzz-reference-encoding.diff",
       "otel-product-transport-lazy.diff",
       "otel-log-transformer-imports.diff",
+      "otel-stable-attributes-imports.diff",
       "zzzzzzz-retainer-decode-copy.diff",
       "zzzzzzz-settings-local-redaction.diff",
       "zzzzzzz-skill-watcher-recheck.diff",
@@ -3034,6 +3084,7 @@
       "tool-schema-keyword-types.diff",
       "tool-schema-intrinsic-source.diff",
       "tool-schema-rule-pair-fields.diff",
+      "tool-schema-local-intrinsic-identity.diff",
       "zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz-phone-run-end-schema.diff",
       "zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz-phone-run-end-retry.diff",
       "zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz-phone-run-end-live-retry.diff",
@@ -3089,11 +3140,14 @@
       "companion-compare-output-window.diff",
       "companion-screen-image.diff",
       "companion-screen-piai-image.diff",
+      "companion-agent-model-call.diff",
       "companion-receipt-file-bytes.diff",
       "web-table-pipes.diff",
       "ohos-web-converter-lazy.diff",
       "office-converter-lazy.diff",
-      "input-recovery.diff"
+      "input-recovery.diff",
+      "ohos-client-hmr-idle.diff",
+      "ohos-skill-root-events.diff"
     ],
     "ohos": [
       "cordis-effect-dispose-completion.diff",
@@ -3137,6 +3191,7 @@
       "zzzzzzz-grep-retention-preview.diff",
       "glob-card-source-retention.diff",
       "file-reference-basename-match.diff",
+      "file-reference-ranked-page.diff",
       "zzzzzzz-input-recovery.diff",
       "zzzzzzz-job-follow-removal.diff",
       "search-card-byte-budget.diff",
@@ -3153,6 +3208,7 @@
       "zzzzzzz-reference-encoding.diff",
       "otel-product-transport-lazy.diff",
       "otel-log-transformer-imports.diff",
+      "otel-stable-attributes-imports.diff",
       "zzzzzzz-retainer-decode-copy.diff",
       "zzzzzzz-settings-local-redaction.diff",
       "zzzzzzz-skill-watcher-recheck.diff",
@@ -3252,6 +3308,7 @@
       "tool-schema-keyword-types.diff",
       "tool-schema-intrinsic-source.diff",
       "tool-schema-rule-pair-fields.diff",
+      "tool-schema-local-intrinsic-identity.diff",
       "zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz-phone-run-end-schema.diff",
       "zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz-phone-run-end-retry.diff",
       "zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz-phone-run-end-live-retry.diff",
@@ -3307,11 +3364,14 @@
       "companion-compare-output-window.diff",
       "companion-screen-image.diff",
       "companion-screen-piai-image.diff",
+      "companion-agent-model-call.diff",
       "companion-receipt-file-bytes.diff",
       "web-table-pipes.diff",
       "ohos-web-converter-lazy.diff",
       "office-converter-lazy.diff",
       "input-recovery.diff",
+      "ohos-client-hmr-idle.diff",
+      "ohos-skill-root-events.diff",
       "ohos-attachment-publication.diff",
       "ohos-attachment-diagnostic.diff",
       "ohos-hap-native-libraries.diff",
@@ -3344,9 +3404,7 @@
       "ohos-mcp-command-router.diff",
       "ohos-workspace-grant-paths.diff",
       "ohos-workspace-edit.diff",
-      "ohos-client-hmr-idle.diff",
       "ohos-image-codec.diff",
-      "ohos-skill-root-events.diff",
       "ohos-piai-empty-models.diff",
       "ohos-mcp-start-close.diff",
       "ohos-jobs-active.diff",

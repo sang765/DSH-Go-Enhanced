@@ -43,6 +43,11 @@ void main() {
       expect(normalizeMath(r'$5 and $10, but $x^2$ is maths'), r'$5 and $10, but \(x^2\) is maths');
     });
 
+    test('a scan with no delimiter changes reuses its input', () {
+      final source = '${'正文 ' * 100}${r'cost $5 and $10; run `echo $HOME $PATH`'}';
+      expect(normalizeMath(source, streaming: true), same(source));
+    });
+
     test('escaped dollars are literal', () {
       expect(normalizeMath(r'cost \$5 and \$10'), r'cost \$5 and \$10');
       expect(normalizeMath(r'$\$5 + x$'), r'\(\$5 + x\)');
@@ -249,6 +254,13 @@ void main() {
     check('$sealed```sh\necho "\$HOME"');
     check('$sealed```sh\necho "\$HOME"\n| A | B |\n|---|---|\n');
     expect(lengths, isEmpty, reason: 'an open code body passes through preparation unchanged');
+
+    // A list step's fence indented up to three spaces is trusted like a flush one.
+    const step = '1. Run:\n\n   ```sh\n   echo "\$HOME"\n   ```\n\n';
+    check(sealed + step);
+    lengths.clear();
+    check('$sealed${step}red');
+    expect(lengths, [3]);
 
     for (final (start, more) in [
       ('prefix ```inline\n```dart\nx\n```\n\n', r'tail $x$'),

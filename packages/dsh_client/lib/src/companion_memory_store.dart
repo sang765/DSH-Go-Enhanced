@@ -23,6 +23,7 @@ part 'companion_memory_scope_store.dart';
 part 'companion_memory_maintenance_store.dart';
 part 'companion_affinity_store.dart';
 part 'companion_memory_embedding_store.dart';
+part 'companion_notice_store.dart';
 
 const _memoryEvidenceSelect = '''
   SELECT s.*, m.role, m.scope, m.first_seq, m.said_at_utc, m.offset_minutes, m.edited_at_utc
@@ -83,7 +84,7 @@ class CompanionMemoryStore {
       _db.execute('PRAGMA foreign_keys = ON');
       _db.execute('PRAGMA busy_timeout = 1000');
       final version = _db.select('PRAGMA user_version').single['user_version'] as int;
-      if (version > 16) {
+      if (version > 17) {
         throw const DshRemoteException('companion/newer-store', 'This memory store needs a newer app', {'status': 409});
       }
       if (version == 0) {
@@ -307,6 +308,7 @@ class CompanionMemoryStore {
           _db.execute('PRAGMA user_version = 16');
         });
       }
+      if (version < 17) _migrateNotices();
       _transaction(() {
         // A cold process can read old effects, but cannot retry an unknown
         // dispatched maintenance source under a new claim identity.
@@ -376,6 +378,7 @@ class CompanionMemoryStore {
   MemoryRow _card(Row row, {bool includeEvidence = true}) => {
     ...row,
     'layer': _memoryLayer(row.containsKey('collection') ? row['collection'] as String : 'about_you'),
+    if (row['collection'] == 'recent') 'source': _noticeSource(row['id'] as String),
     'keywords': (jsonDecode(row['keywords'] as String) as List).cast<String>(),
     'pinned': row['pinned'] == 1,
     'eligible': row['eligible'] == 1,
@@ -464,10 +467,18 @@ class CompanionMemoryStore {
             }
             continue;
           }
+          final controlled = _bodyControlledTopics(memory.text, characterId: null);
+          if (controlled.length > 1) {
+            throw const DshRemoteException(
+              'companion/invalid-request',
+              'Legacy memory matches multiple controlled topics',
+              {'status': 400, 'reason': 'ambiguous_controlled_topic'},
+            );
+          }
           final id = _createId();
-          final topic = _createId();
+          final topic = controlled.isEmpty ? _createId() : controlled.single;
           final real = realIds.contains(oldId);
-          _db.execute('INSERT INTO memory_topics(id) VALUES(?)', [topic]);
+          if (controlled.isEmpty) _db.execute('INSERT INTO memory_topics(id) VALUES(?)', [topic]);
           _db.execute(
             '''
         INSERT INTO memory_cards(id, row_rev, kind, text, keywords, pinned, eligible,
@@ -817,6 +828,23 @@ class CompanionMemoryStore {
     _db.execute('DELETE FROM memory_card_sources WHERE card_id=? AND support_group=?', [cardId, groupId]);
   }
 
+  ({int basis, int sourceAt}) _currentParentSourceValues(Row card) {
+    var basis = 0, sourceAt = 0;
+    for (final parent in _db.select(
+      '''
+      SELECT p.id,p.current_basis_seq,p.source_at_ms FROM memory_card_references r
+      JOIN memory_cards p ON p.id=r.parent_card_id AND p.row_rev=r.parent_row_rev
+      WHERE r.card_id=? AND (p.character_id IS NULL OR p.character_id IS ?)
+    ''',
+      [card['id'], card['character_id']],
+    )) {
+      if (!_memoryReferencesCurrent(parent['id'] as String)) continue;
+      basis = math.max(basis, parent['current_basis_seq'] as int? ?? 0);
+      sourceAt = math.max(sourceAt, parent['source_at_ms'] as int);
+    }
+    return (basis: basis, sourceAt: sourceAt);
+  }
+
   void _refreshSources(Set<String> affected, {bool eraseUnsupported = false}) {
     for (final id in affected) {
       final card = _db.select('SELECT * FROM memory_cards WHERE id=?', [id]).single;
@@ -833,15 +861,16 @@ class CompanionMemoryStore {
         _deleteCards([id]);
         continue;
       }
+      final parents = !manual && supported ? _currentParentSourceValues(card) : (basis: 0, sourceAt: 0);
       final sourceAt = manual || !supported
           ? card['source_at_ms']
-          : sources.map((source) => source['at'] as int).reduce(math.max);
+          : math.max(parents.sourceAt, sources.map((source) => source['at'] as int).reduce(math.max));
       // Cancellation is an explicit later user control, not an inferred tense
       // or the timestamp of a remaining older proof.
       final basis = manual || const ['cancelled', 'postponed'].contains(card['plan_state'])
           ? card['current_basis_seq']
           : supported
-          ? sources.map((source) => source['first_seq'] as int).reduce(math.max)
+          ? math.max(parents.basis, sources.map((source) => source['first_seq'] as int).reduce(math.max))
           : null;
       final keywords = (jsonDecode(card['keywords'] as String) as List)
           .cast<String>()
@@ -1216,16 +1245,19 @@ class CompanionMemoryStore {
     _db.execute("UPDATE memory_events SET state='done',reason=? WHERE seq=?", [reason, message['event_seq']]);
   }
 
-  void _deleteCards(Iterable<String> ids) {
+  void _deleteCards(Iterable<String> ids, {Set<String> retainTopics = const {}}) {
     for (final id in ids) {
       final rows = _db.select('SELECT topic_id FROM memory_cards WHERE id=?', [id]);
       if (rows.isEmpty) continue;
       _db.execute("UPDATE memory_migrations SET result='forgotten' WHERE local_card_id=?", [id]);
+      _forgetNoticeCard(id);
       _db.execute('DELETE FROM memory_cards WHERE id=?', [id]);
-      _db.execute('DELETE FROM memory_topics WHERE id=? AND NOT EXISTS(SELECT 1 FROM memory_cards WHERE topic_id=?)', [
-        rows.single['topic_id'],
-        rows.single['topic_id'],
-      ]);
+      if (!retainTopics.contains(rows.single['topic_id'])) {
+        _db.execute('DELETE FROM memory_topics WHERE id=? AND NOT EXISTS(SELECT 1 FROM memory_cards WHERE topic_id=?)', [
+          rows.single['topic_id'],
+          rows.single['topic_id'],
+        ]);
+      }
     }
   }
 
@@ -1258,13 +1290,14 @@ class CompanionMemoryStore {
   Set<String> _removeFactRelations(
     Set<String> roots, {
     String? retainTargetId,
+    Set<String> retainTopics = const {},
     bool deleteChat = false,
     void Function(Set<String> changedCardIds)? beforeWrite,
     List<MemoryRow>? domainSnapshot,
   }) {
     final plan = _planFactRelations(roots, deleteChat: deleteChat, domainSnapshot: domainSnapshot);
     beforeWrite?.call(plan.cards);
-    _applyFactRemoval(plan, retainIds: {?retainTargetId});
+    _applyFactRemoval(plan, retainIds: {?retainTargetId}, retainTopics: retainTopics);
     return plan.cards;
   }
 
@@ -1280,6 +1313,10 @@ class CompanionMemoryStore {
     final ending = RegExp(r'[。.!！?？]+$');
     final clauseBreak = RegExp(r'[，,。.;；\r\n]+');
     bool containsBody(MemoryRow card, MemoryRow old) {
+      // Equal words do not join independent external events or a later fact
+      // that the user supplied in their own chat. Notice references are not
+      // allowed, so these roots have only their explicit source identity.
+      if (card['collection'] == 'recent' || old['collection'] == 'recent') return false;
       final text = card['text'] as String;
       if (_containsCardText(text, old)) return true;
       final original = normalizeMemoryText(old['text'] as String);
@@ -1389,8 +1426,12 @@ class CompanionMemoryStore {
     return _MemoryRemovalPlan(deleting, rawSources);
   }
 
-  void _applyFactRemoval(_MemoryRemovalPlan plan, {Set<String> retainIds = const {}}) {
-    _deleteCards(plan.cards.where((id) => !retainIds.contains(id)));
+  void _applyFactRemoval(
+    _MemoryRemovalPlan plan, {
+    Set<String> retainIds = const {},
+    Set<String> retainTopics = const {},
+  }) {
+    _deleteCards(plan.cards.where((id) => !retainIds.contains(id)), retainTopics: retainTopics);
     for (final id in plan.rawSources) {
       final rows = _db.select('SELECT * FROM memory_messages WHERE id=?', [id]);
       if (rows.isEmpty) {
@@ -1571,6 +1612,7 @@ class CompanionMemoryStore {
       _currentAnchor(card, at) && !const ['cancelled', 'postponed'].contains(card['plan_state']);
 
   bool _currentAnchor(MemoryRow card, int at) =>
+      card['collection'] != 'recent' &&
       card['scope'] == 'real' &&
       card['eligible'] == true &&
       card['status'] == 'current' &&
@@ -1813,6 +1855,21 @@ class CompanionMemoryStore {
     }.toList()..sort();
   }
 
+  // Match the final card body, not other source clauses or another role's controls.
+  List<String> _bodyControlledTopics(String text, {required String? characterId}) => _controlledTopics(
+    {'text': text, 'evidence': const <MemoryRow>[]},
+    controls: [
+      for (final row in _db.select(
+        "SELECT id,control_anchors FROM memory_topics WHERE character_id IS ? AND mode IN ('less','never')",
+        [characterId],
+      ))
+        {
+          'topic_id': row['id'],
+          'anchors': (jsonDecode(row['control_anchors'] as String) as List<Object?>).cast<String>(),
+        },
+    ],
+  );
+
   void recordInvalidProposal(MemoryBatch batch) => _transaction(() {
     if (!isBatchCurrent(batch)) return;
     _db.execute(
@@ -2030,7 +2087,8 @@ class CompanionMemoryStore {
     final cutoff = archive['history_after_seq'] as int;
     final rows = <MemoryRow>[];
     for (final card in source ?? cards()) {
-      if (card['scope'] != 'real' ||
+      if (card['collection'] == 'recent' ||
+          card['scope'] != 'real' ||
           card['eligible'] != true ||
           card['topic_mode'] == 'never' ||
           const ['cancelled', 'postponed'].contains(card['plan_state']) ||
@@ -2261,7 +2319,7 @@ class CompanionMemoryStore {
     String? batchId,
     String? maintenanceClaimId,
   }) {
-    if (!const ['chat', 'extract', 'organize', 'followup'].contains(category) ||
+    if (!const ['chat', 'extract', 'organize', 'followup', 'notice'].contains(category) ||
         provider.isEmpty ||
         model.isEmpty ||
         _usageCount(inputTokens) == null ||
@@ -2987,7 +3045,16 @@ class CompanionMemoryStore {
     required int maxPerDay,
     required int gapMs,
     String? followupId,
+    String? noticeEventId,
+    String? noticePersonId,
   }) {
+    if (noticeEventId != null) {
+      _noticeIdentity(noticeEventId);
+      if (noticePersonId != null) _noticeIdentity(noticePersonId);
+      if (kind != 'signal' || followupId != null) throw ArgumentError('A notice must be a signal');
+    } else if (noticePersonId != null) {
+      throw ArgumentError('Missing notice event');
+    }
     if (nowMs < 0 || nowMs > 8640000000000000) throw ArgumentError('Invalid initiative clock');
     return _transaction(() {
       final states = _db.select('SELECT * FROM memory_initiative_state WHERE singleton=1');
@@ -3005,6 +3072,9 @@ class CompanionMemoryStore {
         [nowMs - 86400000],
       );
       if (spent.length >= maxPerDay || (spent.isNotEmpty && nowMs - (spent.last['at'] as int) < gapMs)) return null;
+      if (noticeEventId != null && !_noticeMaySpeak(eventId: noticeEventId, personId: noticePersonId, nowMs: nowMs)) {
+        return null;
+      }
       if (kind == 'followup') {
         if (spent.any((row) => row['kind'] == 'followup')) return null;
         final rows = _db.select('SELECT * FROM memory_followups WHERE id=?', [followupId]);
@@ -3020,6 +3090,9 @@ class CompanionMemoryStore {
       ''',
         [id, followupId, kind, nowMs],
       );
+      if (noticeEventId != null) {
+        _db.execute('INSERT INTO memory_notice_spends(spend_id,person_id) VALUES(?,?)', [id, noticePersonId]);
+      }
       return id;
     });
   }
@@ -3308,6 +3381,13 @@ class CompanionMemoryStore {
       final id = memory.id.toLowerCase();
       final rows = _db.select('SELECT * FROM memory_cards WHERE id = ?', [id]);
       final previous = rows.isEmpty ? null : rows.single;
+      if (previous?['collection'] == 'recent') {
+        throw const DshRemoteException(
+          'companion/notice-readonly',
+          'Notice summaries can be forgotten; chat confirmation creates a separate memory',
+          {'status': 400},
+        );
+      }
       if ((previous == null && expectedRowRev != null) || (previous != null && previous['row_rev'] != expectedRowRev)) {
         throw _conflict;
       }
@@ -3315,19 +3395,9 @@ class CompanionMemoryStore {
       if (at < 0 || at > 8640000000000000) {
         throw const DshRemoteException('companion/unavailable', 'Companion clock is unavailable', {'status': 503});
       }
-      final controlled = previous == null
-          ? _controlledTopics(
-              {'text': memory.text, 'evidence': const <MemoryRow>[]},
-              controls: [
-                for (final row in _db.select(
-                  "SELECT id,control_anchors FROM memory_topics WHERE character_id IS NULL AND mode IN ('less','never')",
-                ))
-                  {
-                    'topic_id': row['id'],
-                    'anchors': (jsonDecode(row['control_anchors'] as String) as List<Object?>).cast<String>(),
-                  },
-              ],
-            )
+      final changedText = previous == null || previous['text'] != memory.text;
+      final controlled = changedText
+          ? _bodyControlledTopics(memory.text, characterId: previous?['character_id'] as String?)
           : const <String>[];
       if (controlled.length > 1) {
         throw const DshRemoteException(
@@ -3336,8 +3406,7 @@ class CompanionMemoryStore {
           {'status': 400, 'reason': 'ambiguous_controlled_topic'},
         );
       }
-      final topic = previous?['topic_id'] ?? (controlled.isEmpty ? _createId() : controlled.single);
-      final changedText = previous == null || previous['text'] != memory.text;
+      final topic = controlled.isEmpty ? (previous?['topic_id'] as String?) ?? _createId() : controlled.single;
       final changedContext =
           previous == null ||
           changedText ||
@@ -3352,6 +3421,7 @@ class CompanionMemoryStore {
         _removeFactRelations(
           {id},
           retainTargetId: id,
+          retainTopics: controlled.toSet(),
           domainSnapshot: _memoryDomainCards(previous['character_id'] as String?)
               .where((card) => card['character_id'] == previous['character_id'])
               .toList(),
@@ -3365,7 +3435,7 @@ class CompanionMemoryStore {
           topic_id, current_basis_seq, source_at_ms, created_at_ms, updated_at_ms, expires_at_ms, status,
           cleanup_history_complete)
         VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        ON CONFLICT(id) DO UPDATE SET row_rev=excluded.row_rev, kind=excluded.kind,
+        ON CONFLICT(id) DO UPDATE SET row_rev=excluded.row_rev, kind=excluded.kind, topic_id=excluded.topic_id,
           text=excluded.text, keywords=excluded.keywords, pinned=excluded.pinned,
           eligible=excluded.eligible, manual=excluded.manual, current_basis_seq=excluded.current_basis_seq,
           source_at_ms=excluded.source_at_ms, updated_at_ms=excluded.updated_at_ms,

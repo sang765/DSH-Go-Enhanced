@@ -15,16 +15,19 @@ import 'package:dsh_app/companion/companion_maps.dart';
 import 'package:dsh_app/companion/companion_memory.dart';
 import 'package:dsh_app/companion/companion_memory_worker.dart';
 import 'package:dsh_app/companion/companion_moves.dart';
+import 'package:dsh_app/companion/companion_notice_channel.dart';
 import 'package:dsh_app/companion/companion_pack.dart';
 import 'package:dsh_app/companion/companion_public_lookup.dart';
 import 'package:dsh_app/companion/companion_signal_consent.dart';
 import 'package:dsh_app/companion/companion_signals.dart';
 import 'package:dsh_app/companion/companion_state.dart';
 import 'package:dsh_app/companion/companion_widget.dart';
+import 'package:dsh_app/state/android_features.dart';
 import 'package:dsh_app/notify/chat_alerts.dart';
 import 'package:dsh_app/pets/pet_signals.dart';
 import 'package:dsh_app/state/connection_state.dart';
 import 'package:dsh_app/state/hosts_state.dart';
+import 'package:dsh_app/state/models_state.dart';
 import 'package:dsh_client/dsh_client.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -34,6 +37,7 @@ import 'package:http/testing.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sqlite3/sqlite3.dart';
 
+import 'companion_notice_triage_test.dart' show FakeCompanionNotices;
 import '../../../packages/dsh_client/test/support/companion_signal_host.dart';
 
 final _now = DateTime.utc(2026, 11, 22, 10).millisecondsSinceEpoch;
@@ -457,9 +461,11 @@ class _Visit {
     http.Response? Function(http.Request request)? auxiliary,
     Future<void> Function(Map<String, Object?> body)? beforeReply,
     _RoomUi? roomUi,
+    CompanionNotices? notices,
     CompanionInitiativeClock Function()? clock,
     CompanionMemoryTransport Function()? memoryTransport,
     HostConnection? connection,
+    ModelCatalog? catalog,
   }) async {
     int now() => clock?.call().wallMs ?? _now;
     final root = await Directory.systemTemp.createTemp('agent-public-visit-');
@@ -514,8 +520,13 @@ class _Visit {
     });
     visit._container = ProviderContainer(
       overrides: [
+        if (notices != null) ...[
+          operatingSystemProvider.overrideWithValue('android'),
+          companionNoticesProvider.overrideWithValue(notices),
+        ],
         activeHostProvider.overrideWith(_Host.new),
         activeConnectionProvider.overrideWithValue(AsyncData<HostConnection?>(connection)),
+        if (catalog != null) currentModelCatalogProvider.overrideWithValue(catalog),
         companionMemoryOwnerProvider(root.absolute.path).overrideWith((ref) => memory),
         companionInitiativeClockProvider.overrideWithValue(
           clock ?? (() => CompanionInitiativeClock(wallMs: _now, monoMs: 0, offsetMinutes: 480)),
@@ -565,11 +576,229 @@ class _Visit {
   }
 }
 
+// Only the Android inbox is faked. Source timestamps, person and package
+// follow the channel contract while classification and delivery use the visit.
+class _NoticeInbox extends FakeCompanionNotices {
+  final firstJudged = Completer<void>();
+  final firstSaid = Completer<void>();
+  @override
+  Future<CompanionNoticeBatch?> takeBatch(String pkg, List<String> keys, int expected) async {
+    final batch = await super.takeBatch(pkg, keys, expected);
+    if (batch == null) return null;
+    return CompanionNoticeBatch(
+      pkg: pkg,
+      appName: '聊天',
+      level: batch.level,
+      epoch: batch.epoch,
+      consentEpoch: batch.consentEpoch,
+      items: [
+        for (final item in batch.items)
+          (
+            key: item.key,
+            segments: [
+              for (final segment in item.segments) (text: segment.text, atMs: segment.atMs, personId: 'a' * 64),
+            ],
+          ),
+      ],
+    );
+  }
+
+  @override
+  Future<bool> record(int epoch, {int judged = 0, int said = 0}) async {
+    final recorded = await super.record(epoch, judged: judged, said: said);
+    if (recorded && judged > 0 && !firstJudged.isCompleted) firstJudged.complete();
+    if (recorded && said > 0 && !firstSaid.isCompleted) firstSaid.complete();
+    return recorded;
+  }
+}
+
+const _offer = '聊天里小石问起周末安排，要我帮你想个回复吗？';
+http.Response _noticeOutput({bool remember = false}) => _message(
+  words: jsonEncode([
+    {
+      'id': 0,
+      'segment': 0,
+      'action': remember ? 'remember' : 'say',
+      'person': '小石',
+      'text': remember ? '周五有包裹要领。' : _offer,
+      if (remember) ...{'topic': 'delivery', 'sensitive': false} else 'offerReply': true,
+    },
+  ]),
+);
+
+Future<_Visit> _shownOffer(List<http.Response> replies) async {
+  SharedPreferences.setMockInitialValues({'companion_mode': 'light', 'companion_initiative_enabled': true});
+  final inbox = _NoticeInbox();
+  addTearDown(inbox.events.close);
+  final room = _FollowupUi();
+  var advance = 0;
+  inbox.post('a', 'b' * 64, DateTime.fromMillisecondsSinceEpoch(_now - 30000), '小石 · 周末你回家吗');
+  final visit = await _Visit.open(
+    [_noticeOutput(), ...replies],
+    notices: inbox,
+    roomUi: room,
+    clock: () => CompanionInitiativeClock(wallMs: _now + advance, monoMs: advance, offsetMinutes: 480),
+  );
+  await inbox.firstJudged.future.timeout(const Duration(seconds: 5));
+  await Future<void>.delayed(Duration.zero);
+  room.visible = true;
+  visit.attachment.observe(room.initiativeView);
+  advance += 46000;
+  visit.attachment.observe(room.initiativeView);
+  await inbox.firstSaid.future.timeout(const Duration(seconds: 5));
+  expect(room.lines, [_offer]);
+  return visit;
+}
+
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
   setUp(
     () => SharedPreferences.setMockInitialValues({'companion_mode': 'light', 'companion_initiative_enabled': false}),
   );
+
+  test('notice visit keeps an unrelated user task ordinary after an actually shown offer', () async {
+    final visit = await _shownOffer([_message(words: '可以。')]);
+    visit.attachment.acted();
+    await visit.attachment.submit('明天提醒我买水果。');
+    expect(visit.attachment.error, isNull);
+    expect(_context(visit.requests.last), isNot(contains('noticeReply')));
+    expect((visit.requests.last['tools'] as List).cast<Map>().map((tool) => tool['name']), contains('reminder'));
+    expect(visit.memory.store.messages().where((row) => row['role'] == 'assistant').single['text'], '可以。');
+  });
+
+  test('notice visit retries draft without tools and requires its full frame before phone approval', () async {
+    const phone = MethodChannel('dsh/phone');
+    final messenger = TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
+    final approvals = <MethodCall>[];
+    messenger.setMockMethodCallHandler(phone, (call) async {
+      if (call.method == 'companionPhoneTools') {
+        return [
+          {
+            'name': 'status',
+            'description': 'status',
+            'inputSchema': {'type': 'object'},
+          },
+        ];
+      }
+      if (call.method == 'companionPhoneBegin') {
+        approvals.add(call);
+        return {'decision': 'denied'};
+      }
+      if (call.method == 'companionPhoneEnd') return null;
+      throw StateError('Unexpected phone action');
+    });
+    addTearDown(() => messenger.setMockMethodCallHandler(phone, null));
+    const draft = '我还在确认时间，晚些告诉你。';
+    final visit = await _shownOffer([
+      http.Response('temporary failure', 503),
+      _message(words: draft),
+      _message(calls: [('phone-first', 'phone_status', {})]),
+      _message(words: '尚未操作手机。'),
+    ]);
+    final room = visit.attachment;
+    room.acted();
+    await room.submit('帮我回复');
+    expect(room.error, isNotNull);
+    expect(room.pendingReplyRanges, isEmpty);
+    room.acted();
+    await room.submit('帮我回复');
+    expect(room.error, isNull);
+    for (final request in visit.requests.skip(1).take(2)) {
+      expect((_context(request)['noticeReply'] as Map)['phase'], 'draft');
+      expect(request['tools'] ?? const [], isEmpty);
+    }
+    expect(approvals, isEmpty);
+    expect(room.text, draft);
+    final ranges = room.pendingReplyRanges;
+    expect(ranges.keys.single, 'notice-draft:${room.replyId}');
+    expect(ranges.values.single, (start: 0, end: draft.length));
+    room.presentedReply(room.replyId!, draft.substring(0, 2), sourceIds: ranges.keys.toSet());
+    expect(room.pendingReplyRanges, ranges);
+    room.presentedReply(room.replyId!, draft, sourceIds: ranges.keys.toSet());
+    expect(room.pendingReplyRanges, isEmpty);
+    room.acted();
+    await room.submit('确认发送');
+    expect(room.error, isNull);
+    final request = visit.requests[3];
+    expect((_context(request)['noticeReply'] as Map)['shown_draft'], draft);
+    expect((_context(request)['noticeReply'] as Map)['phase'], 'confirmed');
+    expect((request['tools'] as List).cast<Map>().map((tool) => tool['name']), ['phone_status']);
+    expect((approvals.single.arguments as Map)['sourceText'], '确认发送');
+    final messages = visit.memory.store.messages();
+    expect(messages.where((row) => row['role'] == 'assistant'), isEmpty);
+    expect(messages.where((row) => row['role'] == 'user').map((row) => row['text']), containsAll(['帮我回复', '确认发送']));
+  });
+
+  test('notice visit rejects delayed resident draft delivery after its app is switched off', () async {
+    const draft = '我会先看看行程，再告诉你。';
+    final visit = await _shownOffer([_message(words: draft)]);
+    final resident = visit.agent.retainAlwaysOn(
+      root: Future.value(visit.root),
+      character: const CompanionCharacter(name: '伙伴'),
+      moves: const CompanionMoves(),
+      sourceKey: null,
+      ui: _RoomUi(),
+      mapHandoff: CompanionMapHandoff(visit.container.read(companionMapsProvider)),
+    );
+    addTearDown(resident.close);
+    await resident.submit('帮我回复');
+    expect(resident.ownsCurrentRun, isTrue);
+    expect((_context(visit.requests.last)['noticeReply'] as Map)['phase'], 'draft');
+    expect(visit.attachment.error, isNull);
+    expect(visit.attachment.running, isFalse);
+    final id = visit.attachment.replyId!;
+    expect(visit.attachment.text, draft);
+    final inbox = visit.container.read(companionNoticesProvider);
+    final status = await inbox.setLevel('a', CompanionNoticeLevel.off);
+    expect(status.readable, isTrue);
+    var delivered = false;
+    final shown = await resident.deliverReply(id, draft, (_) async {
+      delivered = true;
+      return true;
+    });
+    expect(shown, isFalse);
+    expect(delivered, isFalse);
+  });
+
+  test('notice visit remembers a 48-hour event and discards a model result after lock', () async {
+    final inbox = _NoticeInbox();
+    addTearDown(inbox.events.close);
+    final held = Completer<void>();
+    final release = Completer<void>();
+    final returned = Completer<void>();
+    var requests = 0;
+    final sourceTime = _now - const Duration(days: 2).inMilliseconds;
+    inbox.post('a', 'b' * 64, DateTime.fromMillisecondsSinceEpoch(sourceTime), '小石 · 请留意周五送到门房的包裹');
+    final visit = await _Visit.open(
+      [_noticeOutput(remember: true), _noticeOutput()],
+      notices: inbox,
+      beforeReply: (_) async {
+        if (++requests == 2) {
+          held.complete();
+          await release.future;
+          returned.complete();
+        }
+      },
+    );
+    await inbox.firstJudged.future.timeout(const Duration(seconds: 5));
+    await Future<void>.delayed(Duration.zero);
+    final row = visit.memory.store.noticeMemories().single;
+    expect(row['text'], '周五有包裹要领。');
+    inbox.post('a', 'c' * 64, DateTime.fromMillisecondsSinceEpoch(_now - 30000), '小石 · 周末安排定了吗');
+    await held.future.timeout(const Duration(seconds: 5));
+    inbox.lock();
+    release.complete();
+    await returned.future;
+    await Future<void>.delayed(Duration.zero);
+    inbox.unlocked = true;
+    inbox.events.add(++inbox.epoch);
+    await Future<void>.delayed(Duration.zero);
+    expect(inbox.judged, 1);
+    expect(inbox.said, 0);
+    expect(inbox.inbox, isEmpty);
+    expect(requests, 2);
+    expect(visit.memory.store.noticeMemories(), hasLength(1));
+  });
 
   test('public attachment retries a no-tool failure with the same source clock and open turn', () async {
     const savedCustom = '我是已保存的星桥旅伴。';
@@ -1103,6 +1332,126 @@ void main() {
         expect(row['raw_usage'], containsPair('http_status', 200));
         expect(row['raw_usage'], containsPair('complete', true));
       }
+
+      // A real user invitation reaches both fixed and ordinary layers, but
+      // the next ordinary user turn does not inherit that permission. Keep
+      // all eight original HTTP/forget/usage observations above intact.
+      visit.attachment.updateCharacter(
+        const CompanionCharacter(name: '伙伴'), const CompanionMoves(),
+        sourceKey: 'builtin:companion/whale-girl',
+      );
+      expect(await visit.attachment.openMemory(), same(visit.memory));
+      final invitationRole = visit.attachment.characterId!;
+      final invitationSource = store.submitMessage(
+        id: 'wire-fixed-invitation-source',
+        sessionId: originalSource['session_id']! as String,
+        characterId: invitationRole,
+        text: '我们看过玉兰，散步时更自在。',
+        saidAtUtc: _now,
+        offsetMinutes: originalSource['offset_minutes']! as int,
+      );
+      final invitationSetup = store.beginAgentTurn(
+        messageId: invitationSource['id']! as String,
+        expectedSourceRev: invitationSource['source_rev']! as int,
+        shownCardRevisions: {kept.targetId!: keptCard['row_rev']! as int},
+      )['id']! as String;
+      expect(store.applyAgentMemoryTool(
+        turnId: invitationSetup, callId: 'wire-quiet-postcards', toolName: 'quiet',
+        input: {'card': kept.targetId, 'mode': 'never'},
+      ).applied, isTrue);
+      final invitationStory = store.applyAgentMemoryTool(
+        turnId: invitationSetup, callId: 'wire-magnolia-story', toolName: 'remember',
+        input: {'collection': 'our_story', 'text': '我们看过玉兰。', 'keywords': ['玉兰']},
+      );
+      expect(invitationStory.applied, isTrue);
+      expect(store.applyAgentMemoryTool(
+        turnId: invitationSetup, callId: 'wire-quiet-magnolia', toolName: 'quiet',
+        input: {'card': invitationStory.targetId, 'mode': 'never'},
+      ).applied, isTrue);
+      const impressionText = '聊过玉兰之后，散步时彼此更自在。';
+      final invitationImpression = store.applyAgentMemoryTool(
+        turnId: invitationSetup, callId: 'wire-magnolia-impression', toolName: 'impression',
+        input: {'text': impressionText, 'keywords': ['散步']},
+      );
+      expect(invitationImpression.applied, isTrue);
+      store.closeAgentTurn(invitationSetup);
+      final storyRow = store.cards().singleWhere((row) => row['id'] == invitationStory.targetId);
+      final impressionRow = store.cards().singleWhere((row) => row['id'] == invitationImpression.targetId);
+      expect(impressionRow['topic_id'], storyRow['topic_id']);
+      expect(impressionRow['topic_mode'], 'never');
+      final invitationControls = store.topicControls();
+      visit.memory.changed();
+      replies.addAll([
+        _message(calls: [('wire-fixed-related', 'related', {'card': invitationImpression.targetId})]),
+        _message(words: '想起玉兰时，散步也很轻松。'),
+      ]);
+      await visit.attachment.submit('聊聊玉兰');
+      expect(visit.attachment.error, isNull);
+      expect(visit.requests, hasLength(10));
+      for (final body in visit.requests.skip(8).take(2)) {
+        final blocks = <Map>[
+          for (final message in (body['messages']! as List).cast<Map>())
+            if (message['role'] == 'user' && message['content'] is List)
+              for (final block in (message['content']! as List).cast<Map>())
+                if (block['type'] == 'text' && (block['text']! as String).startsWith('{"type":"companion_memory"'))
+                  jsonDecode(block['text']! as String) as Map,
+        ];
+        final items = (blocks.single['items']! as List).cast<Map>();
+        expect(items.map((row) => row['id']), containsAll([invitationStory.targetId, invitationImpression.targetId]));
+        expect(items.singleWhere((row) => row['id'] == invitationImpression.targetId)['text'], impressionText);
+      }
+      final invitedToolResult = <Map>[
+        for (final message in (visit.requests[9]['messages']! as List).cast<Map>())
+          if (message['role'] == 'user' && message['content'] is List)
+            for (final block in (message['content']! as List).cast<Map>())
+              if (block['type'] == 'tool_result') block,
+      ].singleWhere((row) => row['tool_use_id'] == 'wire-fixed-related');
+      expect(jsonDecode(invitedToolResult['content']! as String), containsPair('applied', true));
+
+      replies.addAll([
+        _message(calls: [('wire-explicit-recall', 'recall', {'query': '聊聊玉兰'})]),
+        _message(words: '今天也可以慢慢聊。'),
+      ]);
+      await visit.attachment.submit('今天随便说几句。');
+      expect(visit.attachment.error, isNull);
+      expect(visit.requests, hasLength(12));
+      for (final body in visit.requests.skip(10)) {
+        final fixedBlocks = <Map>[
+          for (final message in (body['messages']! as List).cast<Map>())
+            if (message['role'] == 'user' && message['content'] is List)
+              for (final block in (message['content']! as List).cast<Map>())
+                if (block['type'] == 'text' && (block['text']! as String).startsWith('{"type":"companion_memory"'))
+                  jsonDecode(block['text']! as String) as Map,
+        ];
+        expect(fixedBlocks, isEmpty);
+      }
+      final explicitRecallResult = <Map>[
+        for (final message in (visit.requests[11]['messages']! as List).cast<Map>())
+          if (message['role'] == 'user' && message['content'] is List)
+            for (final block in (message['content']! as List).cast<Map>())
+              if (block['type'] == 'tool_result') block,
+      ].singleWhere((row) => row['tool_use_id'] == 'wire-explicit-recall');
+      final recallPayload = jsonDecode(explicitRecallResult['content']! as String) as Map;
+      expect(recallPayload['applied'], isTrue);
+      expect(((recallPayload['selection']! as Map)['items']! as List).cast<Map>().map((row) => row['id']), [invitationStory.targetId]);
+      expect(store.cards().singleWhere((row) => row['id'] == invitationImpression.targetId), impressionRow);
+      expect(store.cards().singleWhere((row) => row['id'] == invitationStory.targetId), storyRow);
+      expect(store.topicControls(), invitationControls);
+      final afterInvitations = {for (final row in store.requests()) row['id']! as String: row};
+      expect(afterInvitations, hasLength(12));
+      for (final entry in after.entries) {
+        expect(afterInvitations[entry.key], entry.value);
+      }
+      final invitationRequests = afterInvitations.entries.where((entry) => !after.containsKey(entry.key)).map((entry) => entry.value).toList();
+      expect(invitationRequests, hasLength(4));
+      for (final row in invitationRequests) {
+        expect(row['sent_at_ms'], isNotNull);
+        expect(row['terminal'], 'complete');
+        expect(row['state'], 'finished');
+        expect(row['input_uncached'], 12);
+        expect(row['output_tokens'], 8);
+        expect(row['raw_usage'], containsPair('http_status', 200));
+      }
     } finally {
       await visit.close();
     }
@@ -1202,6 +1551,9 @@ void main() {
           opportunities.add(opportunity);
           store.closeAgentTurn(turn);
           visit.memory.changed();
+          // The worker claims its run before it asks for the (async) route;
+          // with no key configured that run ends without a request.
+          await pumpEventQueue();
           expect(visit.memory.working, isFalse);
 
           configured = true;
@@ -1689,8 +2041,109 @@ void main() {
     }
   });
 
-  test('screen observation revalidates after the model and awaits the actual presentation acknowledgement', () async {
-    final visit = await _Visit.open([_message(words: '第一句观察。'), _message(words: '第二句观察。')]);
+  test('screen observation revalidates after the model and awaits the actual presentation acknowledgement', () => HttpOverrides.runWithHttpOverrides(() async {
+    const selection = ModelSelection(provider: 'screen-provider', model: 'screen-model');
+    const catalog = ModelCatalog(
+      defaultSelection: selection,
+      routableProviders: ['screen-provider'],
+      groups: [ProviderGroup('screen-provider', 'Screen', [
+        ModelInfo(provider: 'screen-provider', id: 'screen-model', name: 'Screen model'),
+      ])],
+      failures: [],
+    );
+    const classification = <String, Object?>{
+      'scene': 'reading', 'mood': 'calm', 'salience': 0.4,
+      'busy': false, 'quip': '慢慢看这一页。', 'emotion': 'neutral',
+    };
+    final visionQueries = <Map<String, String>>[];
+    final visionRequests = <Map<String, Object?>>[];
+    final sockets = <WebSocket>[];
+    final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
+    addTearDown(() async {
+      for (final socket in sockets) {
+        await socket.close();
+      }
+      await server.close(force: true);
+    });
+    server.listen((request) async {
+      if (request.uri.path == '/' && request.uri.queryParameters['token'] == 'vision-test') {
+        request.response
+          ..statusCode = 303
+          ..headers.set('location', './')
+          ..headers.add('set-cookie', 'dsh-auth-vision=v1.test; Path=/; HttpOnly');
+        await request.response.close();
+        return;
+      }
+      if (request.uri.path == '/api/remote.mux') {
+        final socket = await WebSocketTransformer.upgrade(request);
+        sockets.add(socket);
+        socket.listen((raw) {
+          final frame = jsonDecode(raw as String) as Map;
+          if (frame['type'] == 'open' && frame['endpoint'] == r'$events') {
+            socket.add(jsonEncode({
+              'type': 'item', 'streamId': frame['streamId'],
+              'value': {'type': 'ready', 'clientId': 'vision-client', 'host': {'home': '/test'}},
+            }));
+          }
+        });
+        return;
+      }
+      if (request.method == 'GET' && request.uri.path == '/dsh-go/v1/companion/auxiliary') {
+        visionQueries.add(request.uri.queryParameters);
+        request.response
+          ..headers.contentType = ContentType.json
+          ..write(jsonEncode({
+            'v': 1, 'kind': 'screen', 'instanceId': 'vision-host', 'supported': true,
+            'provider': selection.provider, 'model': selection.model,
+            'capability': {
+              'noTools': true, 'transientImage': 'jpeg-512-inline',
+              'physicalDispatch': 'fetch-invoked', 'rawUsage': 'deepseek-messages-cumulative',
+              'maxPhysicalRequests': 1,
+            },
+          }));
+        await request.response.close();
+        return;
+      }
+      if (request.method == 'POST' && request.uri.path == '/dsh-go/v1/companion/auxiliary/screen') {
+        final body = Map<String, Object?>.from(jsonDecode(await utf8.decoder.bind(request).join()) as Map);
+        visionRequests.add(body);
+        final id = body['requestId']! as String;
+        final usage = <String, Object?>{
+          'provider': selection.provider, 'model': selection.model,
+          'start_usage': {'input_tokens': 7},
+          'final_usage': {'input_tokens': 7, 'output_tokens': 5},
+          'start_event': 'message_start', 'final_event': 'message_delta',
+          'usage_semantics': 'cumulative', 'input_uncached': 7,
+          'input_cache_read': 0, 'input_cache_write': null, 'output_tokens': 5,
+          'stop_reason': 'end_turn', 'terminal': 'complete', 'complete': true, 'http_status': 200,
+        };
+        final frames = [
+          {'type': 'accepted', 'requestId': id, 'instanceId': 'vision-host',
+            'provider': selection.provider, 'model': selection.model},
+          {'type': 'dispatch', 'requestId': id, 'atMs': _now, 'boundary': 'fetch-invoked'},
+          {'type': 'text', 'requestId': id, 'text': jsonEncode(classification)},
+          {'type': 'finish', 'requestId': id, 'dispatched': true, 'dispatchAtMs': _now,
+            'terminal': 'complete', 'complete': true, 'stopReason': 'end_turn', 'httpStatus': 200, 'usage': usage},
+        ];
+        request.response.headers.contentType = ContentType('application', 'x-ndjson', charset: 'utf-8');
+        for (final frame in frames) {
+          request.response.write('${jsonEncode(frame)}\n');
+        }
+        await request.response.close();
+        return;
+      }
+      request.response.statusCode = 404;
+      await request.response.close();
+    });
+    final client = await DshClient.connect(
+      baseUri: Uri.parse('http://127.0.0.1:${server.port}'), token: 'vision-test',
+      muxOptions: const MuxOptions(autoReconnect: false),
+    );
+    addTearDown(client.close);
+    final visit = await _Visit.open(
+      [_message(words: '第一句观察。'), _message(words: '第二句观察。')],
+      connection: HostConnection(client: client, isLocal: true), catalog: catalog,
+    );
     const character = CompanionCharacter(name: '伙伴');
     const sourceKey = 'builtin:companion/whale-girl';
     visit.attachment.updateCharacter(character, const CompanionMoves(), sourceKey: sourceKey);
@@ -1768,6 +2221,171 @@ void main() {
         expect(body.containsKey('tools'), isFalse);
         expect(_context(body)['screenObservation'], context);
       }
+
+      // Observation text can be relevant without being a user's permission
+      // to reopen a never topic. Seed only after the original empty-source
+      // and acknowledgement assertions, using real public Store writes.
+      final store = visit.memory.store;
+      final coffeeSource = store.submitMessage(
+        id: 'screen-coffee-source', sessionId: 'light:screen-test',
+        characterId: resident.characterId,
+        text: '我们聊过咖啡，散步时更轻松。', saidAtUtc: _now, offsetMinutes: 480,
+      );
+      final coffeeTurn = store.beginAgentTurn(
+        messageId: coffeeSource['id']! as String,
+        expectedSourceRev: coffeeSource['source_rev']! as int,
+        shownCardRevisions: const {},
+      )['id']! as String;
+      final coffee = store.applyAgentMemoryTool(
+        turnId: coffeeTurn, callId: 'screen-coffee', toolName: 'remember',
+        input: {'collection': 'our_story', 'text': '我们聊过咖啡。', 'keywords': ['咖啡']},
+      );
+      expect(coffee.applied, isTrue);
+      expect(store.applyAgentMemoryTool(
+        turnId: coffeeTurn, callId: 'screen-coffee-never', toolName: 'quiet',
+        input: {'card': coffee.targetId, 'mode': 'never'},
+      ).applied, isTrue);
+      final coffeeImpression = store.applyAgentMemoryTool(
+        turnId: coffeeTurn, callId: 'screen-coffee-impression', toolName: 'impression',
+        input: {'text': '聊过咖啡之后，散步时更轻松。', 'keywords': ['散步']},
+      );
+      expect(coffeeImpression.applied, isTrue);
+      store.closeAgentTurn(coffeeTurn);
+      final relevanceSource = store.submitMessage(
+        id: 'screen-relevance-source', sessionId: 'light:screen-test',
+        characterId: resident.characterId,
+        text: '我们喜欢聊聊书里的想法，也喜欢聊聊路上的风景。', saidAtUtc: _now, offsetMinutes: 480,
+      );
+      final relevanceTurn = store.beginAgentTurn(
+        messageId: relevanceSource['id']! as String,
+        expectedSourceRev: relevanceSource['source_rev']! as int,
+        shownCardRevisions: const {},
+      )['id']! as String;
+      final normal = store.applyAgentMemoryTool(
+        turnId: relevanceTurn, callId: 'screen-relevant-normal', toolName: 'remember',
+        input: {'collection': 'our_story', 'text': '我们喜欢聊聊书里的想法。', 'keywords': ['聊聊']},
+      );
+      final less = store.applyAgentMemoryTool(
+        turnId: relevanceTurn, callId: 'screen-relevant-less', toolName: 'remember',
+        input: {'collection': 'our_story', 'text': '我们喜欢聊聊路上的风景。', 'keywords': ['聊聊']},
+      );
+      expect(normal.applied, isTrue);
+      expect(less.applied, isTrue);
+      expect(store.applyAgentMemoryTool(
+        turnId: relevanceTurn, callId: 'screen-relevance-less', toolName: 'quiet',
+        input: {'card': less.targetId, 'mode': 'less'},
+      ).applied, isTrue);
+      store.closeAgentTurn(relevanceTurn);
+      final screenCards = store.cards();
+      expect(screenCards.singleWhere((row) => row['id'] == normal.targetId)['topic_mode'], 'normal');
+      expect(screenCards.singleWhere((row) => row['id'] == less.targetId)['topic_mode'], 'less');
+      expect(screenCards.singleWhere((row) => row['id'] == coffee.targetId)['topic_mode'], 'never');
+      expect(screenCards.singleWhere((row) => row['id'] == coffeeImpression.targetId)['topic_id'],
+        screenCards.singleWhere((row) => row['id'] == coffee.targetId)['topic_id']);
+      final screenMessages = store.messages();
+      final screenTasks = store.tasks();
+      final screenControls = store.topicControls();
+      final screenRequests = {for (final row in store.requests()) row['id']! as String: row};
+      visit.memory.changed();
+      visit.replies.add(_message(words: '书里的想法可以慢慢看。'));
+      ambient.entered = null;
+      ambient.acknowledgement = null;
+      final invitingObservation = {...context, 'text': '聊聊咖啡'};
+      expect(await visit.agent.observeScreen(
+        context: invitingObservation, isCurrentObservation: () async => true,
+      ), isTrue);
+      expect(visit.requests, hasLength(3));
+      final observationBody = visit.requests.last;
+      expect(observationBody.containsKey('tools'), isFalse);
+      expect(_context(observationBody)['screenObservation'], invitingObservation);
+      final observationMemory = <Map>[
+        for (final message in (observationBody['messages']! as List).cast<Map>())
+          if (message['role'] == 'user' && message['content'] is List)
+            for (final block in (message['content']! as List).cast<Map>())
+              if (block['type'] == 'text' && (block['text']! as String).startsWith('{"type":"companion_memory"'))
+                jsonDecode(block['text']! as String) as Map,
+      ].single;
+      final observationIds = (observationMemory['items']! as List).cast<Map>().map((row) => row['id']);
+      expect(observationIds, unorderedEquals([normal.targetId, less.targetId]));
+      expect(observationIds, isNot(contains(coffee.targetId)));
+      expect(observationIds, isNot(contains(coffeeImpression.targetId)));
+      expect(ambient.presented, hasLength(2));
+      expect(ambient.presented.last.text, '书里的想法可以慢慢看。');
+      expect(visit.agent.running, isFalse);
+      expect(store.messages(), screenMessages);
+      expect(store.tasks(), screenTasks);
+      expect(store.cards(), screenCards);
+      expect(store.topicControls(), screenControls);
+      final afterObservation = {for (final row in store.requests()) row['id']! as String: row};
+      expect(afterObservation, hasLength(3));
+      for (final entry in screenRequests.entries) {
+        expect(afterObservation[entry.key], entry.value);
+      }
+      final observationReceipt = afterObservation.entries.singleWhere((entry) => !screenRequests.containsKey(entry.key)).value;
+      expect(observationReceipt['sent_at_ms'], isNotNull);
+      expect(observationReceipt['terminal'], 'complete');
+      expect(observationReceipt['input_uncached'], 12);
+      expect(observationReceipt['output_tokens'], 8);
+
+      // Populate this role's actual conversation first; absence in the image
+      // payload must not pass merely because there was no recent chat.
+      const privateUser = '这是只留在伙伴聊天里的私密标记松灯七。';
+      const privateAssistant = '我记得这句聊天中的回声海桥九。';
+      visit.replies.add(_message(words: privateAssistant));
+      await visit.attachment.submit(privateUser);
+      expect(visit.attachment.error, isNull);
+      expect(visit.requests, hasLength(4));
+      final history = store.modelMessages(
+        sessionId: store.lightSessionId, characterId: resident.characterId, limit: 6,
+      );
+      expect(history.map((row) => row['text']), containsAll([privateUser, privateAssistant]));
+      final historyInput = [for (final row in history) {'role': row['role'], 'text': row['text']}];
+      final vision = await visit.agent.prepareScreenVision({
+        'vision_enabled': true,
+        'vision_host': companionHostKey(visit.container.read(activeHostProvider)),
+        'vision_selection': selection.toJson(),
+      });
+      expect(vision?.available, isTrue);
+      expect(visionQueries, [{'kind': 'screen', 'provider': selection.provider, 'model': selection.model}]);
+      const imageData = '/9j/wAALCAABAAEBAREA/9k=';
+      final image = CompanionScreenImage.fromNative({
+        'mime_type': 'image/jpeg', 'width': 1, 'height': 1, 'bytes': base64Decode(imageData),
+      })!;
+      expect(await visit.agent.classifyScreen(
+        context: context, image: image, vision: vision, isCurrentObservation: () async => true,
+      ), classification);
+      expect(visionRequests, hasLength(1));
+      final imageBody = visionRequests.single;
+      expect(jsonDecode(imageBody['input']! as String), {'screen_observation': context});
+      expect(jsonEncode(imageBody), isNot(contains(privateUser)));
+      expect(jsonEncode(imageBody), isNot(contains(privateAssistant)));
+      expect(imageBody['kind'], 'screen');
+      expect(imageBody['provider'], selection.provider);
+      expect(imageBody['model'], selection.model);
+      expect(imageBody['maxTokens'], 220);
+      expect(imageBody['image'], {'mediaType': 'image/jpeg', 'width': 1, 'height': 1, 'data': imageData});
+      expect(imageBody.containsKey('tools'), isFalse);
+      final imageReceipt = store.requests().singleWhere((row) => row['id'] == imageBody['requestId']);
+      expect(imageReceipt['sent_at_ms'], isNotNull);
+      expect(imageReceipt['terminal'], 'complete');
+      expect(imageReceipt['provider'], selection.provider);
+      expect(imageReceipt['model'], selection.model);
+      expect(imageReceipt['input_uncached'], 7);
+      expect(imageReceipt['output_tokens'], 5);
+
+      // The existing text-only classification contract still uses that same
+      // actual history. The image-only change must not remove it here.
+      visit.replies.add(_message(words: jsonEncode(classification)));
+      expect(await visit.agent.classifyScreen(context: context), classification);
+      expect(visit.requests, hasLength(5));
+      final textMessage = (visit.requests.last['messages']! as List).single as Map;
+      expect(jsonDecode(textMessage['content']! as String), {
+        'screen_observation': context, 'recent_conversation': historyInput,
+      });
+      expect(visionRequests, hasLength(1));
+      expect(store.modelMessages(
+        sessionId: store.lightSessionId, characterId: resident.characterId, limit: 6,
+      ), history);
     } finally {
       final acknowledgement = ambient.acknowledgement;
       if (acknowledgement != null && !acknowledgement.isCompleted) acknowledgement.complete(true);
@@ -1775,5 +2393,5 @@ void main() {
       resident.close();
       await visit.close();
     }
-  });
+  }, _Loopback()));
 }

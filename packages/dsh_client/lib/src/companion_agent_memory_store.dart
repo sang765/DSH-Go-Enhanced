@@ -273,8 +273,14 @@ extension CompanionAgentMemoryStore on CompanionMemoryStore {
 
   MemorySelection _agentRecallSelection(Row turn, MemoryRow input, List<String>? rankedIds) {
     final query = _agentText(input, 'query');
-    final candidates = memoryRetrievalCandidates(characterId: turn['character_id'] as String?, input: query);
-    final explicit = explicitMemoryTopics(query, candidates);
+    final candidates = [
+      for (final card in memoryRetrievalCandidates(characterId: turn['character_id'] as String?, input: query))
+        if (turn['origin_kind'] == 'chat' || card['collection'] != 'recent') card,
+    ];
+    final explicit = <String>{
+      for (final card in candidates)
+        if (card['topic_mode'] == 'never') card['topic_id']! as String,
+    };
     final revision = archive['control_revision']! as int;
     return rankedIds == null
         ? selectMemoryContext(
@@ -630,14 +636,17 @@ extension CompanionAgentMemoryStore on CompanionMemoryStore {
           .toList();
       final manual = card['manual'] == 1;
       if (!manual && sources.isEmpty) throw const _AgentMemoryRejected('incomplete_effect_set');
+      final parents = manual ? (basis: 0, sourceAt: 0) : _currentParentSourceValues(card);
       // Preview exactly _refreshSources: manual/control basis is preserved;
-      // other supported cards take the remaining proof maxima, not today's text.
+      // other supported cards combine remaining proofs and current parents.
       refreshedRevisions[id] = (card['row_rev'] as int) + 1;
       refreshedValues[id] = (
         basis: manual || const ['cancelled', 'postponed'].contains(card['plan_state'])
             ? card['current_basis_seq'] as int? ?? 0
-            : sources.map((source) => source['first_seq'] as int).reduce(math.max),
-        sourceAt: manual ? card['source_at_ms'] as int : sources.map((source) => source['at'] as int).reduce(math.max),
+            : math.max(parents.basis, sources.map((source) => source['first_seq'] as int).reduce(math.max)),
+        sourceAt: manual
+            ? card['source_at_ms'] as int
+            : math.max(parents.sourceAt, sources.map((source) => source['at'] as int).reduce(math.max)),
       );
     }
     final planned = {for (final id in revised.keys) id: (originals[id]!['row_rev'] as int) + 1};
@@ -674,7 +683,10 @@ extension CompanionAgentMemoryStore on CompanionMemoryStore {
     _agentValidateReferencePlan({for (final write in writes) write.id: write.references}, deleted);
     // Every ID/revision, retained nonempty body, reference and shared budget
     // above is settled before the first card is touched.
-    _deleteCards(deleted);
+    _deleteCards(
+      deleted,
+      retainTopics: writes.map((write) => write.controlledTopic).whereType<String>().toSet(),
+    );
     for (final id in sourceOnly) {
       for (final group in withdrawnGroups[id] ?? const <String>{}) {
         _withdrawSourceGroup(id, group);
@@ -731,7 +743,10 @@ extension CompanionAgentMemoryStore on CompanionMemoryStore {
 
   List<MemoryRow> _agentRelated(Row turn, MemoryRow input) {
     final character = turn['character_id'] as String?;
-    final domain = _memoryDomainCards(character);
+    final domain = [
+      for (final card in _memoryDomainCards(character))
+        if (turn['origin_kind'] == 'chat' || card['collection'] != 'recent') card,
+    ];
     final wanted = <String>{};
     final requiredEffects = <String>{};
     final root = input['card'];
@@ -756,6 +771,8 @@ extension CompanionAgentMemoryStore on CompanionMemoryStore {
     final result = <MemoryRow>[];
     for (final card in domain) {
       final id = card['id'] as String;
+      final expiredNotice = card['collection'] == 'recent' && (card['expires_at_ms'] as int) <= _checkedNow();
+      if (expiredNotice) continue;
       final stale = !_memoryReferencesCurrent(id);
       if (card['status'] == 'withdrawn' || (!wanted.contains(id) && !stale)) continue;
       shown[id] = card['row_rev'] as int;
@@ -767,6 +784,7 @@ extension CompanionAgentMemoryStore on CompanionMemoryStore {
         'stale': stale,
         'required_effect': requiredEffects.contains(id),
         if (stale) 'reason': 'reference_changed',
+        if (card['collection'] == 'recent') 'source': _noticeSource(id),
         if (!stale) ...{
           'text': card['text'],
           'keywords': card['keywords'],
@@ -795,6 +813,9 @@ extension CompanionAgentMemoryStore on CompanionMemoryStore {
     Map<String, int> refreshedRevisions = const {},
     ({int basis, int sourceAt})? Function(String)? plannedReference,
   }) {
+    if (previous?['collection'] == 'recent' || input['collection'] == 'recent') {
+      throw const _AgentMemoryRejected('notice_requires_user_source');
+    }
     final text = _agentText(input, 'text');
     final collection = previous?['collection'] as String? ?? input['collection'] as String? ?? 'about_you';
     final private = const ['our_story', 'impression'].contains(collection);
@@ -831,6 +852,7 @@ extension CompanionAgentMemoryStore on CompanionMemoryStore {
     for (final reference in rawRefs.cast<String>()) {
       if (reference == id || deleted.contains(reference)) throw const _AgentMemoryRejected('invalid_reference');
       final card = _agentCard(turn, reference);
+      if (card['collection'] == 'recent') throw const _AgentMemoryRejected('notice_requires_user_source');
       if ((card['character_id'] != null && card['character_id'] != character) ||
           (!planned.containsKey(reference) && !_memoryReferencesCurrent(reference))) {
         throw const _AgentMemoryRejected('reference_not_current');
@@ -961,22 +983,8 @@ extension CompanionAgentMemoryStore on CompanionMemoryStore {
       }
       eventTime = Map<String, Object?>.from(input['event_time'] as MemoryRow);
     }
-    final controlled = previous == null
-        ? _controlledTopics(
-            // A full source can contain several independent facts. Only this card's
-            // wording may match a saved control, not another clause in that source.
-            {'text': text, 'evidence': const <MemoryRow>[]},
-            controls: [
-              for (final row in _db.select(
-                "SELECT id,control_anchors FROM memory_topics WHERE character_id IS ? AND mode IN ('less','never')",
-                [character],
-              ))
-                {
-                  'topic_id': row['id'],
-                  'anchors': (jsonDecode(row['control_anchors'] as String) as List).cast<String>(),
-                },
-            ],
-          )
+    final controlled = previous == null || previous['text'] != text
+        ? _bodyControlledTopics(text, characterId: character)
         : const <String>[];
     if (controlled.length > 1) throw const _AgentMemoryRejected('ambiguous_controlled_topic');
     var keywords = _agentKeywords(input, text);
@@ -1052,7 +1060,7 @@ extension CompanionAgentMemoryStore on CompanionMemoryStore {
       // cleanup origins follow another member's planned final revision.
       final ready = remaining.values.firstWhere((write) => !write.references.keys.any(remaining.containsKey));
       final previous = ready.previous;
-      final topic = previous?['topic_id'] as String? ?? ready.controlledTopic ?? _createId();
+      final topic = ready.controlledTopic ?? (previous?['topic_id'] as String?) ?? _createId();
       if (previous == null) {
         if (ready.controlledTopic == null) {
           _db.execute('INSERT INTO memory_topics(id,character_id) VALUES(?,?)', [topic, ready.characterId]);
@@ -1085,11 +1093,12 @@ extension CompanionAgentMemoryStore on CompanionMemoryStore {
       } else {
         _db.execute(
           '''
-          UPDATE memory_cards SET row_rev=row_rev+1,kind=?,text=?,keywords=?,scope='real',eligible=1,status='current',
+          UPDATE memory_cards SET row_rev=row_rev+1,topic_id=?,kind=?,text=?,keywords=?,scope='real',eligible=1,status='current',
             manual=0,current_basis_seq=?,source_at_ms=?,event_time=?,followup=NULL,plan_state=NULL,expires_at_ms=NULL,
             maintenance_row_rev=0,updated_at_ms=?,cleanup_history_complete=? WHERE id=?
         ''',
           [
+            topic,
             ready.kind,
             ready.text,
             jsonEncode(ready.keywords),
@@ -1163,7 +1172,8 @@ extension CompanionAgentMemoryStore on CompanionMemoryStore {
     };
     final target = rows[targetId]!;
     for (final row in rows.values) {
-      if (row['collection'] != target['collection'] ||
+      if (row['collection'] == 'recent' ||
+          row['collection'] != target['collection'] ||
           row['character_id'] != target['character_id'] ||
           !_memoryReferencesCurrent(row['id'] as String)) {
         throw const _AgentMemoryRejected('merge_domain_changed');
@@ -1194,11 +1204,10 @@ extension CompanionAgentMemoryStore on CompanionMemoryStore {
       for (final row in mergedRows)
         _db.select('SELECT id,mode FROM memory_topics WHERE id=?', [row['topic_id']]).single,
     ];
-    final topic = mergedTopics.firstWhere(
+    var topic = mergedTopics.firstWhere(
       (topic) => topic['mode'] == 'never',
       orElse: () => mergedTopics.firstWhere((topic) => topic['mode'] == 'less', orElse: () => mergedTopics.first),
     );
-    final quiet = topic['mode'] != 'normal';
     final basis = mergedRows.map((row) => row['current_basis_seq'] as int? ?? 0).reduce(math.max);
     final sourceAt = mergedRows.map((row) => row['source_at_ms'] as int).reduce(math.max);
     final writes = {
@@ -1227,6 +1236,15 @@ extension CompanionAgentMemoryStore on CompanionMemoryStore {
     final referencePlan = {targetId: targetRefs, for (final write in writes.values) write.id: write.references};
     _agentValidateReferencePlan(referencePlan, fromIds);
     final text = input['text'] == null ? target['text'] as String : _agentText(input, 'text');
+    if (text != target['text']) {
+      final controlled = _bodyControlledTopics(text, characterId: target['character_id'] as String?);
+      final participants = mergedTopics.map((row) => row['id']).toSet();
+      if (controlled.any((id) => !participants.contains(id))) {
+        if (controlled.length > 1) throw const _AgentMemoryRejected('ambiguous_controlled_topic');
+        topic = _db.select('SELECT id,mode FROM memory_topics WHERE id=?', [controlled.single]).single;
+      }
+    }
+    final quiet = topic['mode'] != 'normal';
     final words = input['keywords'] == null
         ? <String>{for (final row in mergedRows) ...(jsonDecode(row['keywords'] as String) as List).cast<String>()}
               .toList()

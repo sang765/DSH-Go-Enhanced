@@ -47,6 +47,7 @@ import '../../pets/pet_signals.dart' show petEventBusProvider;
 import '../../pets/pet_state.dart';
 import '../../speech/speech_settings.dart';
 import '../../speech/voice_cloud.dart';
+import '../../state/android_features.dart' show operatingSystemProvider;
 import '../../state/app_mode_state.dart';
 import '../../state/android_features.dart';
 import '../../state/connection_state.dart';
@@ -82,6 +83,7 @@ import 'companion_receipt_inputs.dart';
 import 'companion_log.dart';
 import 'companion_memory_page.dart';
 import 'companion_memory_model_dialog.dart';
+import 'companion_notices_page.dart';
 import 'companion_persona_page.dart';
 import 'companion_room_panel.dart';
 import 'companion_voice_page.dart';
@@ -2042,10 +2044,10 @@ class _CompanionPageState extends ConsumerState<CompanionPage>
   String _failureText(Object error) {
     final l10n = context.l10n;
     return switch (error) {
-      // Full mode still reaches her model straight from the phone for now:
-      // say so, instead of naming a mode the person didn't pick.
-      CompanionLightError(failure: CompanionLightFailure.noKey) =>
-        _light ? l10n.companionLightNoKey : l10n.companionFullNoKey,
+      CompanionHostError(hostFailure: CompanionHostFailure.disconnected) => l10n.companionNotConnectedTryLight,
+      CompanionHostError(hostFailure: CompanionHostFailure.modelUnavailable) => l10n.companionHostModelUnavailable,
+      CompanionHostError(hostFailure: CompanionHostFailure.unavailable) => l10n.companionHostUnavailable,
+      CompanionLightError(failure: CompanionLightFailure.noKey) => l10n.companionLightNoKey,
       CompanionLightError(failure: CompanionLightFailure.badKey) => l10n.companionLightBadKey,
       CompanionLightError(failure: CompanionLightFailure.busy) => l10n.companionLightBusy,
       DshRemoteException(code: 'companion/agent-retry-closed') => l10n.companionAgentRetryClosed,
@@ -2782,6 +2784,19 @@ class _CompanionPageState extends ConsumerState<CompanionPage>
               );
             },
           ),
+          // 她会留意你的通知: only Android has a notification listener.
+          if (ref.read(operatingSystemProvider) == 'android')
+            SettingsTile(
+              key: const ValueKey('companion-notices'),
+              icon: AppIcons.mail,
+              tinted: false,
+              title: l10n.companionNotices,
+              onTap: () => run(
+                () => unawaited(
+                  Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => const CompanionNoticesPage())),
+                ),
+              ),
+            ),
           Consumer(
             builder: (context, ref, _) => SettingsTile(
               icon: AppIcons.companionInvite,
@@ -3031,13 +3046,33 @@ class _CompanionPageState extends ConsumerState<CompanionPage>
           },
           // Her top bar, words and input blur what's behind them once between
           // them (they never overlap), not once each, each time her stage draws.
-          child: BackdropGroup(child: Builder(builder: _buildPage)),
+          child: BackdropGroup(child: Builder(builder: _buildSections)),
         ),
       ),
     );
   }
 
-  Widget _buildPage(BuildContext context) {
+  Widget _buildSections(BuildContext context) {
+    // The memory and task pages query the store as they build. This page
+    // builds for each of her streamed words and the room for each frame of the
+    // keyboard, so they are made again only for another tab, memory or
+    // character. The task page in front still is: its times move.
+    if (widget.sections) _visited.add(_tab);
+    if (_sectionPagesKey != _sectionPagesFor) _sectionPages.clear();
+    for (final tab in _visited) {
+      if (tab == _CompanionTab.memory || tab == _CompanionTab.tasks && _tab != tab) {
+        _sectionPages.putIfAbsent(tab, () => _sectionPage(context, tab));
+      }
+    }
+    _sectionPagesFor = _sectionPagesKey;
+    return Builder(builder: (context) => _buildPage(context, _sectionPages));
+  }
+
+  final _sectionPages = <_CompanionTab, Widget>{};
+  Object? _sectionPagesFor;
+  Object get _sectionPagesKey => (_tab, _sectionMemory, _attachment.characterId);
+
+  Widget _buildPage(BuildContext context, Map<_CompanionTab, Widget> pages) {
     final l10n = context.l10n;
     final insets = MediaQuery.viewInsetsOf(context).bottom;
     final padding = MediaQuery.paddingOf(context);
@@ -3320,7 +3355,6 @@ class _CompanionPageState extends ConsumerState<CompanionPage>
     if (!widget.sections) {
       return Scaffold(backgroundColor: const Color(0xFF0D2F55), resizeToAvoidBottomInset: false, body: room);
     }
-    _visited.add(_tab);
     return Scaffold(
       backgroundColor: const Color(0xFF0D2F55),
       resizeToAvoidBottomInset: false,
@@ -3349,7 +3383,7 @@ class _CompanionPageState extends ConsumerState<CompanionPage>
                   MediaQuery(
                     data: MediaQuery.of(context)
                         .copyWith(padding: padding.copyWith(bottom: padding.bottom + CompanionSectionNav.height + 10)),
-                    child: TickerMode(enabled: _tab == tab, child: _sectionPage(context, tab)),
+                    child: TickerMode(enabled: _tab == tab, child: pages[tab] ?? _sectionPage(context, tab)),
                   ),
             ],
           ),
@@ -3384,8 +3418,8 @@ class _CompanionPageState extends ConsumerState<CompanionPage>
   final _visited = <_CompanionTab>{};
 
   Widget _sectionPage(BuildContext context, _CompanionTab tab) {
-    final l10n = context.l10n;
     if (tab == _CompanionTab.her) {
+      final l10n = context.l10n;
       return AppPage(
         title: ref.read(companionNameProvider) ?? _character.name ?? l10n.companionTitle,
         hero: _panelHeader(l10n),
@@ -3399,27 +3433,30 @@ class _CompanionPageState extends ConsumerState<CompanionPage>
         ],
       );
     }
-    final title = tab == _CompanionTab.memory ? l10n.companionMemoryTitle : l10n.companionTasksTitle;
     return FutureBuilder<CompanionMemoryOwner>(
       future: _sectionMemory ??= _openMemory(),
-      builder: (context, snapshot) => switch (snapshot) {
-        AsyncSnapshot(hasData: true, :final data?) when tab == _CompanionTab.memory => CompanionMemoryPage(
-          memory: data,
-          characterId: _attachment.characterId,
-        ),
-        AsyncSnapshot(hasData: true, :final data?) => CompanionTasksPage(memory: data, allSessions: true),
-        AsyncSnapshot(hasError: true) => AppPage.list(
-          title: title,
-          children: [
-            EmptyView(
-              icon: tab == _CompanionTab.memory ? AppIcons.bookmark : AppIcons.reminder,
-              title: l10n.companionMemoryLoadFailed,
-              actionLabel: l10n.commonRetry,
-              onAction: () => setState(() => _sectionMemory = null),
-            ),
-          ],
-        ),
-        _ => AppPage.list(title: title, children: const []),
+      builder: (context, snapshot) {
+        final l10n = context.l10n;
+        final title = tab == _CompanionTab.memory ? l10n.companionMemoryTitle : l10n.companionTasksTitle;
+        return switch (snapshot) {
+          AsyncSnapshot(hasData: true, :final data?) when tab == _CompanionTab.memory => CompanionMemoryPage(
+            memory: data,
+            characterId: _attachment.characterId,
+          ),
+          AsyncSnapshot(hasData: true, :final data?) => CompanionTasksPage(memory: data, allSessions: true),
+          AsyncSnapshot(hasError: true) => AppPage.list(
+            title: title,
+            children: [
+              EmptyView(
+                icon: tab == _CompanionTab.memory ? AppIcons.bookmark : AppIcons.reminder,
+                title: l10n.companionMemoryLoadFailed,
+                actionLabel: l10n.commonRetry,
+                onAction: () => setState(() => _sectionMemory = null),
+              ),
+            ],
+          ),
+          _ => AppPage.list(title: title, children: const []),
+        };
       },
     );
   }
