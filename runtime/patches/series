@@ -17,6 +17,7 @@ client-hmr-closed-response.diff
 client-modules-combo-rebuild.diff
 client-modules-manifest-read.diff
 client-modules-combo-buffer.diff
+client-chunk-empty-path.diff
 schemastery-json-context.diff
 session-title-word-prefix.diff
 str-editor-view-prefix.diff
@@ -152,6 +153,8 @@ zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz-companion-signals.diff
 tool-author-annotation-keys.diff
 zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz-phone-run-end.diff
 tool-schema-keyword-types.diff
+tool-schema-intrinsic-source.diff
+tool-schema-rule-pair-fields.diff
 zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz-phone-run-end-schema.diff
 zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz-phone-run-end-retry.diff
 zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz-phone-run-end-live-retry.diff
@@ -171,8 +174,10 @@ web-search-key-write-result.diff
 deepseek-attachment-error.diff
 fork-default-effort.diff
 config-editor-lock-order.diff
+config-editor-empty-layer-copy.diff
 piai-overflow-output-limit.diff
 schedule-authorization-availability.diff
+schedule-task-schema-on-demand.diff
 deepseek-refusal.diff
 deepseek-unnamed-stream-error.diff
 discovery-capabilities.diff
@@ -182,6 +187,7 @@ plugin-compatibility-exact-version.diff
 profile-sibling-package-lookup.diff
 profile-runtime-version-validation.diff
 profile-runtime-version-preflight.diff
+profile-telemetry-compose-on-opt-out.diff
 messages-usage-evidence.diff
 piai-usage-evidence.diff
 piai-tool-call-id.diff
