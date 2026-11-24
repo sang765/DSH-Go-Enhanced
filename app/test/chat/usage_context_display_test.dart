@@ -55,17 +55,22 @@ void main() {
     final chat = FakeChatController('s', const ChatState(loading: false));
     Future<void> show(SessionUsage usage, {required bool sheet}) async {
       await tester.pumpWidget(
-        testApp(
-          Scaffold(
-            body: sheet
-                ? UsageSheet(sessionId: 's')
-                : SingleChildScrollView(child: SessionUsageSections(usage: usage)),
+        // A fresh key forces a fresh ProviderScope: overrides are captured at
+        // scope creation, so re-pumping in place would keep the first usage.
+        KeyedSubtree(
+          key: ValueKey('$sheet-${usage.contextTokens}-${usage.contextWindow}'),
+          child: testApp(
+            Scaffold(
+              body: sheet
+                  ? UsageSheet(sessionId: 's')
+                  : SingleChildScrollView(child: SessionUsageSections(usage: usage)),
+            ),
+            overrides: [
+              sessionUsageProvider.overrideWith2((id) => FakeUsage(id, usage)),
+              balanceProvider.overrideWith(_FakeBalanceController.new),
+              chatProvider('s').overrideWith(() => chat),
+            ],
           ),
-          overrides: [
-            sessionUsageProvider.overrideWith2((id) => FakeUsage(id, usage)),
-            balanceProvider.overrideWith(_FakeBalanceController.new),
-            chatProvider('s').overrideWith(() => chat),
-          ],
         ),
       );
       await tester.pumpAndSettle();
