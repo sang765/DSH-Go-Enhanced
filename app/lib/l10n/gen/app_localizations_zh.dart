@@ -18323,6 +18323,39 @@ class L10nZh extends L10n {
   String get remoteWorkspaceAdd => '添加工作区';
 
   @override
+  String get remoteWorkspaceClone => '克隆仓库';
+
+  @override
+  String get remoteWorkspaceCloneHint => 'GitHub / GitLab 地址，或 owner/repo';
+
+  @override
+  String get remoteWorkspaceCloneHost => '简称的托管平台';
+
+  @override
+  String get remoteWorkspaceCloneFolder => '克隆到';
+
+  @override
+  String get remoteWorkspaceCloneChooseFolder => '选择文件夹';
+
+  @override
+  String get remoteWorkspaceCloneAction => '克隆';
+
+  @override
+  String get remoteWorkspaceCloneBusy => '正在克隆…';
+
+  @override
+  String get remoteWorkspaceCloneInvalid => '请输入 GitHub/GitLab 地址或 owner/repo';
+
+  @override
+  String get remoteWorkspaceCloneFailed => '没能克隆';
+
+  @override
+  String get remoteWorkspaceCloneAdded => '已克隆并添加为工作区';
+
+  @override
+  String get remoteWorkspaceCloneTerminalOff => '此主机没有终端';
+
+  @override
   String remoteWorkspaceAdded(String name) {
     return '已添加「$name」';
   }

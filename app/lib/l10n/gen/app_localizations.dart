@@ -33696,6 +33696,72 @@ abstract class L10n {
   /// **'添加工作区'**
   String get remoteWorkspaceAdd;
 
+  /// No description provided for @remoteWorkspaceClone.
+  ///
+  /// In zh, this message translates to:
+  /// **'克隆仓库'**
+  String get remoteWorkspaceClone;
+
+  /// No description provided for @remoteWorkspaceCloneHint.
+  ///
+  /// In zh, this message translates to:
+  /// **'GitHub / GitLab 地址，或 owner/repo'**
+  String get remoteWorkspaceCloneHint;
+
+  /// No description provided for @remoteWorkspaceCloneHost.
+  ///
+  /// In zh, this message translates to:
+  /// **'简称的托管平台'**
+  String get remoteWorkspaceCloneHost;
+
+  /// No description provided for @remoteWorkspaceCloneFolder.
+  ///
+  /// In zh, this message translates to:
+  /// **'克隆到'**
+  String get remoteWorkspaceCloneFolder;
+
+  /// No description provided for @remoteWorkspaceCloneChooseFolder.
+  ///
+  /// In zh, this message translates to:
+  /// **'选择文件夹'**
+  String get remoteWorkspaceCloneChooseFolder;
+
+  /// No description provided for @remoteWorkspaceCloneAction.
+  ///
+  /// In zh, this message translates to:
+  /// **'克隆'**
+  String get remoteWorkspaceCloneAction;
+
+  /// No description provided for @remoteWorkspaceCloneBusy.
+  ///
+  /// In zh, this message translates to:
+  /// **'正在克隆…'**
+  String get remoteWorkspaceCloneBusy;
+
+  /// No description provided for @remoteWorkspaceCloneInvalid.
+  ///
+  /// In zh, this message translates to:
+  /// **'请输入 GitHub/GitLab 地址或 owner/repo'**
+  String get remoteWorkspaceCloneInvalid;
+
+  /// No description provided for @remoteWorkspaceCloneFailed.
+  ///
+  /// In zh, this message translates to:
+  /// **'没能克隆'**
+  String get remoteWorkspaceCloneFailed;
+
+  /// No description provided for @remoteWorkspaceCloneAdded.
+  ///
+  /// In zh, this message translates to:
+  /// **'已克隆并添加为工作区'**
+  String get remoteWorkspaceCloneAdded;
+
+  /// No description provided for @remoteWorkspaceCloneTerminalOff.
+  ///
+  /// In zh, this message translates to:
+  /// **'此主机没有终端'**
+  String get remoteWorkspaceCloneTerminalOff;
+
   /// No description provided for @remoteWorkspaceAdded.
   ///
   /// In zh, this message translates to:

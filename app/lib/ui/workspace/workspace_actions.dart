@@ -28,19 +28,33 @@ import '../common/brief_notice.dart';
 /// workspace in the drawer. Returns it, or null when dismissed or failed.
 Future<Workspace?> addWorkspace(BuildContext context) async {
   final l10n = context.l10n;
-  final container = ProviderScope.containerOf(context, listen: false);
-  final messenger = ScaffoldMessenger.maybeOf(context);
   final path = await showDirectoryPicker(context, title: l10n.remoteWorkspaceAdd, confirmLabel: l10n.commonAdd);
   if (path == null) return null;
+  return registerWorkspacePath(context, path);
+}
+
+/// Registers an existing folder (picked or freshly cloned) as a workspace and
+/// makes it the active one, exactly like the Add workspace flow.
+Future<Workspace?> registerWorkspacePath(
+  BuildContext context,
+  String path, {
+  String? successNotice,
+  String? errorFallback,
+}) async {
+  final l10n = context.l10n;
+  final container = ProviderScope.containerOf(context, listen: false);
+  final messenger = ScaffoldMessenger.maybeOf(context);
   try {
     final workspace = await container.read(workspacesProvider.notifier).add(path);
     final prefs = container.read(workspacePrefsProvider.notifier);
     if (parentFolder(path) case final parent?) await prefs.remember(parent);
     await prefs.select(workspace.workspaceId);
-    messenger?.showBriefNotice(l10n.remoteWorkspaceAdded(workspaceTitle(workspace)));
+    messenger?.showBriefNotice(successNotice ?? l10n.remoteWorkspaceAdded(workspaceTitle(workspace)));
     return workspace;
   } catch (e) {
-    messenger?.showSnackBar(SnackBar(content: Text(workspaceErrorText(e, fallback: l10n.remoteWorkspaceErrAdd))));
+    messenger?.showSnackBar(
+      SnackBar(content: Text(workspaceErrorText(e, fallback: errorFallback ?? l10n.remoteWorkspaceErrAdd))),
+    );
     return null;
   }
 }

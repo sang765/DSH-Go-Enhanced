@@ -19285,6 +19285,39 @@ class L10nEn extends L10n {
   String get remoteWorkspaceAdd => 'Add workspace';
 
   @override
+  String get remoteWorkspaceClone => 'Clone a repository';
+
+  @override
+  String get remoteWorkspaceCloneHint => 'GitHub / GitLab URL, or owner/repo';
+
+  @override
+  String get remoteWorkspaceCloneHost => 'Host for short names';
+
+  @override
+  String get remoteWorkspaceCloneFolder => 'Clone into';
+
+  @override
+  String get remoteWorkspaceCloneChooseFolder => 'Choose folder';
+
+  @override
+  String get remoteWorkspaceCloneAction => 'Clone';
+
+  @override
+  String get remoteWorkspaceCloneBusy => 'Cloning…';
+
+  @override
+  String get remoteWorkspaceCloneInvalid => 'Enter a GitHub/GitLab URL or owner/repo';
+
+  @override
+  String get remoteWorkspaceCloneFailed => 'Couldn’t clone';
+
+  @override
+  String get remoteWorkspaceCloneAdded => 'Cloned and added as a workspace';
+
+  @override
+  String get remoteWorkspaceCloneTerminalOff => 'This host has no terminal';
+
+  @override
   String remoteWorkspaceAdded(String name) {
     return 'Added “$name”';
   }

@@ -18,6 +18,7 @@ import '../common/row_marks.dart';
 import '../common/sheet_title_bar.dart';
 import '../theme/app_icons.dart';
 import '../theme/theme.dart';
+import 'clone_repository_sheet.dart';
 import 'workspace_actions.dart';
 import 'workspace_format.dart';
 
@@ -97,7 +98,7 @@ class WorkspaceSwitcher extends ConsumerWidget {
   }
 }
 
-enum _SheetAction { add, manage }
+enum _SheetAction { add, clone, manage }
 
 /// 「工作区」: 全部对话, the host's workspaces, 「添加工作区」, 「管理工作区」.
 Future<void> showWorkspaceSheet(BuildContext context, {required VoidCallback onManage}) async {
@@ -110,6 +111,8 @@ Future<void> showWorkspaceSheet(BuildContext context, {required VoidCallback onM
   switch (action) {
     case _SheetAction.add:
       await addWorkspace(context);
+    case _SheetAction.clone:
+      await showCloneRepositorySheet(context);
     case _SheetAction.manage:
       onManage();
     case null:
@@ -179,6 +182,13 @@ class WorkspaceSheet extends ConsumerWidget {
               SheetGroup(
                 margin: margin,
                 children: [
+                  if (local)
+                    ListPageRow(
+                      icon: AppIcons.terminal,
+                      title: l10n.remoteWorkspaceClone,
+                      subtitle: l10n.remoteWorkspaceCloneHint,
+                      onTap: () => Navigator.of(context).pop(_SheetAction.clone),
+                    ),
                   ListPageRow(
                     icon: AppIcons.newFolder,
                     title: l10n.remoteWorkspaceAdd,

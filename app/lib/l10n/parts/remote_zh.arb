@@ -793,6 +793,17 @@
   },
   "remoteDirectoryTruncated": "文件夹太多，只列出了前面一部分",
   "remoteWorkspaceAdd": "添加工作区",
+  "remoteWorkspaceClone": "克隆仓库",
+  "remoteWorkspaceCloneHint": "GitHub / GitLab 地址，或 owner/repo",
+  "remoteWorkspaceCloneHost": "简称的托管平台",
+  "remoteWorkspaceCloneFolder": "克隆到",
+  "remoteWorkspaceCloneChooseFolder": "选择文件夹",
+  "remoteWorkspaceCloneAction": "克隆",
+  "remoteWorkspaceCloneBusy": "正在克隆…",
+  "remoteWorkspaceCloneInvalid": "请输入 GitHub/GitLab 地址或 owner/repo",
+  "remoteWorkspaceCloneFailed": "没能克隆",
+  "remoteWorkspaceCloneAdded": "已克隆并添加为工作区",
+  "remoteWorkspaceCloneTerminalOff": "此主机没有终端",
   "remoteWorkspaceAdded": "已添加「{name}」",
   "@remoteWorkspaceAdded": {
     "placeholders": {
