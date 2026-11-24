@@ -163,7 +163,7 @@ class HostGitCloneService implements GitCloneService {
       if (closed) return;
       closed = true;
       await frames?.cancel();
-      await attachment?.cancel();
+      await attachment?.close();
       try {
         await client.closeTerminal(sessionId, terminalId);
       } on Object {
@@ -179,7 +179,7 @@ class HostGitCloneService implements GitCloneService {
     }
 
     try {
-      await client.createTerminal(sessionId, terminalId, cols: 100, rows: 30);
+      await client.createTerminal(sessionId, id: terminalId, cols: 100, rows: 30);
       final environment = await client.terminalEnvironment(sessionId);
       attachment = client.attachTerminal(sessionId, terminalId, environment: environment);
       final done = Completer<int>();
@@ -187,14 +187,14 @@ class HostGitCloneService implements GitCloneService {
       frames = attachment!.frames.listen(
         (frame) {
           if (frame is TerminalSnapshot && frame.writable) {
-            final command = '${spec.cloneCommand}; printf \'\\n__DSH_GIT_CLONE__:%s\\n\' "$?"\n';
+            final command = '${spec.cloneCommand}; printf \'\\n__DSH_GIT_CLONE__:%s\\n\' "\$?"\n';
             if (!attachment!.write(command)) {
-              if (!done.isCompleted) done.addError(const GitCloneException('terminalNotWritable'));
+              if (!done.isCompleted) done.completeError(const GitCloneException('terminalNotWritable'));
             }
             return;
           }
           if (frame is TerminalOutput) {
-            final text = _ansi.replaceAll(frame.data, '');
+            final text = frame.data.replaceAll(_ansi, '');
             buffer.write(text);
             if (buffer.length > 16384) buffer.clear();
             final clean = text.replaceAll(RegExp(r'\r'), '').trim();
@@ -208,7 +208,7 @@ class HostGitCloneService implements GitCloneService {
           }
         },
         onError: (Object error) {
-          if (!done.isCompleted) done.addError(error);
+          if (!done.isCompleted) done.completeError(error);
         },
       );
       final exitCode = await done.future.timeout(
@@ -243,8 +243,8 @@ class HostGitCloneService implements GitCloneService {
   String _join(String parent, String name) => parent.endsWith('/') ? '$parent$name' : '$parent/$name';
 
   String _tail(String text) {
-    final lines = _ansi
-        .replaceAll(text, '')
+    final lines = text
+        .replaceAll(_ansi, '')
         .split(RegExp(r'\r?\n'))
         .map((line) => line.trim())
         .where((line) => line.isNotEmpty && !line.startsWith('__DSH_GIT_CLONE__:'))

@@ -2,6 +2,7 @@
 // GitLab source, pick a parent folder on the active Host, run git in a
 // throwaway Host session, then register the cloned folder as a workspace.
 
+import 'package:dsh_client/dsh_client.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -61,6 +62,7 @@ class _CloneRepositorySheetState extends ConsumerState<CloneRepositorySheet> {
     if (_busy) return;
     final l10n = context.l10n;
     final container = ProviderScope.containerOf(context, listen: false);
+    final messenger = ScaffoldMessenger.maybeOf(context);
     final spec = parseGitRepoInput(_input.text, _host);
     if (spec == null) {
       setState(() => _problem = l10n.remoteWorkspaceCloneInvalid);
@@ -108,7 +110,8 @@ class _CloneRepositorySheetState extends ConsumerState<CloneRepositorySheet> {
         return;
       }
       final registered = await registerWorkspacePath(
-        context,
+        container,
+        messenger,
         outcome.path,
         successNotice: l10n.remoteWorkspaceCloneAdded,
         errorFallback: l10n.remoteWorkspaceCloneFailed,
