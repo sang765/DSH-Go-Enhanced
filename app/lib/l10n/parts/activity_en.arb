@@ -338,6 +338,7 @@
   "activityUsageBreakdownEstimate": "Breakdown items are independent estimates and may differ from the total",
   "activityUsageCumulativeInput": "Total input",
   "activityUsageContextFull": "Context nearly full. Send /compact to compact it",
+  "activityUsageCompactContext": "Compact context",
   "activitySpanZero": "0 sec",
   "activitySpanTiny": "<0.1 sec",
   "activityTokensTenThousands": "{value}K",

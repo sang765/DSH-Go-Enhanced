@@ -2642,6 +2642,12 @@ abstract class L10n {
   /// **'上下文将满，发送 /compact 可压缩'**
   String get activityUsageContextFull;
 
+  /// No description provided for @activityUsageCompactContext.
+  ///
+  /// In zh, this message translates to:
+  /// **'压缩上下文'**
+  String get activityUsageCompactContext;
+
   /// No description provided for @activitySpanZero.
   ///
   /// In zh, this message translates to:

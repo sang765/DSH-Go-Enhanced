@@ -1303,6 +1303,9 @@ class L10nZh extends L10n {
   String get activityUsageContextFull => '上下文将满，发送 /compact 可压缩';
 
   @override
+  String get activityUsageCompactContext => '压缩上下文';
+
+  @override
   String get activitySpanZero => '0 秒';
 
   @override

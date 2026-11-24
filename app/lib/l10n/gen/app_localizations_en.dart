@@ -1310,6 +1310,9 @@ class L10nEn extends L10n {
   String get activityUsageContextFull => 'Context nearly full. Send /compact to compact it';
 
   @override
+  String get activityUsageCompactContext => 'Compact context';
+
+  @override
   String get activitySpanZero => '0 sec';
 
   @override

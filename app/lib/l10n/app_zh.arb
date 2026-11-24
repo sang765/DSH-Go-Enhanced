@@ -491,6 +491,7 @@
   "activityUsageBreakdownEstimate": "分项为独立估算，可能与总量不同",
   "activityUsageCumulativeInput": "累计输入",
   "activityUsageContextFull": "上下文将满，发送 /compact 可压缩",
+  "activityUsageCompactContext": "压缩上下文",
   "activitySpanZero": "0 秒",
   "activitySpanTiny": "<0.1 秒",
   "activityTokensTenThousands": "{value} 万",

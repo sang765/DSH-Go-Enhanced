@@ -8,11 +8,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../l10n/l10n.dart';
+import '../../state/chat_state.dart';
 import '../../state/usage_state.dart';
 import '../../state/subscriptions_state.dart';
 import '../../state/providers_state.dart';
 import '../common/app_sheet.dart';
 import '../common/sheet_title_bar.dart';
+import '../theme/app_icons.dart';
 import '../theme/theme.dart';
 import 'balance_widgets.dart';
 
@@ -186,13 +188,65 @@ class UsageSheet extends ConsumerWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             SheetTitleBar(l10n.activityUsage),
-            SessionUsageSections(usage: usage, pricing: pricing, sheet: true, margin: _margin),
+            SessionUsageSections(
+              usage: usage,
+              pricing: pricing,
+              sheet: true,
+              margin: _margin,
+              contextTrailing: _hasContextUsage(usage) ? _CompactContextButton(sessionId: sessionId) : null,
+            ),
             const SizedBox(height: 16),
             if (subscription == null)
               BalanceCard(title: l10n.activityUsageBalance, margin: _margin)
             else if (subscription != Subscription.chatgptOfficial)
               _SubscriptionQuota(subscription: subscription, margin: _margin),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Only sessions with a context projection can be compacted; an idle chat
+/// has nothing to reclaim and hides the action instead of offering a no-op.
+bool _hasContextUsage(SessionUsage usage) => (usage.contextTokens ?? 0) > 0;
+
+class _CompactContextButton extends ConsumerStatefulWidget {
+  const _CompactContextButton({required this.sessionId});
+
+  final String sessionId;
+
+  @override
+  ConsumerState<_CompactContextButton> createState() => _CompactContextButtonState();
+}
+
+class _CompactContextButtonState extends ConsumerState<_CompactContextButton> {
+  bool _busy = false;
+
+  Future<void> _compact() async {
+    if (_busy) return;
+    HapticFeedback.selectionClick();
+    setState(() => _busy = true);
+    await ref.read(chatProvider(widget.sessionId).notifier).runCommand('/compact');
+    if (mounted) setState(() => _busy = false);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    return Padding(
+      padding: const EdgeInsets.only(top: 6),
+      child: Align(
+        alignment: Alignment.centerRight,
+        child: TextButton.icon(
+          onPressed: _busy ? null : _compact,
+          icon: _busy
+              ? const SizedBox.square(
+                  dimension: 16,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              : const Icon(AppIcons.compact, size: 18),
+          label: Text(_busy ? l10n.activityCompacting : l10n.activityUsageCompactContext),
         ),
       ),
     );
@@ -343,12 +397,16 @@ class SessionUsageSections extends StatelessWidget {
     this.pricing,
     this.sheet = false,
     this.margin = const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+    this.contextTrailing,
   });
 
   final SessionUsage usage;
   final TokenPricing? pricing;
   final bool sheet;
   final EdgeInsets margin;
+
+  /// Action shown right below the context block, in the Usage sheet only.
+  final Widget? contextTrailing;
 
   @override
   Widget build(BuildContext context) {
@@ -366,6 +424,7 @@ class SessionUsageSections extends StatelessWidget {
             if (i > 0) const SizedBox(height: 16),
             SheetSectionLabel(title, inset: margin.left),
             SheetGroup(margin: margin, children: [body]),
+            if (i == 0 && contextTrailing != null) contextTrailing!,
           ] else
             SheetGroup(title: title, margin: margin, children: [body]),
       ],
