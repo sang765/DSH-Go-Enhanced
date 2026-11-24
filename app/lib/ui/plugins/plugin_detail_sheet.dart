@@ -477,7 +477,7 @@ class BundleSheet extends ConsumerWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         SheetHeader(
-          title ?? l10n.hubPluginDetails,
+          title,
           actions: [
             if (shareable) _ShareKey(onPressed: () => unawaited(shareInstalledPlugin(context, bundle, card: market))),
           ],
