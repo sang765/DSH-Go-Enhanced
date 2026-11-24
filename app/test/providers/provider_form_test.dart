@@ -135,6 +135,26 @@ class _FakeCatalogHttp implements UpdateHttp {
   }
 }
 
+/// A models.dev entry whose advertised Base URL is a placeholder, like the
+/// real databricks/snowflake/cloudflare/neon/infomaniak presets.
+class _TemplateCatalogHttp implements UpdateHttp {
+  @override
+  Future<UpdateHttpResponse> get(Uri url, {Map<String, String> headers = const {}, Duration timeout = const Duration(seconds: 15)}) async {
+    return UpdateHttpResponse(
+      status: 200,
+      body: Stream.value(
+        utf8.encode(jsonEncode({
+          'templated': {
+            'id': 'templated',
+            'name': 'Template Gateway',
+            'api': r'https://${DATABRICKS_HOST}/ai-gateway/mlflow/v1',
+            'models': {'template-pro': {'id': 'template-pro', 'name': 'Template Pro'}},
+          },
+        }))).asBroadcastStream(),
+    );
+  }
+}
+
 Finder _field(String label) => find.descendant(
   of: find.ancestor(of: find.text(label), matching: find.byType(Column)).first,
   matching: find.byType(TextField),
@@ -610,6 +630,33 @@ void main() {
       expect(create['baseURL'], 'https://api.example.com/v1');
       expect(create['api'], 'openai-completions');
       expect(find.text('result: custom-example-cloud'), findsOneWidget);
+    });
+
+    testWidgets('a template Base URL preset stays editable in place', (tester) async {
+      final backend = FakeProviderBackend(discoverResult: discovered);
+      await _open(tester, backend, http: _TemplateCatalogHttp(), catalogFirst: true);
+      await tester.runAsync(() async {
+        final container = ProviderScope.containerOf(tester.element(find.byType(ProviderFormPage)));
+        for (var i = 0; i < 50; i++) {
+          await Future<void>.delayed(const Duration(milliseconds: 100));
+          if (container.read(modelsDevCatalogProvider) case AsyncValue(:final value?)) {
+            if (value.providers.isNotEmpty) return;
+          }
+        }
+      });
+      await settle(tester);
+      await tester.tap(find.text('Template Gateway'));
+      await settle(tester);
+      final field = _field('Base URL');
+      expect(tester.widget<TextField>(field).controller!.text, r'https://${DATABRICKS_HOST}/ai-gateway/mlflow/v1');
+      // A placeholder is not a usable URL: fill in the real host here, not
+      // after a save + reopen round trip.
+      expect(tester.widget<TextField>(field).readOnly, isFalse);
+      await _type(tester, 'Base URL', 'https://my-workspace.cloud.databricks.com/ai-gateway/mlflow/v1');
+      expect(tester.widget<TextField>(_field('Base URL')).controller!.text,
+          'https://my-workspace.cloud.databricks.com/ai-gateway/mlflow/v1');
+      // Name and protocol stay locked by the preset.
+      expect(tester.widget<TextField>(_field('名称')).readOnly, isTrue);
     });
 
     testWidgets('fetched models gain what the listing left out from the catalogue', (tester) async {

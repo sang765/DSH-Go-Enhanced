@@ -1,5 +1,6 @@
 import 'package:dsh_app/runtime/runtime_bridge.dart';
 import 'package:dsh_app/runtime/runtime_state.dart';
+import 'package:dsh_app/state/android_features.dart';
 import 'package:dsh_app/state/settings_state.dart';
 import 'package:dsh_app/ui/engine/engine_screen.dart';
 import 'package:dsh_app/ui/engine/log_view.dart';
@@ -25,7 +26,12 @@ class _Logs extends LocalRuntimeLogsController {
 }
 
 void main() {
-  Future<_Runtime> pump(WidgetTester tester, RuntimePhase phase, {_Logs? logs}) async {
+  Future<_Runtime> pump(
+    WidgetTester tester,
+    RuntimePhase phase, {
+    _Logs? logs,
+    String os = 'android',
+  }) async {
     final runtime = _Runtime(LocalRuntimeState(loaded: true, status: RuntimeStatus(phase: phase)));
     usePhoneSurface(tester);
     await tester.pumpWidget(
@@ -33,6 +39,7 @@ void main() {
         home: const EngineScreen(),
         brightness: Brightness.light,
         overrides: [
+          operatingSystemProvider.overrideWithValue(os),
           localRuntimeProvider.overrideWith(() => runtime),
           if (logs != null) localRuntimeLogsProvider.overrideWith(() => logs),
           runtimeBridgeProvider.overrideWithValue(FakeBridge()),
@@ -165,4 +172,15 @@ void main() {
     expect(resetDeletes(const ResetKeep(pluginsAndSettings: true)), '对话、工作区、界面配置和技能');
     expect(resetDeletes(const ResetKeep(uiAndSkills: true, pluginsAndSettings: true)), '对话和工作区');
   });
+
+  // The home-import channel exists only on Android; the OS-only gate used to
+  // show the row on iOS too, where tapping it stopped the engine for nothing.
+  for (final entry in {'android': true, 'ohos': false, 'ios': false}.entries) {
+    testWidgets('home import row on ${entry.key}: visible=${entry.value}', (tester) async {
+      await pump(tester, RuntimePhase.installed, os: entry.key);
+      await tester.scrollUntilVisible(find.text('重置运行环境'), 500, scrollable: find.byType(Scrollable).first);
+      await tester.pumpAndSettle();
+      expect(find.text('导入 DSH Go 数据'), entry.value ? findsOneWidget : findsNothing);
+    });
+  }
 }

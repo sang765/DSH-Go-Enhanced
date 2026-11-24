@@ -206,8 +206,18 @@ class _ProviderFormPageState extends ConsumerState<ProviderFormPage> with FieldP
     _clean = _signature();
   }
 
-  /// Whether the name / protocol / Base URL fields are locked by a preset.
+  /// Whether the name / protocol fields are locked by a preset.
   bool get _locked => _preset != null;
+
+  /// A preset's Base URL stays locked only when it is concrete. Some
+  /// models.dev entries advertise a URL template with a host slot to fill; that
+  /// placeholder is not a usable URL, so leave it editable in place instead
+  /// of forcing a save-then-reopen dance just to fill in the host.
+  bool get _baseUrlLocked {
+    if (!_locked) return false;
+    final url = _preset!.apiUrl;
+    return url == null || !url.contains(r'${');
+  }
 
   /// The models.dev docs of a preset provider, in the system browser.
   void _openDoc(BuildContext context, String url) {
@@ -523,7 +533,7 @@ class _ProviderFormPageState extends ConsumerState<ProviderFormPage> with FieldP
                       helper: _errors[_F.baseUrl] == null ? _baseUrlNote : null,
                       child: TextField(
                         controller: _baseUrl,
-                        readOnly: _locked,
+                        readOnly: _baseUrlLocked,
                         keyboardType: TextInputType.url,
                         autocorrect: false,
                         // Android adds a password variation when suggestions are disabled.
