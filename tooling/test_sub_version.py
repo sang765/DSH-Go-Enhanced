@@ -28,26 +28,32 @@ class SubVersionTest(unittest.TestCase):
     def test_read_pubspec_and_check(self):
         base, sub = sub_version.read_pubspec()
         self.assertEqual(base, "1.3.0")
-        self.assertEqual(sub, 1)
+        self.assertGreaterEqual(sub, 1)
         sub_version.check()
 
     def test_write_bumps_both_files(self):
+        # The counter moves with each release, so derive the expected bump
+        # from the tree under test instead of hardcoding the current number.
+        base, sub = sub_version.read_pubspec()
+        expected = f"{base}-sub.{sub + 1}"
         with tempfile.TemporaryDirectory() as tmp:
             root = pathlib.Path(tmp)
             shutil.copytree(sub_version.ROOT / "app", root / "app")
-            self.assertEqual(sub_version.write(root, tags=["v1.3.0-sub.1"]), "1.3.0-sub.2")
-            self.assertEqual(sub_version.read_pubspec(root), ("1.3.0", 2))
+            self.assertEqual(sub_version.write(root, tags=[f"v{base}-sub.{sub}"]), expected)
+            self.assertEqual(sub_version.read_pubspec(root), (base, sub + 1))
             sub_version.check(root)
             text = (root / "app" / "lib" / "state" / "app_info.dart").read_text(encoding="utf-8")
-            self.assertIn("defaultValue: '1.3.0-sub.2+1'", text)
-            self.assertIn("DSH_APP_VERSION=1.3.0-sub.2+7", text)
+            self.assertIn(f"defaultValue: '{expected}+1'", text)
+            self.assertIn(f"DSH_APP_VERSION={expected}+7", text)
 
     def test_check_rejects_a_stale_app_info(self):
+        base, sub = sub_version.read_pubspec()
+        current = f"{base}-sub.{sub}+1"
         with tempfile.TemporaryDirectory() as tmp:
             root = pathlib.Path(tmp)
             shutil.copytree(sub_version.ROOT / "app", root / "app")
             info = root / "app" / "lib" / "state" / "app_info.dart"
-            info.write_text(info.read_text(encoding="utf-8").replace("1.3.0-sub.1+1", "1.2.13+1"), encoding="utf-8")
+            info.write_text(info.read_text(encoding="utf-8").replace(current, "1.2.13+1"), encoding="utf-8")
             with self.assertRaises(ValueError):
                 sub_version.check(root)
 

@@ -279,7 +279,16 @@ Future<String?> gitScopeCwd(DshClient client, GitScope scope) async {
 /// watched paths below bring it up to date, so a branch the agent (or a
 /// terminal) creates or switches shows up without closing the sheet.
 final gitBranchProvider = FutureProvider.autoDispose.family<GitBranchInfo, GitScope>((ref, scope) async {
-  final client = ref.watch(activeConnectionProvider.select((c) => c.value?.client));
+  // A reconnect replaces the client and its connection object but not the
+  // host. Watching those objects would re-probe git on every retry — a storm
+  // on a Host that is offline. Watch only the host identity; the file watches
+  // below follow the branch as it moves, and a host switch rebuilds this.
+  final host = ref.watch(activeConnectionProvider.select((c) {
+    final connection = c.value;
+    return connection == null ? null : (connection.hostId, connection.isLocal);
+  }));
+  if (host == null) return GitBranchInfo.notRepo;
+  final client = ref.read(activeConnectionProvider).value?.client;
   if (client == null) return GitBranchInfo.notRepo;
   final generation = client.mux.generation;
   bool current() => ref.mounted && client.mux.generation == generation;

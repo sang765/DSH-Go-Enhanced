@@ -16,6 +16,7 @@ import 'package:dsh_app/runtime/runtime_bridge.dart';
 import 'package:dsh_app/runtime/runtime_state.dart';
 import 'package:dsh_app/state/chat_state.dart';
 import 'package:dsh_app/state/connection_state.dart';
+import 'package:dsh_app/state/git_branch_state.dart';
 import 'package:dsh_app/state/hosts_state.dart';
 import 'package:dsh_app/state/sessions_state.dart';
 import 'package:dsh_app/ui/shell/home_shell.dart';
@@ -87,6 +88,9 @@ Future<_App> _open(WidgetTester tester) async {
         ),
         relayBackendProvider.overrideWithValue(backend),
         networkKicksProvider.overrideWithValue(kicks.stream),
+        // The composer's git probe is a one-off open cost of its own feature;
+        // these budgets pin the traffic of the flows under test.
+        gitBranchProvider.overrideWith((ref, scope) async => GitBranchInfo.notRepo),
       ],
     ),
   );
