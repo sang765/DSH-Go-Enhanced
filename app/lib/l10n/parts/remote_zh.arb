@@ -817,6 +817,20 @@
     }
   },
   "remoteGitBranchFailed": "没能切换分支",
+  "remoteGitBranchDirty": "有 {count} 处未提交的改动",
+  "@remoteGitBranchDirty": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "remoteGitBranchCreate": "新建分支",
+  "remoteGitBranchCreateName": "分支名",
+  "remoteGitBranchCreateInvalid": "分支名不可用",
+  "remoteGitBranchRemote": "远程分支",
+  "remoteGitBranchRemoteEmpty": "无远程分支",
+  "remoteGitBranchWorktree": "链接的工作树",
   "remoteWorkspaceAdded": "已添加「{name}」",
   "@remoteWorkspaceAdded": {
     "placeholders": {

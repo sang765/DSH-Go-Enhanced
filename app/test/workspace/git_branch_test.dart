@@ -63,6 +63,40 @@ void main() {
     );
   });
 
+  group('linked worktrees', () {
+    test('reads the git directory a .git file names', () {
+      expect(gitDirFromFile('gitdir: ../main/.git/worktrees/fix-login\n'), '../main/.git/worktrees/fix-login');
+      expect(gitDirFromFile('gitdir: /srv/main/.git/worktrees/fix\n'), '/srv/main/.git/worktrees/fix');
+      expect(gitDirFromFile('9f2c1b4e5a6d7c8b9a0e1f2a3b4c5d6e7f809123\n'), isNull);
+      expect(gitDirFromFile('gitdir: \n'), isNull);
+    });
+
+    test('only reaches a git directory that stays inside the folder', () {
+      expect(reachableGitDir('.git/worktrees/fix'), '.git/worktrees/fix');
+      expect(reachableGitDir('../main/.git/worktrees/fix'), isNull);
+      expect(reachableGitDir('/srv/main/.git/worktrees/fix'), isNull);
+      expect(reachableGitDir('C:/repo/.git/worktrees/fix'), isNull);
+    });
+  });
+
+  group('remote branches on disk', () {
+    test('lists packed remote refs without the symbolic HEAD', () {
+      const packed = '''
+# pack-refs with: peeled fully-peeled sorted
+9f2c1b4e5a6d7c8b9a0e1f2a3b4c5d6e7f809123 refs/remotes/origin/main
+1a2b3c4d5e6f708192a3b4c5d6e7f80912345678 refs/remotes/origin/HEAD
+''';
+      expect(parsePackedRefsRemotes(packed), ['origin/main', 'origin/HEAD']);
+      expect(parsePackedRefsRemotes(''), isEmpty);
+    });
+  });
+
+  test('a repository with uncommitted changes says so, an unread one does not', () {
+    expect(const GitBranchInfo(isRepo: true, branch: 'main', changedFiles: 2).dirty, isTrue);
+    expect(const GitBranchInfo(isRepo: true, branch: 'main', changedFiles: 0).dirty, isFalse);
+    expect(const GitBranchInfo(isRepo: true, branch: 'main').dirty, isFalse);
+  });
+
   test('the live watch follows the checked-out branch and both ref stores', () {
     // Dropping any of these leaves the chip stale after a switch, a new
     // branch or a fetch.
@@ -71,5 +105,12 @@ void main() {
     expect(gitWatchTargets, contains('.git/packed-refs'));
     expect(gitWatchNeedsReread(const DshWorkspaceWatchChange(absolutePath: '/w/.git/HEAD', version: 'v2')), isTrue);
     expect(gitWatchNeedsReread(const DshWorkspaceWatchReady()), isFalse);
+  });
+
+  test('a worktree watches the only path inside the folder it has', () {
+    // Its git directory lives outside, so following the ref files there would
+    // watch paths that do not exist.
+    expect(gitWatchTargetsFor(const GitBranchInfo(isRepo: true, worktree: true)), ['.git']);
+    expect(gitWatchTargetsFor(const GitBranchInfo(isRepo: true)), gitWatchTargets);
   });
 }

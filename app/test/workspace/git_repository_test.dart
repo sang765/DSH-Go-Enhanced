@@ -42,4 +42,46 @@ void main() {
       }
     });
   });
+
+  group('parseGitProbe', () {
+    test('reads the line the probe prints', () {
+      final state = parseGitProbe('\n__DSH_GITSTATE__main|0|main develop|origin/main origin/develop|main\n')!;
+      expect(state.branch, 'main');
+      expect(state.changedFiles, 0);
+      expect(state.dirty, isFalse);
+      expect(state.branches, ['main', 'develop']);
+      expect(state.remotes, ['origin/main', 'origin/develop']);
+      expect(state.worktree, isFalse);
+    });
+
+    test('keeps a detached worktree with uncommitted changes', () {
+      final state = parseGitProbe('__DSH_GITSTATE__HEAD|3|main|origin/main|worktree')!;
+      expect(state.branch, isNull);
+      expect(state.changedFiles, 3);
+      expect(state.dirty, isTrue);
+      expect(state.worktree, isTrue);
+    });
+
+    test('drops the symbolic remote HEAD and keeps nested remote names', () {
+      final state = parseGitProbe('__DSH_GITSTATE__main|0|main|origin/HEAD origin/main origin/feature/x|main')!;
+      expect(state.remotes, ['origin/main', 'origin/feature/x']);
+    });
+
+    test('ignores the echoed command and prefers the answer that followed it', () {
+      // The terminal prints the command it was given, so the marker appears a
+      // first time inside its own source.
+      const echoed = r'''printf '\n__DSH_GITSTATE__%s|%s|%s|%s|%s\n' "$(git rev-parse --abbrev-ref HEAD)"''';
+      final state = parseGitProbe('$echoed\n__DSH_GITSTATE__feature/x|1|feature/x|origin/main|main\n')!;
+      expect(state.branch, 'feature/x');
+      expect(state.changedFiles, 1);
+      expect(state.branches, ['feature/x']);
+    });
+
+    test('reports nothing outside a repository', () {
+      expect(parseGitProbe(''), isNull);
+      expect(parseGitProbe('fatal: not a git repository\n'), isNull);
+      expect(parseGitProbe('__DSH_GITSTATE__main|0|main'), isNull);
+      expect(parseGitProbe('__DSH_GITSTATE__main|x|main||main'), isNull);
+    });
+  });
 }

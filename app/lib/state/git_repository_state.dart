@@ -1,11 +1,12 @@
-// Git repository input parsing and Host-side git commands (clone, checkout)
-// used by the new-chat Workspace sheet and the branch picker.
+// Git repository input parsing and Host-side git commands (clone, checkout,
+// branch state) used by the new-chat Workspace sheet, the branch picker and the
+// composer's branch chip.
 //
 // Parsing is pure and deliberately strict: everything that reaches a shell is
 // either a validated repository slug or a validated URL, so a pasted string
-// can never inject a second command. Commands run in a throwaway session's
-// terminal on the active Host — the phone never touches its own filesystem,
-// and Remote Hosts run against their own disk through the same API.
+// can never inject a second command. Commands run in a terminal on the active
+// Host — the phone never touches its own filesystem, and Remote Hosts run
+// against their own disk through the same API.
 
 import 'dart:async';
 
@@ -104,15 +105,90 @@ String? _nameFromPath(String path) {
   return _segment.hasMatch(last) ? last : null;
 }
 
-/// One command's exit code and the short, ANSI-stripped tail of what it wrote.
+/// One command's exit code, the short ANSI-stripped tail of what it wrote
+/// ([output], what a person reads), and everything it wrote ([raw], what a
+/// structured command is parsed from).
 class GitCommandResult {
-  const GitCommandResult({required this.exitCode, required this.output});
+  const GitCommandResult({required this.exitCode, required this.output, this.raw = ''});
 
   final int exitCode;
   final String output;
+  final String raw;
 
   bool get ok => exitCode == 0;
 }
+
+/// What one structured git probe reports (see [gitProbeCommand]).
+class GitProbeState {
+  const GitProbeState({
+    required this.branch,
+    required this.changedFiles,
+    required this.branches,
+    required this.remotes,
+    required this.worktree,
+  });
+
+  /// Current branch; null on a detached HEAD.
+  final String? branch;
+
+  /// Entries `git status --porcelain` lists, 0 when the tree is clean.
+  final int changedFiles;
+
+  /// Local branch names.
+  final List<String> branches;
+
+  /// Remote-tracking names, e.g. `origin/develop`; the symbolic `origin/HEAD`
+  /// is dropped.
+  final List<String> remotes;
+
+  /// True in a linked worktree (`git worktree add`), where `.git` is a file.
+  final bool worktree;
+
+  bool get dirty => changedFiles > 0;
+}
+
+/// Prints one machine-readable line describing the repository in the terminal's
+/// folder, or nothing at all outside one.
+///
+/// Raw on purpose: `%(refname:short)` and `$?` must reach the shell as written.
+/// Ref names cannot contain a space, so the two branch lists join on one.
+const String gitProbeCommand =
+    r'''git rev-parse --git-dir >/dev/null 2>&1 && cd "$(git rev-parse --show-toplevel 2>/dev/null)" && printf '\n__DSH_GITSTATE__%s|%s|%s|%s|%s\n' "$(git rev-parse --abbrev-ref HEAD 2>/dev/null)" "$(git status --porcelain 2>/dev/null | wc -l | tr -d ' ')" "$(git for-each-ref --count=200 --format='%(refname:short)' refs/heads 2>/dev/null | tr '\n' ' ')" "$(git for-each-ref --count=200 --format='%(refname:short)' refs/remotes 2>/dev/null | tr '\n' ' ')" "$([ "$(git rev-parse --git-dir 2>/dev/null)" = "$(git rev-parse --git-common-dir 2>/dev/null)" ] && printf main || printf worktree)"''';
+
+final _probeMarker = RegExp(r'__DSH_GITSTATE__([^\r\n]*)');
+
+/// A payload field: ref names, list separators, one digit run. Deliberately
+/// narrow, because the terminal echoes the command that printed the line and
+/// the echoed source is full of `%s`, quotes and `$(`.
+final _probeField = RegExp(r'^[A-Za-z0-9._/ -]*$');
+
+/// Reads the line [gitProbeCommand] prints; null when there is none — no
+/// repository in that folder, or a terminal that could not run git.
+GitProbeState? parseGitProbe(String text) {
+  GitProbeState? found;
+  for (final match in _probeMarker.allMatches(text)) {
+    final parts = match.group(1)!.split('|');
+    if (parts.length != 5 || !parts.every(_probeField.hasMatch)) continue;
+    // `--abbrev-ref HEAD` answers HEAD itself when it points at no branch.
+    final branch = parts[0].isEmpty || parts[0] == 'HEAD' ? null : parts[0];
+    if (branch != null && !isValidGitRefName(branch)) continue;
+    final changed = int.tryParse(parts[1]);
+    if (changed == null || changed < 0) continue;
+    found = GitProbeState(
+      branch: branch,
+      changedFiles: changed,
+      branches: _probeRefs(parts[2]),
+      remotes: _probeRefs(parts[3]).where((name) => !name.endsWith('/HEAD')).toList(),
+      worktree: parts[4] == 'worktree',
+    );
+  }
+  return found;
+}
+
+List<String> _probeRefs(String field) => [
+  for (final name in field.split(' '))
+    if (name.isNotEmpty && isValidGitRefName(name)) name,
+];
 
 class GitCommandException implements Exception {
   const GitCommandException(this.code, [this.detail = '']);
@@ -124,8 +200,9 @@ class GitCommandException implements Exception {
   String toString() => detail.isEmpty ? code : '$code: $detail';
 }
 
-/// Runs one shell command inside a throwaway Host session's terminal, with a
-/// unique marker appended so the exit code can be read back reliably.
+/// Runs one shell command in a Host terminal, with a unique marker appended so
+/// the exit code can be read back reliably: [run] in a throwaway session (clone,
+/// checkout), [runIn] in a session the caller already has (the branch probe).
 ///
 /// The caller owns authority: [stillCurrent] is rechecked at every await, so a
 /// host switch or a closed sheet cannot let a stale command register anything.
@@ -150,6 +227,62 @@ class GitHostTerminal {
     final session = await client.createSession(cwd: cwd, workspaceId: workspaceId);
     final sessionId = session.sessionId;
     if (sessionId.isEmpty) throw const GitCommandException('sessionCreateFailed');
+    try {
+      return await _execute(
+        client: client,
+        sessionId: sessionId,
+        command: command,
+        stillCurrent: stillCurrent,
+        onProgress: onProgress,
+        timeout: timeout,
+      );
+    } finally {
+      if (await _canDelete(client)) {
+        try {
+          await client.deleteSessionPermanently(sessionId);
+        } on Object {
+          // Cleanup is best effort; a session left on the Host is not a failure.
+        }
+      }
+    }
+  }
+
+  /// Runs one command in a terminal of a session the caller already has. The
+  /// read-only probe uses this: it runs inside the conversation it describes,
+  /// so watching a branch never creates a session that the drawer would show.
+  Future<GitCommandResult> runIn({
+    required DshClient client,
+    required String sessionId,
+    required String command,
+    required bool Function() stillCurrent,
+    void Function(String)? onProgress,
+    Duration timeout = const Duration(seconds: 30),
+  }) async {
+    if (!client.supportsTerminals) throw const GitCommandException('terminalUnavailable');
+    if (!stillCurrent()) throw const GitCommandException('revoked');
+    return _execute(
+      client: client,
+      sessionId: sessionId,
+      command: command,
+      stillCurrent: stillCurrent,
+      onProgress: onProgress,
+      timeout: timeout,
+      // One probe line carries every ref name; a busy repository easily
+      // outgrows the interactive buffer. Long-running commands keep the
+      // small tail window, this one needs its whole answer.
+      maxBuffer: 1 << 20,
+    );
+  }
+
+  Future<GitCommandResult> _execute({
+    required DshClient client,
+    required String sessionId,
+    required String command,
+    required bool Function() stillCurrent,
+    required void Function(String)? onProgress,
+    required Duration timeout,
+    int maxBuffer = 16384,
+  }) async {
     final terminalId = newTerminalId();
     StreamSubscription<TerminalFrame>? frames;
     TerminalAttachment? attachment;
@@ -188,7 +321,7 @@ class GitHostTerminal {
           if (frame is TerminalOutput) {
             final text = frame.data.replaceAll(_ansi, '');
             buffer.write(text);
-            if (buffer.length > 16384) buffer.clear();
+            if (buffer.length > maxBuffer) buffer.clear();
             final clean = text.replaceAll(RegExp(r'\r'), '').trim();
             if (clean.isNotEmpty) onProgress?.call(clean.length > 160 ? clean.substring(clean.length - 160) : clean);
             final match = _markerPattern.firstMatch(buffer.toString());
@@ -208,18 +341,12 @@ class GitHostTerminal {
         onTimeout: () => throw const GitCommandException('timeout'),
       );
       if (!stillCurrent()) throw const GitCommandException('revoked');
-      return GitCommandResult(exitCode: exitCode, output: gitCommandTail(buffer.toString()));
+      final text = buffer.toString();
+      return GitCommandResult(exitCode: exitCode, output: gitCommandTail(text), raw: text);
     } on TimeoutException {
       throw const GitCommandException('timeout');
     } finally {
       await cleanup();
-      if (await _canDelete(client)) {
-        try {
-          await client.deleteSessionPermanently(sessionId);
-        } on Object {
-          // Cleanup is best effort; a session left on the Host is not a failure.
-        }
-      }
     }
   }
 
@@ -265,7 +392,7 @@ class GitCheckoutOutcome {
   bool get ok => exitCode == 0;
 }
 
-/// Clone and branch switching against the active Host.
+/// Clone, branch switching and branch state against the active Host.
 abstract interface class GitHostService {
   Future<GitCloneOutcome> clone({
     required DshClient client,
@@ -275,10 +402,21 @@ abstract interface class GitHostService {
     void Function(String)? onProgress,
   });
 
+  /// Switches to [branch]; with [create], makes it first (`git checkout -b`).
   Future<GitCheckoutOutcome> checkout({
     required DshClient client,
     required String cwd,
     required String branch,
+    required bool Function() stillCurrent,
+    bool create = false,
+  });
+
+  /// The folder's full git state, or null when the folder is not a repository
+  /// (or the terminal could not answer) — the caller keeps what it already had.
+  /// Runs inside [sessionId], the conversation the state describes.
+  Future<GitProbeState?> probe({
+    required DshClient client,
+    required String sessionId,
     required bool Function() stillCurrent,
   });
 }
@@ -313,14 +451,36 @@ class HostGitService implements GitHostService {
     required String cwd,
     required String branch,
     required bool Function() stillCurrent,
+    bool create = false,
   }) async {
     if (!isValidGitRefName(branch)) throw const GitCommandException('invalidRef');
     final result = await const GitHostTerminal().run(
       client: client,
       cwd: cwd,
-      command: "git checkout '$branch'",
+      command: create ? "git checkout -b '$branch'" : "git checkout '$branch'",
       stillCurrent: stillCurrent,
     );
     return GitCheckoutOutcome(branch: branch, exitCode: result.exitCode, output: result.output);
+  }
+
+  @override
+  Future<GitProbeState?> probe({
+    required DshClient client,
+    required String sessionId,
+    required bool Function() stillCurrent,
+  }) async {
+    final GitCommandResult result;
+    try {
+      result = await const GitHostTerminal().runIn(
+        client: client,
+        sessionId: sessionId,
+        command: gitProbeCommand,
+        stillCurrent: stillCurrent,
+      );
+    } on GitCommandException {
+      // No terminal, no git, or the caller moved on: the file probe stands.
+      return null;
+    }
+    return parseGitProbe(result.raw);
   }
 }

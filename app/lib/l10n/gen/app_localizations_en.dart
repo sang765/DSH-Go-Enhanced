@@ -19342,6 +19342,29 @@ class L10nEn extends L10n {
   String get remoteGitBranchFailed => 'Couldn’t switch branch';
 
   @override
+  String remoteGitBranchDirty(int count) {
+    return '$count uncommitted changes';
+  }
+
+  @override
+  String get remoteGitBranchCreate => 'New branch';
+
+  @override
+  String get remoteGitBranchCreateName => 'Branch name';
+
+  @override
+  String get remoteGitBranchCreateInvalid => 'Not a usable branch name';
+
+  @override
+  String get remoteGitBranchRemote => 'Remote branches';
+
+  @override
+  String get remoteGitBranchRemoteEmpty => 'No remote branches';
+
+  @override
+  String get remoteGitBranchWorktree => 'Linked worktree';
+
+  @override
   String remoteWorkspaceAdded(String name) {
     return 'Added “$name”';
   }

@@ -132,6 +132,9 @@ class WorkspaceSheet extends ConsumerWidget {
     final counts = ref.watch(workspaceCountsProvider);
     final total = ref.watch(sessionsProvider.select((s) => s.value?.length ?? 0));
     final local = ref.watch(activeConnectionProvider.select((c) => c.value?.isLocal ?? true));
+    // Cloning needs a shell on the Host's own disk, which a Remote Host can
+    // provide too; the sheet asks for the folder there instead of guessing one.
+    final canClone = ref.watch(activeConnectionProvider.select((c) => c.value?.client.supportsTerminals ?? false));
     final prefs = ref.read(workspacePrefsProvider.notifier);
 
     void pick(String? id) {
@@ -182,7 +185,7 @@ class WorkspaceSheet extends ConsumerWidget {
               SheetGroup(
                 margin: margin,
                 children: [
-                  if (local)
+                  if (canClone)
                     ListPageRow(
                       icon: AppIcons.terminal,
                       title: l10n.remoteWorkspaceClone,

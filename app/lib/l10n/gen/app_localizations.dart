@@ -33804,6 +33804,48 @@ abstract class L10n {
   /// **'没能切换分支'**
   String get remoteGitBranchFailed;
 
+  /// No description provided for @remoteGitBranchDirty.
+  ///
+  /// In zh, this message translates to:
+  /// **'有 {count} 处未提交的改动'**
+  String remoteGitBranchDirty(int count);
+
+  /// No description provided for @remoteGitBranchCreate.
+  ///
+  /// In zh, this message translates to:
+  /// **'新建分支'**
+  String get remoteGitBranchCreate;
+
+  /// No description provided for @remoteGitBranchCreateName.
+  ///
+  /// In zh, this message translates to:
+  /// **'分支名'**
+  String get remoteGitBranchCreateName;
+
+  /// No description provided for @remoteGitBranchCreateInvalid.
+  ///
+  /// In zh, this message translates to:
+  /// **'分支名不可用'**
+  String get remoteGitBranchCreateInvalid;
+
+  /// No description provided for @remoteGitBranchRemote.
+  ///
+  /// In zh, this message translates to:
+  /// **'远程分支'**
+  String get remoteGitBranchRemote;
+
+  /// No description provided for @remoteGitBranchRemoteEmpty.
+  ///
+  /// In zh, this message translates to:
+  /// **'无远程分支'**
+  String get remoteGitBranchRemoteEmpty;
+
+  /// No description provided for @remoteGitBranchWorktree.
+  ///
+  /// In zh, this message translates to:
+  /// **'链接的工作树'**
+  String get remoteGitBranchWorktree;
+
   /// No description provided for @remoteWorkspaceAdded.
   ///
   /// In zh, this message translates to:

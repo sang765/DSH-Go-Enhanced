@@ -3,6 +3,27 @@
 每个版本先中文、后英文。发版时把对应版本的正文（不含版本标题）作为 Release 正文，见 `docs/release.md`。
 
 
+## 1.3.0-sub.2 · 2026-11-24
+
+### 中文
+
+- **分支入口收进输入框。** 原来 `+` 面板里的分支行改成输入框旁的小 chip:只显示图标和分支名,点开还是同一张分支面板。名字太长会省略,不会挤掉模型选择。
+- **认得 linked worktree 了。** 以前 `.git` 是文件的仓库(agent team / worktree 常见)整块被当成非 git 目录。现在会话里有终端时直接问 git,能认出分支、远程分支和 worktree;没有终端的新对话仍读文件,不会因此报错。
+- **未提交的改动有提示。** chip 上的小圆点和分支面板里的计数都来自 `git status`,在切换前就能看见。切到别的分支时仍由 git 自己拒绝并原样显示原因,不会替你动工作区。
+- **分支面板多两项。** 远程分支单独一页,点 `origin/develop` 会切出本地 `develop`;「新建分支」输名字后走 `git checkout -b`。分支名照旧先校验再进命令行。
+- **克隆不限于本机。** 远端主机只要有终端也能用「克隆仓库」,文件夹必须自己选,因为 App 不猜远端主机的默认目录。
+- **验证情况。** 终端探测命令在本机 shell 里量过:根目录和子目录都正确识别为普通仓库,非仓库目录不输出,带大量 refs 的仓库输出被限制在 2 万字节以内。CI 结果见对应提交;真机克隆/切换分支仍待设备验证。
+
+### English
+
+- **The branch entry moved into the composer.** The row in the `+` panel is now a small chip beside the model pill: icon and branch name only, opening the same sheet. Long names ellipsize instead of pushing the model selector away.
+- **Linked worktrees are recognised.** A repository whose `.git` is a file — common with agent teams and worktrees — was treated as "not git". A conversation with a terminal now asks git directly for the branch, remote branches and worktree state; new chats without a session still read files and never error because of it.
+- **Uncommitted changes are visible.** A dot on the chip and a count in the sheet come from `git status`, so they show before a switch is attempted. git itself still refuses a switch that would overwrite local changes, and its message is shown unchanged.
+- **Two more entries in the sheet.** Remote branches live on their own page; tapping `origin/develop` checks out a local `develop`. "New branch" asks for a name and runs `git checkout -b`. Names are validated before reaching a shell as before.
+- **Cloning is no longer local-only.** A Remote Host with a terminal can clone too; the destination folder must be picked explicitly because the app cannot guess that Host's default directory.
+- **Testing.** The probe command was measured in a local shell: a normal repository is recognised from both its root and a subdirectory, a non-repository prints nothing, and a repo with many refs stays under 20 KB of output. See the corresponding commit for CI; cloning and branch switching still need a real-device run.
+
+
 ## 1.3.0-sub.1 · 2026-11-24
 
 ### 中文

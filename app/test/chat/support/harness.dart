@@ -11,6 +11,7 @@ import 'package:dsh_app/state/chat_state.dart';
 import 'package:dsh_app/state/commands_state.dart';
 import 'package:dsh_app/state/connection_state.dart';
 import 'package:dsh_app/state/features_state.dart' show agentPresetsProvider, permissionStateProvider;
+import 'package:dsh_app/state/git_branch_state.dart' show GitBranchInfo, gitBranchProvider;
 import 'package:dsh_app/state/models_state.dart';
 import 'package:dsh_app/state/plugins/plugin_readme.dart';
 import 'package:dsh_app/state/sessions_state.dart';
@@ -54,6 +55,10 @@ Widget testApp(Widget home, {Brightness brightness = Brightness.light, List<Over
       accountWalletBalanceProvider.overrideWithValue(null),
       // Market sheets must not reach the network in tests.
       pluginReadmeProvider.overrideWith((ref, name) async => null),
+      // The composer's branch chip probes the folder on mount. A fake Host has
+      // no git and no workspace routes, so that probe would leave an RPC in
+      // flight when the harness closes; tests that care override this below.
+      gitBranchProvider.overrideWith((ref, scope) async => GitBranchInfo.notRepo),
       ...overrides,
     ],
     child: MaterialApp(

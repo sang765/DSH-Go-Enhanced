@@ -411,6 +411,20 @@
     }
   },
   "remoteGitBranchFailed": "Couldn’t switch branch",
+  "remoteGitBranchDirty": "{count} uncommitted changes",
+  "@remoteGitBranchDirty": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "remoteGitBranchCreate": "New branch",
+  "remoteGitBranchCreateName": "Branch name",
+  "remoteGitBranchCreateInvalid": "Not a usable branch name",
+  "remoteGitBranchRemote": "Remote branches",
+  "remoteGitBranchRemoteEmpty": "No remote branches",
+  "remoteGitBranchWorktree": "Linked worktree",
   "remoteWorkspaceAdded": "Added “{name}”",
   "remoteWorkspaceErrAdd": "Couldn’t add workspace",
   "remoteWorkspaceNoChats": "No chats",

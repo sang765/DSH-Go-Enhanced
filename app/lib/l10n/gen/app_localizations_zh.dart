@@ -18379,6 +18379,29 @@ class L10nZh extends L10n {
   String get remoteGitBranchFailed => '没能切换分支';
 
   @override
+  String remoteGitBranchDirty(int count) {
+    return '有 $count 处未提交的改动';
+  }
+
+  @override
+  String get remoteGitBranchCreate => '新建分支';
+
+  @override
+  String get remoteGitBranchCreateName => '分支名';
+
+  @override
+  String get remoteGitBranchCreateInvalid => '分支名不可用';
+
+  @override
+  String get remoteGitBranchRemote => '远程分支';
+
+  @override
+  String get remoteGitBranchRemoteEmpty => '无远程分支';
+
+  @override
+  String get remoteGitBranchWorktree => '链接的工作树';
+
+  @override
   String remoteWorkspaceAdded(String name) {
     return '已添加「$name」';
   }
