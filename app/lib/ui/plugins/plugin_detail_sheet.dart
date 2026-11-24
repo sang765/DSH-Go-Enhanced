@@ -468,16 +468,16 @@ class BundleSheet extends ConsumerWidget {
     final locale = Localizations.localeOf(context).languageCode;
     // The native title provider falls back to the bundle's zh title; the
     // sheet follows the app's language when the plugin translated its name.
-    final title = display == bundle.title() ? bundle.title(locale) : display;
+    final displayTitle = display == bundle.title() ? bundle.title(locale) : display;
     final translation = ref.watch(pluginTranslationProvider);
-    final shownDisplay = translation.of(title) ?? title;
+    final shownDisplay = translation.of(displayTitle) ?? displayTitle;
     final shownSummary = summary == null ? null : translation.of(summary) ?? summary;
-    final translatable = [title, ?summary].where((text) => pluginNeedsTranslation(text, locale)).toList();
+    final translatable = [displayTitle, ?summary].where((text) => pluginNeedsTranslation(text, locale)).toList();
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         SheetHeader(
-          title,
+          title ?? l10n.hubPluginDetails,
           actions: [
             if (shareable) _ShareKey(onPressed: () => unawaited(shareInstalledPlugin(context, bundle, card: market))),
           ],
