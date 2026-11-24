@@ -3,21 +3,27 @@
 每个版本先中文、后英文。发版时把对应版本的正文（不含版本标题）作为 Release 正文，见 `docs/release.md`。
 
 
-## 1.3.0-sub.1 · 2026-11-22
+## 1.3.0-sub.1 · 2026-11-24
 
 ### 中文
 
-- **应用改名为 DSH Go Enhanced。** 桌面图标、系统设置/通知里的名称、通知标题与使用说明中本 App 的自称都改为新名字；指代原版 DSH Go 应用、上游桥接与项目主页的地方保持原样。
-- **版本命名改为跟随上游。** 版本名从本 fork 自增长的 `1.2.13` 改成 `<上游版本>-sub.<序号>`，首个版本是 `1.3.0-sub.1`。同一个上游版本每发一次版序号加一，由 `tooling/sub_version.py` 读取现有 tag 自动给出下一个号并同步 `pubspec.yaml` 与 `AppInfo`；构建号（versionCode、`+N`）仍是构建分钟，规则不变。
-- **同步上游 15 个提交。** 远程控制恢复（空 websocket close 视为瞬时错误、TURN 授权期间保留 relay、不重启健康隧道即可恢复 Control）、伙伴小屋的称呼识别与素材包重复打包修复等。
-- **验证情况。** GitHub Actions 全量 CI、OHOS 编译、iOS 编译与 iOS UI tour 均绿；补丁链 33 项测试通过。真机尚未完整验证。
+- **应用改名为 DSH Go Enhanced。** 桌面图标、系统设置/通知里的名称、通知标题与使用说明中本 App 的自称都改为新名字;指代原版 DSH Go 应用、上游桥接与项目主页的地方保持原样。
+- **版本命名改为跟随上游。** 版本名从本 fork 自增长的 `1.2.13` 改成 `<上游版本>-sub.<序号>`,首个版本是 `1.3.0-sub.1`。同一个上游版本每发一次版序号加一,由 `tooling/sub_version.py` 读取现有 tag 自动给出下一个号并同步 `pubspec.yaml` 与 `AppInfo`;构建号(versionCode、`+N`)仍是构建分钟,规则不变。
+- **新增:用量弹层里直接压缩上下文。** 上下文卡片下方多了一枚「压缩上下文」按钮,点击即发送 `/compact`,结果照常显示在对话里。只有已经用上上下文时才出现;新对话还没有用量数据时不显示。
+- **新增:新建对话时可克隆仓库。** 工作区列表里选「克隆仓库」,填入 GitHub/GitLab 地址、`git@host:owner/repo` 或简写 `owner/repo`(简写可选平台),再选目标文件夹。克隆完成后该文件夹立即加入工作区并设为当前工作区,失败时显示 git 自己的最后几行输出,不会留下半个工作区。
+- **新增:切换 Git 分支。** 对话侧(输入框 `+` 面板的「本对话」卡片)和新建对话的选项行会显示当前分支,点开可切换本地分支。分支名与仓库地址都先校验再进命令行,脏工作区由 git 自己拒绝并原样显示原因;分支变化会自动跟随刷新(监听 `.git/HEAD`、`.git/refs/heads`、`.git/packed-refs`),所以在终端或由 Agent 改的分支也会即时反映。
+- **同步上游 17 个合并批次。** 伙伴(companion)多批修复与性能优化、p2–p5 运行时/对话/外壳/原生性能轮次、论坛草稿发送、手机技能、常驻悬浮条紧凑模式、会话投影补丁(`projection-current-state.diff`)等;引擎补丁链按合并后的链重新记录。
+- **验证情况。** GitHub Actions 全量 CI、OHOS 编译、iOS UI tour 均绿,补丁链 33 项测试通过。真机尚未验证:克隆/切换分支、以及新对话下的工作区探测,需要在设备上确认。
 
 ### English
 
 - **The app is now called DSH Go Enhanced.** The launcher label, system settings and notification names, notification titles and the app's own wording in the guide use the new name; mentions of the original DSH Go app, the upstream bridge and the upstream project home are unchanged.
 - **Version names now follow upstream.** The fork's own `1.2.13` sequence is replaced by `<upstream-version>-sub.<n>`; the first is `1.3.0-sub.1`. Each release against the same upstream base increments `<n>`; `tooling/sub_version.py` reads the existing tags and bumps both `pubspec.yaml` and `AppInfo`. The build number (versionCode, `+N`) is still the build minute and is unchanged.
-- **Synced 15 upstream commits.** Remote-control recovery (empty websocket close treated as transient, relay kept during TURN authorization, Control recovered without restarting healthy tunnels), companion recipient recognition and a companion asset-pack repackaging fix, among others.
-- **Testing.** Full GitHub Actions CI, OHOS compile, iOS compile and the iOS UI tour are green; all 33 patch-chain tests pass. Not yet fully verified on a real device.
+- **New: compact the context from the usage sheet.** A “Compact context” button under the context card sends `/compact`, and its result shows in the conversation as usual. It appears only once context is in use; a new chat with no usage data does not show it.
+- **New: clone a repository for a new conversation.** Choose “Clone a repository” in the workspace list, enter a GitHub/GitLab URL, `git@host:owner/repo` or the short `owner/repo` (the platform is selectable for the short form), then pick the destination folder. The cloned folder joins the workspace list immediately and becomes the active one; a failure shows git's own last lines and never leaves a half-registered workspace.
+- **New: switch Git branches.** The conversation's `+` panel (“This chat” card) and the new-conversation options row show the current branch and open a picker for local branches. Branch names and repository sources are validated before they reach a shell, a dirty worktree is refused by git itself with its own message, and branch changes follow automatically (`.git/HEAD`, `.git/refs/heads`, `.git/packed-refs`), so a switch made in a terminal or by the agent shows up without reopening the sheet.
+- **Synced 17 upstream merge batches.** Companion fixes and performance work, the p2–p5 runtime/chat/shell/native rounds, forum sent-draft handling, phone skills, an always-on float compact mode, the session projection patch (`projection-current-state.diff`) among others; the engine patch chain was re-recorded against the merged chain.
+- **Testing.** Full GitHub Actions CI, OHOS compile and the iOS UI tour are green; all 33 patch-chain tests pass. Not yet verified on a real device: cloning and branch switching, and the workspace probe for a new chat, need a device run.
 
 ## 1.2.13 · 2026-11-22
 
