@@ -424,7 +424,7 @@ class BundleSheet extends ConsumerWidget {
     final bundle = bundles?.where((b) => b.name == name).firstOrNull ?? initial;
     final gone = bundles != null && !bundles.any((b) => b.name == name && bundleGroup(b) != BundleGroup.hidden);
     final job = ref.watch(pluginInstallsProvider.select((jobs) => jobs[name]));
-    final summary = bundle.summary();
+    final summary = bundle.summary(Localizations.localeOf(context).languageCode);
     final error = bundleErrorText(bundle);
     final canSwitch = bundle.readOnlyReason == null && (bundle.installed || bundle.optional) && !gone;
     final configSource = ref.watch(pluginConfigProvider);
@@ -466,10 +466,13 @@ class BundleSheet extends ConsumerWidget {
     // the package name stays as the quiet line under it.
     final display = ref.watch(nativePluginTitleProvider(bundle.name));
     final locale = Localizations.localeOf(context).languageCode;
+    // The native title provider falls back to the bundle's zh title; the
+    // sheet follows the app's language when the plugin translated its name.
+    final title = display == bundle.title() ? bundle.title(locale) : display;
     final translation = ref.watch(pluginTranslationProvider);
-    final shownDisplay = translation.of(display) ?? display;
+    final shownDisplay = translation.of(title) ?? title;
     final shownSummary = summary == null ? null : translation.of(summary) ?? summary;
-    final translatable = [display, ?summary].where((text) => pluginNeedsTranslation(text, locale)).toList();
+    final translatable = [title, ?summary].where((text) => pluginNeedsTranslation(text, locale)).toList();
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [

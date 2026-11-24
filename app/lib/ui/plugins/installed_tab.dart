@@ -185,11 +185,14 @@ class BundleTile extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = context.l10n;
     final colors = DshColors.of(context);
+    final locale = Localizations.localeOf(context).languageCode;
     bool currentBundle() =>
         !readOnly &&
         !ref.read(pluginListViewProvider).readOnly &&
         (ref.read(installedPluginsProvider).value?.any((b) => identical(b, bundle)) ?? false);
-    final summary = bundle.summary();
+    // A plugin may ship both zh and en text. Pick the one the app is using;
+    // LocalizedText falls back on its own when that language is missing.
+    final summary = bundle.summary(locale);
     final switchable = bundle.readOnlyReason == null && (bundle.installed || bundle.optional);
     final running = job?.isActive ?? false;
     // The official market's entry: a newer pinned version, or this one withdrawn.
@@ -236,9 +239,15 @@ class BundleTile extends ConsumerWidget {
     }
 
     // The plugin's own name for people (its native title), else the bundle's.
-    final title = displaySnapshot
-        ? bundle.title(Localizations.localeOf(context).languageCode)
-        : ref.watch(nativePluginTitleProvider(bundle.name));
+    // Without a cached view the native title provider falls back to the
+    // bundle's zh title; use the app's language for that same fallback.
+    String resolvedTitle() {
+      if (displaySnapshot) return bundle.title(locale);
+      final native = ref.watch(nativePluginTitleProvider(bundle.name));
+      return native == bundle.title() ? bundle.title(locale) : native;
+    }
+
+    final title = resolvedTitle();
     return Semantics(
       button: !readOnly,
       child: ListPageRow(
