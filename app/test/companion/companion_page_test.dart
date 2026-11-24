@@ -37,6 +37,7 @@ import 'package:dsh_app/ui/companion/companion_memory_page.dart';
 import 'package:dsh_app/ui/companion/companion_page.dart';
 import 'package:dsh_app/ui/companion/companion_stage.dart';
 import 'package:dsh_app/ui/companion/companion_tasks_page.dart';
+import 'package:dsh_app/ui/shell/system_entry_host.dart';
 import 'package:dsh_app/ui/tavern/tavern_chat_page.dart';
 import 'package:dsh_app/ui/tavern/tavern_home_page.dart';
 import 'package:dsh_app/ui/theme/app_icons.dart';
@@ -796,6 +797,53 @@ void main() {
       await _settle(tester);
     });
 
+    testWidgets('back from a phone task asked in her room: what covers it closes, the same room stays', (tester) async {
+      CompanionStageEvents? stageEvents;
+      await tester.pumpWidget(_app(const Scaffold(body: SystemEntryHost())));
+      final home = tester.element(find.byType(SystemEntryHost));
+      unawaited(
+        Navigator.of(home).push(
+          MaterialPageRoute<void>(
+            builder: (_) => CompanionPage(
+              storeOverride: installedStore(),
+              stageBuilder: (_, events) {
+                stageEvents = events;
+                return const SizedBox.expand();
+              },
+            ),
+          ),
+        ),
+      );
+      final stage = await _stageUp(tester, () => stageEvents);
+      stage.onReady();
+      await _until2(tester, () => find.byType(EditableText).evaluate().isNotEmpty);
+      await tester.enterText(find.byType(EditableText), '还没发的话');
+      final room = tester.state(find.byType(CompanionPage));
+      // A page she opened over her room, as her tasks or her own page are.
+      unawaited(
+        Navigator.of(tester.element(find.byType(CompanionPage))).push(
+          MaterialPageRoute<void>(builder: (_) => const Scaffold(body: Text('她的任务'))),
+        ),
+      );
+      await _settle(tester);
+      expect(find.text('她的任务'), findsOneWidget);
+
+      ProviderScope.containerOf(home).read(launcherBridgeProvider).add(const OpenCompanionEntry(room: true));
+      await _settle(tester);
+      expect(find.text('她的任务'), findsNothing);
+      expect(tester.state(find.byType(CompanionPage)), same(room));
+      expect(ModalRoute.of(tester.element(find.byType(CompanionPage)))!.isCurrent, isTrue);
+      expect(find.text('还没发的话'), findsOneWidget);
+
+      // Already in front: nothing moves, no second room.
+      ProviderScope.containerOf(home).read(launcherBridgeProvider).add(const OpenCompanionEntry(room: true));
+      await _settle(tester);
+      expect(find.byType(CompanionPage), findsOneWidget);
+      expect(tester.state(find.byType(CompanionPage)), same(room));
+      await tester.pumpWidget(_app(const SizedBox()));
+      await _settle(tester);
+    });
+
     testWidgets('once the stage is ready: greeting, name, input; touches get a line', (tester) async {
       final commands = <(String, Map<String, Object?>)>[];
       CompanionStageEvents? stageEvents;
@@ -1242,11 +1290,14 @@ void main() {
       await tester.enterText(find.byType(TextField), '在吗');
       await tester.pump();
       await tester.tap(find.byIcon(AppIcons.send).last);
-      for (var i = 0; i < 20 && asked.isEmpty; i++) {
+      // Her new persona also gets her own lines written once; the chat is what's checked here.
+      Iterable<Map<String, Object?>> chat() =>
+          asked.where((r) => !(r['system']! as String).startsWith('你在为一个陪伴角色写'));
+      for (var i = 0; i < 20 && chat().isEmpty; i++) {
         await tester.runAsync(() => Future<void>.delayed(const Duration(milliseconds: 40)));
         await tester.pump(const Duration(milliseconds: 100));
       }
-      final system = asked.single['system']! as String;
+      final system = chat().single['system']! as String;
       expect(system, startsWith('你的名字是「小蓝」。\n你是一只爱撒娇的猫娘'));
       expect(system, contains('称呼对方为「阿周」。'));
       // The marks her stage reads stay, whatever the persona says; the rest is theirs.

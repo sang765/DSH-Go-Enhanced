@@ -3140,6 +3140,9 @@ class L10nZh extends L10n {
   String get botsTerminal => '终端';
 
   @override
+  String get botsTerminalShowKeyboard => '唤起键盘';
+
+  @override
   String get botsTerminalRename => '重命名终端';
 
   @override
@@ -5291,6 +5294,9 @@ class L10nZh extends L10n {
   String get companionShake3 => '再摇我要吐泡泡了！';
 
   @override
+  String get companionShakeDizzy => '头好晕……世界在转。';
+
+  @override
   String get companionStatusIdle => '在发呆';
 
   @override
@@ -6227,16 +6233,13 @@ class L10nZh extends L10n {
   String get companionReminderSecond => '第二次';
 
   @override
-  String get companionReminderExactMissing => '手机还没让我准点提醒，这条没设上。去系统设置里打开「闹钟和提醒」就好。';
+  String get companionReminderNotificationsMissing => '设好了，可通知还关着，到点我叫不到你。去系统设置里打开通知就好。';
 
   @override
-  String get companionReminderNotificationsMissing => '通知没开，这条还没设上。去系统设置里打开通知就好。';
+  String get companionReminderChannelMissing => '设好了，可「提醒」这类通知被关掉了，到点我叫不到你。去系统设置里打开就好。';
 
   @override
-  String get companionReminderChannelMissing => '「提醒」这类通知被关掉了，这条还没设上。去系统设置里打开就好。';
-
-  @override
-  String get companionReminderGroupMissing => '提醒所在的那组通知被关掉了，这条还没设上。去系统设置里打开就好。';
+  String get companionReminderGroupMissing => '设好了，可提醒所在的那组通知被关掉了，到点我叫不到你。去系统设置里打开就好。';
 
   @override
   String get companionReminderTimePassed => '约好的时间已经过了，我就没再补响。';
@@ -7399,6 +7402,29 @@ class L10nZh extends L10n {
 
   @override
   String get companionRawEraseGone => '这次来不及了，原话还留着。';
+
+  @override
+  String get companionSetupWorkshop => '去创意工坊找一位';
+
+  @override
+  String get companionRosterTitle => '伙伴';
+
+  @override
+  String get companionRosterHere => '正在小屋里';
+
+  @override
+  String get companionRosterAdd => '添加伙伴';
+
+  @override
+  String get companionRosterBring => '请她进小屋';
+
+  @override
+  String get companionRosterRemove => '从手机上移除';
+
+  @override
+  String companionRosterRemoveConfirm(String name) {
+    return '把「$name」从这台手机上移除？她的文件会删掉，记忆和提醒还在。';
+  }
 
   @override
   String get automaticDiagnosticsRecover => '恢复本地记录';
