@@ -7,6 +7,8 @@
 // Host session's terminal ([GitHostService.checkout]); git itself refuses a
 // checkout that would overwrite local changes, and that refusal is shown.
 
+import 'dart:async';
+
 import 'package:dsh_client/dsh_client.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -164,9 +166,54 @@ Future<String?> gitScopeCwd(DshClient client, GitScope scope) async {
   }
 }
 
-/// Live branch state of one scope; re-read after a switch by invalidating it.
+/// Live branch state of one scope.
+///
+/// The first read is one pass; while the UI keeps the provider alive the
+/// watched refs below bring it up to date, so a branch the agent (or a
+/// terminal) creates or switches shows up without closing the sheet.
 final gitBranchProvider = FutureProvider.autoDispose.family<GitBranchInfo, GitScope>((ref, scope) async {
   final client = ref.watch(activeConnectionProvider.select((c) => c.value?.client));
   if (client == null) return GitBranchInfo.notRepo;
-  return readGitBranch(client, scope);
+  final info = await readGitBranch(client, scope);
+  // A folder without a repository has nothing to follow, and a host that
+  // cannot watch answers with an error; either way the next open re-reads.
+  if (info.isRepo) _followGitRefs(ref, client, scope);
+  return info;
 });
+
+/// What a branch change can touch: the checked-out branch, the loose refs a
+/// new branch creates, and the packed refs a fetch or clone writes.
+const gitWatchTargets = ['.git/HEAD', '.git/refs/heads', '.git/packed-refs'];
+
+/// Whether a watch frame means the branch state may have moved.
+bool gitWatchNeedsReread(DshWorkspaceWatchFrame frame) => frame is DshWorkspaceWatchChange;
+
+/// Re-reads the scope when one of [gitWatchTargets] changes. A target that is
+/// absent (a repository with no packed refs yet) ends only its own watch.
+void _followGitRefs(Ref ref, DshClient client, GitScope scope) {
+  final subscriptions = <StreamSubscription<DshWorkspaceWatchFrame>>[];
+  Timer? pending;
+  for (final path in gitWatchTargets) {
+    subscriptions.add(
+      client.watchWorkspace(scope.id, path).listen(
+        (frame) {
+          if (!gitWatchNeedsReread(frame)) return;
+          // A checkout or a merge writes several refs in a row; one re-read
+          // after the dust settles is enough.
+          pending?.cancel();
+          pending = Timer(const Duration(milliseconds: 150), () {
+            if (ref.mounted) ref.invalidateSelf();
+          });
+        },
+        onError: (Object _) {},
+        cancelOnError: true,
+      ),
+    );
+  }
+  ref.onDispose(() {
+    pending?.cancel();
+    for (final subscription in subscriptions) {
+      unawaited(subscription.cancel());
+    }
+  });
+}

@@ -1,5 +1,6 @@
 import 'package:dsh_app/state/git_branch_state.dart';
 import 'package:dsh_app/state/git_repository_state.dart';
+import 'package:dsh_client/dsh_client.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
@@ -60,5 +61,15 @@ void main() {
       const GitScope.workspace('w1', workspacePath: '/w'),
       isNot(const GitScope.workspace('w1', workspacePath: '/other')),
     );
+  });
+
+  test('the live watch follows the checked-out branch and both ref stores', () {
+    // Dropping any of these leaves the chip stale after a switch, a new
+    // branch or a fetch.
+    expect(gitWatchTargets, contains('.git/HEAD'));
+    expect(gitWatchTargets, contains('.git/refs/heads'));
+    expect(gitWatchTargets, contains('.git/packed-refs'));
+    expect(gitWatchNeedsReread(const DshWorkspaceWatchChange(absolutePath: '/w/.git/HEAD', version: 'v2')), isTrue);
+    expect(gitWatchNeedsReread(const DshWorkspaceWatchReady()), isFalse);
   });
 }
