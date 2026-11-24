@@ -1,11 +1,11 @@
-// Git repository input parsing and the Host-side clone operation used by the
-// new-chat Workspace sheet.
+// Git repository input parsing and Host-side git commands (clone, checkout)
+// used by the new-chat Workspace sheet and the branch picker.
 //
 // Parsing is pure and deliberately strict: everything that reaches a shell is
 // either a validated repository slug or a validated URL, so a pasted string
-// can never inject a second command. The clone itself runs in a throwaway
-// session's terminal on the active Host — the phone never touches its own
-// filesystem, and Remote Hosts clone on their own disk through the same API.
+// can never inject a second command. Commands run in a throwaway session's
+// terminal on the active Host — the phone never touches its own filesystem,
+// and Remote Hosts run against their own disk through the same API.
 
 import 'dart:async';
 
@@ -36,8 +36,14 @@ class GitRepoSpec {
 
 final _segment = RegExp(r'^[A-Za-z0-9][A-Za-z0-9._~-]*$');
 final _sshUrl = RegExp(r'^git@([A-Za-z0-9.-]+):([A-Za-z0-9._~/-]+?)(?:\.git)?$');
-final _marker = RegExp(r'__DSH_GIT_CLONE__:([0-9]+)');
 final _ansi = RegExp(r'\x1B(?:\[[0-9;?]*[ -/]*[@-~]|\][^\x07]*(?:\x07|\x1B\\))');
+
+/// A git ref name safe to hand to a shell: no spaces, quotes, globs or dashes
+/// that a command could read as an option.
+final _refName = RegExp(r'^[A-Za-z0-9][A-Za-z0-9._/-]*$');
+
+bool isValidGitRefName(String name) =>
+    name.length <= 200 && _refName.hasMatch(name) && !name.contains('..') && !name.endsWith('/');
 
 /// Accepts a full `https://` / `git@host:` URL or an `owner/repo` slug.
 /// Returns null for anything ambiguous; the sheet shows one fixed hint then.
@@ -98,20 +104,18 @@ String? _nameFromPath(String path) {
   return _segment.hasMatch(last) ? last : null;
 }
 
-/// Result of one clone attempt. [output] is the short, ANSI-stripped tail the
-/// sheet shows when [exitCode] is non-zero.
-class GitCloneOutcome {
-  const GitCloneOutcome({required this.path, required this.exitCode, required this.output});
+/// One command's exit code and the short, ANSI-stripped tail of what it wrote.
+class GitCommandResult {
+  const GitCommandResult({required this.exitCode, required this.output});
 
-  final String path;
   final int exitCode;
   final String output;
 
   bool get ok => exitCode == 0;
 }
 
-class GitCloneException implements Exception {
-  const GitCloneException(this.code, [this.detail = '']);
+class GitCommandException implements Exception {
+  const GitCommandException(this.code, [this.detail = '']);
 
   final String code;
   final String detail;
@@ -120,41 +124,33 @@ class GitCloneException implements Exception {
   String toString() => detail.isEmpty ? code : '$code: $detail';
 }
 
-/// Runs `git clone` in a throwaway session's terminal on the active Host.
-/// The caller owns authority: [stillCurrent] is rechecked at every await, so
-/// a host switch or a closed sheet cannot let a stale clone register a folder.
-abstract interface class GitCloneService {
-  Future<GitCloneOutcome> clone({
+/// Runs one shell command inside a throwaway Host session's terminal, with a
+/// unique marker appended so the exit code can be read back reliably.
+///
+/// The caller owns authority: [stillCurrent] is rechecked at every await, so a
+/// host switch or a closed sheet cannot let a stale command register anything.
+class GitHostTerminal {
+  const GitHostTerminal();
+
+  static const marker = '__DSH_GIT__';
+  static final _markerPattern = RegExp('$marker:([0-9]+)');
+
+  Future<GitCommandResult> run({
     required DshClient client,
-    required GitRepoSpec spec,
-    required String parentPath,
+    String? cwd,
+    String? workspaceId,
+    required String command,
     required bool Function() stillCurrent,
     void Function(String)? onProgress,
-  });
-}
-
-final gitCloneServiceProvider = Provider<GitCloneService>((_) => const HostGitCloneService());
-
-class HostGitCloneService implements GitCloneService {
-  const HostGitCloneService();
-
-  @override
-  Future<GitCloneOutcome> clone({
-    required DshClient client,
-    required GitRepoSpec spec,
-    required String parentPath,
-    required bool Function() stillCurrent,
-    void Function(String)? onProgress,
+    Duration timeout = const Duration(minutes: 10),
   }) async {
-    if (!client.supportsTerminals) throw const GitCloneException('terminalUnavailable');
-    if (!stillCurrent()) throw const GitCloneException('revoked');
+    if (!client.supportsTerminals) throw const GitCommandException('terminalUnavailable');
+    if (!stillCurrent()) throw const GitCommandException('revoked');
 
-    final session = await client.createSession(cwd: parentPath);
+    final session = await client.createSession(cwd: cwd, workspaceId: workspaceId);
     final sessionId = session.sessionId;
-    if (sessionId.isEmpty) throw const GitCloneException('sessionCreateFailed');
+    if (sessionId.isEmpty) throw const GitCommandException('sessionCreateFailed');
     final terminalId = newTerminalId();
-    final target = _join(parentPath, spec.name);
-    String? lastOutput;
     StreamSubscription<TerminalFrame>? frames;
     TerminalAttachment? attachment;
     var closed = false;
@@ -173,12 +169,8 @@ class HostGitCloneService implements GitCloneService {
       attachment = null;
     }
 
-    if (!stillCurrent()) {
-      await cleanup();
-      throw const GitCloneException('revoked');
-    }
-
     try {
+      if (!stillCurrent()) throw const GitCommandException('revoked');
       await client.createTerminal(sessionId, id: terminalId, cols: 100, rows: 30);
       final environment = await client.terminalEnvironment(sessionId);
       attachment = client.attachTerminal(sessionId, terminalId, environment: environment);
@@ -187,9 +179,9 @@ class HostGitCloneService implements GitCloneService {
       frames = attachment!.frames.listen(
         (frame) {
           if (frame is TerminalSnapshot && frame.writable) {
-            final command = '${spec.cloneCommand}; printf \'\\n__DSH_GIT_CLONE__:%s\\n\' "\$?"\n';
-            if (!attachment!.write(command)) {
-              if (!done.isCompleted) done.completeError(const GitCloneException('terminalNotWritable'));
+            final wrapped = "$command; printf '\\n$marker:%s\\n' \"\$?\"\n";
+            if (!attachment!.write(wrapped)) {
+              if (!done.isCompleted) done.completeError(const GitCommandException('terminalNotWritable'));
             }
             return;
           }
@@ -199,7 +191,7 @@ class HostGitCloneService implements GitCloneService {
             if (buffer.length > 16384) buffer.clear();
             final clean = text.replaceAll(RegExp(r'\r'), '').trim();
             if (clean.isNotEmpty) onProgress?.call(clean.length > 160 ? clean.substring(clean.length - 160) : clean);
-            final match = _marker.firstMatch(buffer.toString());
+            final match = _markerPattern.firstMatch(buffer.toString());
             if (match != null && !done.isCompleted) done.complete(int.tryParse(match.group(1)!) ?? -1);
             return;
           }
@@ -212,21 +204,20 @@ class HostGitCloneService implements GitCloneService {
         },
       );
       final exitCode = await done.future.timeout(
-        const Duration(minutes: 10),
-        onTimeout: () => throw const GitCloneException('timeout'),
+        timeout,
+        onTimeout: () => throw const GitCommandException('timeout'),
       );
-      if (!stillCurrent()) throw const GitCloneException('revoked');
-      lastOutput = buffer.toString();
-      return GitCloneOutcome(path: target, exitCode: exitCode, output: _tail(lastOutput));
+      if (!stillCurrent()) throw const GitCommandException('revoked');
+      return GitCommandResult(exitCode: exitCode, output: gitCommandTail(buffer.toString()));
     } on TimeoutException {
-      throw const GitCloneException('timeout');
+      throw const GitCommandException('timeout');
     } finally {
       await cleanup();
       if (await _canDelete(client)) {
         try {
           await client.deleteSessionPermanently(sessionId);
         } on Object {
-          // Cleanup is best effort; a session left on the Host is not a failed clone.
+          // Cleanup is best effort; a session left on the Host is not a failure.
         }
       }
     }
@@ -239,16 +230,97 @@ class HostGitCloneService implements GitCloneService {
       return false;
     }
   }
+}
 
-  String _join(String parent, String name) => parent.endsWith('/') ? '$parent$name' : '$parent/$name';
+/// The last few meaningful lines of a command's output, without the marker.
+String gitCommandTail(String text) {
+  final lines = text
+      .replaceAll(_ansi, '')
+      .split(RegExp(r'\r?\n'))
+      .map((line) => line.trim())
+      .where((line) => line.isNotEmpty && !line.startsWith('${GitHostTerminal.marker}:'))
+      .toList();
+  return lines.skip(lines.length > 6 ? lines.length - 6 : 0).join('\n');
+}
 
-  String _tail(String text) {
-    final lines = text
-        .replaceAll(_ansi, '')
-        .split(RegExp(r'\r?\n'))
-        .map((line) => line.trim())
-        .where((line) => line.isNotEmpty && !line.startsWith('__DSH_GIT_CLONE__:'))
-        .toList();
-    return lines.skip(lines.length > 6 ? lines.length - 6 : 0).join('\n');
+/// Result of one clone attempt.
+class GitCloneOutcome {
+  const GitCloneOutcome({required this.path, required this.exitCode, required this.output});
+
+  final String path;
+  final int exitCode;
+  final String output;
+
+  bool get ok => exitCode == 0;
+}
+
+/// Result of one branch switch: `ok`, or git's own refusal message.
+class GitCheckoutOutcome {
+  const GitCheckoutOutcome({required this.branch, required this.exitCode, required this.output});
+
+  final String branch;
+  final int exitCode;
+  final String output;
+
+  bool get ok => exitCode == 0;
+}
+
+/// Clone and branch switching against the active Host.
+abstract interface class GitHostService {
+  Future<GitCloneOutcome> clone({
+    required DshClient client,
+    required GitRepoSpec spec,
+    required String parentPath,
+    required bool Function() stillCurrent,
+    void Function(String)? onProgress,
+  });
+
+  Future<GitCheckoutOutcome> checkout({
+    required DshClient client,
+    required String cwd,
+    required String branch,
+    required bool Function() stillCurrent,
+  });
+}
+
+final gitHostServiceProvider = Provider<GitHostService>((_) => const HostGitService());
+
+class HostGitService implements GitHostService {
+  const HostGitService();
+
+  @override
+  Future<GitCloneOutcome> clone({
+    required DshClient client,
+    required GitRepoSpec spec,
+    required String parentPath,
+    required bool Function() stillCurrent,
+    void Function(String)? onProgress,
+  }) async {
+    final target = parentPath.endsWith('/') ? '$parentPath${spec.name}' : '$parentPath/${spec.name}';
+    final result = await const GitHostTerminal().run(
+      client: client,
+      cwd: parentPath,
+      command: spec.cloneCommand,
+      stillCurrent: stillCurrent,
+      onProgress: onProgress,
+    );
+    return GitCloneOutcome(path: target, exitCode: result.exitCode, output: result.output);
+  }
+
+  @override
+  Future<GitCheckoutOutcome> checkout({
+    required DshClient client,
+    required String cwd,
+    required String branch,
+    required bool Function() stillCurrent,
+  }) async {
+    if (!isValidGitRefName(branch)) throw const GitCommandException('invalidRef');
+    final result = await const GitHostTerminal().run(
+      client: client,
+      cwd: cwd,
+      command: "git checkout '$branch'",
+      stillCurrent: stillCurrent,
+    );
+    return GitCheckoutOutcome(branch: branch, exitCode: result.exitCode, output: result.output);
   }
 }

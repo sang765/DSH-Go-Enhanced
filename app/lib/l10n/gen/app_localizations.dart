@@ -33762,6 +33762,42 @@ abstract class L10n {
   /// **'此主机没有终端'**
   String get remoteWorkspaceCloneTerminalOff;
 
+  /// No description provided for @remoteGitBranch.
+  ///
+  /// In zh, this message translates to:
+  /// **'Git 分支'**
+  String get remoteGitBranch;
+
+  /// No description provided for @remoteGitBranchDetached.
+  ///
+  /// In zh, this message translates to:
+  /// **'游离 HEAD'**
+  String get remoteGitBranchDetached;
+
+  /// No description provided for @remoteGitBranchNotRepo.
+  ///
+  /// In zh, this message translates to:
+  /// **'此文件夹不是 Git 仓库'**
+  String get remoteGitBranchNotRepo;
+
+  /// No description provided for @remoteGitBranchNoFolder.
+  ///
+  /// In zh, this message translates to:
+  /// **'主机没有给出这个文件夹'**
+  String get remoteGitBranchNoFolder;
+
+  /// No description provided for @remoteGitBranchSwitched.
+  ///
+  /// In zh, this message translates to:
+  /// **'已切换到 {name}'**
+  String remoteGitBranchSwitched(String name);
+
+  /// No description provided for @remoteGitBranchFailed.
+  ///
+  /// In zh, this message translates to:
+  /// **'没能切换分支'**
+  String get remoteGitBranchFailed;
+
   /// No description provided for @remoteWorkspaceAdded.
   ///
   /// In zh, this message translates to:

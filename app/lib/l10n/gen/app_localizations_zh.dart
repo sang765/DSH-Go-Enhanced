@@ -18356,6 +18356,26 @@ class L10nZh extends L10n {
   String get remoteWorkspaceCloneTerminalOff => '此主机没有终端';
 
   @override
+  String get remoteGitBranch => 'Git 分支';
+
+  @override
+  String get remoteGitBranchDetached => '游离 HEAD';
+
+  @override
+  String get remoteGitBranchNotRepo => '此文件夹不是 Git 仓库';
+
+  @override
+  String get remoteGitBranchNoFolder => '主机没有给出这个文件夹';
+
+  @override
+  String remoteGitBranchSwitched(String name) {
+    return '已切换到 $name';
+  }
+
+  @override
+  String get remoteGitBranchFailed => '没能切换分支';
+
+  @override
   String remoteWorkspaceAdded(String name) {
     return '已添加「$name」';
   }

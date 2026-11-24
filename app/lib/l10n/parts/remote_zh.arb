@@ -804,6 +804,19 @@
   "remoteWorkspaceCloneFailed": "没能克隆",
   "remoteWorkspaceCloneAdded": "已克隆并添加为工作区",
   "remoteWorkspaceCloneTerminalOff": "此主机没有终端",
+  "remoteGitBranch": "Git 分支",
+  "remoteGitBranchDetached": "游离 HEAD",
+  "remoteGitBranchNotRepo": "此文件夹不是 Git 仓库",
+  "remoteGitBranchNoFolder": "主机没有给出这个文件夹",
+  "remoteGitBranchSwitched": "已切换到 {name}",
+  "@remoteGitBranchSwitched": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "remoteGitBranchFailed": "没能切换分支",
   "remoteWorkspaceAdded": "已添加「{name}」",
   "@remoteWorkspaceAdded": {
     "placeholders": {

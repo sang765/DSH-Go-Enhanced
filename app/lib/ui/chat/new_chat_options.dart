@@ -17,6 +17,7 @@ import '../../state/connection_state.dart';
 import '../../state/features_state.dart';
 import '../../state/models_state.dart' show modelSelectionScopeProvider;
 import '../../state/new_chat_modes.dart';
+import '../../state/git_branch_state.dart';
 import '../../state/sessions_state.dart' show currentSessionProvider;
 import '../../state/settings_state.dart';
 import '../common/app_sheet.dart';
@@ -26,6 +27,7 @@ import '../features/feature_format.dart';
 import '../features/permission_page.dart' show confirmPermission;
 import '../theme/app_icons.dart';
 import '../theme/theme.dart' show DshThemeStyle, ThemeEmptyLayout;
+import '../workspace/git_branch_sheet.dart';
 import 'empty_actions.dart';
 
 /// The longest a single option may grow before its label is cut.
@@ -100,11 +102,15 @@ String _readEffectivePermission(WidgetRef ref, PermissionState state) => effecti
 /// The preset and permission items appear once the Host has said what it
 /// offers, and only when there is a real choice.
 class NewChatOptions extends ConsumerWidget {
-  const NewChatOptions({super.key, this.folderLabel, this.onFolder});
+  const NewChatOptions({super.key, this.folderLabel, this.onFolder, this.gitScope});
 
   /// The drawer-folder item, when there are folders.
   final String? folderLabel;
   final VoidCallback? onFolder;
+
+  /// The folder this conversation will start in, when it is a workspace: the
+  /// Git branch item appears only once the folder reports a repository.
+  final GitScope? gitScope;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -167,6 +173,15 @@ class NewChatOptions extends ConsumerWidget {
         ),
       if (folderLabel != null && onFolder != null)
         item(const ValueKey('new-chat-folder'), AppIcons.folder, folderLabel!, l10n.viewNewChatFolder, onFolder!),
+      if (gitScope case final scope?)
+        if (ref.watch(gitBranchProvider(scope)).value case final git? when git.isRepo)
+          item(
+            const ValueKey('new-chat-branch'),
+            AppIcons.fork,
+            git.branch ?? l10n.remoteGitBranchDetached,
+            l10n.remoteGitBranch,
+            () => unawaited(showGitBranchSheet(context, scope)),
+          ),
     ];
     if (items.isEmpty) return const SizedBox.shrink();
     // The editorial empty state is set left; a centred second line would step off its left line.

@@ -92,7 +92,7 @@ class _CloneRepositorySheetState extends ConsumerState<CloneRepositorySheet> {
       _progress = l10n.remoteWorkspaceCloneBusy;
     });
     try {
-      final outcome = await container.read(gitCloneServiceProvider).clone(
+      final outcome = await container.read(gitHostServiceProvider).clone(
         client: client,
         spec: spec,
         parentPath: parent,
@@ -118,7 +118,7 @@ class _CloneRepositorySheetState extends ConsumerState<CloneRepositorySheet> {
       );
       if (!mounted || registered == null) return;
       Navigator.of(context).maybePop();
-    } on GitCloneException catch (e) {
+    } on GitCommandException catch (e) {
       if (!current()) return;
       setState(() {
         _busy = false;

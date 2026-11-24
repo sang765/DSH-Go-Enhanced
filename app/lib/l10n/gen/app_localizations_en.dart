@@ -19318,6 +19318,26 @@ class L10nEn extends L10n {
   String get remoteWorkspaceCloneTerminalOff => 'This host has no terminal';
 
   @override
+  String get remoteGitBranch => 'Git branch';
+
+  @override
+  String get remoteGitBranchDetached => 'Detached HEAD';
+
+  @override
+  String get remoteGitBranchNotRepo => 'This folder is not a git repository';
+
+  @override
+  String get remoteGitBranchNoFolder => 'The Host didn’t report this folder';
+
+  @override
+  String remoteGitBranchSwitched(String name) {
+    return 'Switched to $name';
+  }
+
+  @override
+  String get remoteGitBranchFailed => 'Couldn’t switch branch';
+
+  @override
   String remoteWorkspaceAdded(String name) {
     return 'Added “$name”';
   }

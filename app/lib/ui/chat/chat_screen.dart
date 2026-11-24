@@ -55,6 +55,7 @@ import '../../state/session_modes.dart';
 import '../../state/sessions_state.dart';
 import '../../state/settings_state.dart';
 import '../../state/usage_state.dart';
+import '../../state/git_branch_state.dart';
 import '../../state/voice_state.dart';
 import '../../state/voice_model_state.dart';
 import '../../state/voice_settings.dart';
@@ -1884,6 +1885,9 @@ class _ChatScreenState extends ConsumerState<ChatScreen> with WidgetsBindingObse
                                             ? context.l10n.shellFolders
                                             : context.l10n.shellFolderLabel(newFolder.name),
                                         onFolder: hasFolders ? _pickNewChatFolder : null,
+                                        gitScope: workspace == null
+                                            ? null
+                                            : GitScope.workspace(workspace.workspaceId, workspacePath: workspace.path),
                                       ),
                                       workspace: workspace != null
                                           ? workspaceTitle(workspace)

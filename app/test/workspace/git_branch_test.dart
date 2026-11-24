@@ -1,0 +1,64 @@
+import 'package:dsh_app/state/git_branch_state.dart';
+import 'package:dsh_app/state/git_repository_state.dart';
+import 'package:flutter_test/flutter_test.dart';
+
+void main() {
+  group('gitBranchFromHead', () {
+    test('reads the branch a normal HEAD points at', () {
+      expect(gitBranchFromHead('ref: refs/heads/main\n'), 'main');
+      expect(gitBranchFromHead('ref: refs/heads/feature/git-branch\r\n'), 'feature/git-branch');
+    });
+
+    test('reports nothing for a detached HEAD or a foreign ref', () {
+      expect(gitBranchFromHead('9f2c1b4e5a6d7c8b9a0e1f2a3b4c5d6e7f809123\n'), isNull);
+      expect(gitBranchFromHead('ref: refs/tags/v1.0.0\n'), isNull);
+      expect(gitBranchFromHead(''), isNull);
+    });
+  });
+
+  group('parsePackedRefsHeads', () {
+    test('keeps local branches and drops remote, peeled and comment lines', () {
+      const packed = '''
+# pack-refs with: peeled fully-peeled sorted
+9f2c1b4e5a6d7c8b9a0e1f2a3b4c5d6e7f809123 refs/heads/main
+1a2b3c4d5e6f708192a3b4c5d6e7f80912345678 refs/heads/develop
+7f6e5d4c3b2a1908172635443322110099887766 refs/remotes/origin/main
+^1122334455667788990011223344556677889900
+''';
+      expect(parsePackedRefsHeads(packed), ['main', 'develop']);
+      expect(parsePackedRefsHeads(''), isEmpty);
+    });
+  });
+
+  group('isValidGitRefName', () {
+    test('accepts ordinary and nested branch names', () {
+      for (final name in ['main', 'feature/git-branch', 'release-1.3.0', 'a_b.c']) {
+        expect(isValidGitRefName(name), isTrue, reason: name);
+      }
+    });
+
+    test('refuses names a shell or git could read as something else', () {
+      for (final name in [
+        '',
+        '-D',
+        'main; rm -rf /',
+        "main'",
+        'ma in',
+        'a..b',
+        'ends/',
+        r'main$(id)',
+      ]) {
+        expect(isValidGitRefName(name), isFalse, reason: name);
+      }
+    });
+  });
+
+  test('a scope compares by kind, id and folder', () {
+    expect(const GitScope.session('s1'), const GitScope.session('s1'));
+    expect(const GitScope.session('s1'), isNot(const GitScope.workspace('s1')));
+    expect(
+      const GitScope.workspace('w1', workspacePath: '/w'),
+      isNot(const GitScope.workspace('w1', workspacePath: '/other')),
+    );
+  });
+}
