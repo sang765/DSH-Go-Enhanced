@@ -87,6 +87,7 @@ import '../shell/drawer/folder_sheets.dart';
 import '../theme/app_icons.dart';
 import '../theme/theme.dart';
 import '../wallpaper/wallpaper_backdrop.dart';
+import '../workspace/git_branch_sheet.dart' show GitBranchChip;
 import '../workspace/workspace_switcher.dart' show showWorkspaceSheet;
 import '../workspace/workspaces_page.dart';
 import 'balance_widgets.dart';
@@ -2290,9 +2291,26 @@ class _ChatScreenState extends ConsumerState<ChatScreen> with WidgetsBindingObse
                                     leading: AttachButton(onPressed: connected ? _attach : null),
                                     keyboardInset: MediaQuery.viewInsetsOf(context).bottom,
                                     footer: _composerOpens(context) && !isChild
-                                        ? ComposerModelPill(
-                                            selection: sessionId == null ? pendingModel : chat?.model,
-                                            onSelected: _modelTarget(),
+                                        ? Row(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              Flexible(
+                                                child: ComposerModelPill(
+                                                  selection: sessionId == null ? pendingModel : chat?.model,
+                                                  onSelected: _modelTarget(),
+                                                ),
+                                              ),
+                                              GitBranchChip(
+                                                scope: sessionId != null
+                                                    ? GitScope.session(sessionId)
+                                                    : workspace == null
+                                                    ? null
+                                                    : GitScope.workspace(
+                                                        workspace.workspaceId,
+                                                        workspacePath: workspace.path,
+                                                      ),
+                                              ),
+                                            ],
                                           )
                                         : null,
                                     tray: ComposerTrayStack.maybe(

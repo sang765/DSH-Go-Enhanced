@@ -1,8 +1,10 @@
 // The Git branch sheet: which branch the folder behind a conversation (or the
 // workspace a new conversation will start in) is on, and switching it.
 //
-// Opened from the new-chat options row and from the composer's 本对话 card;
+// Opened from the new-chat options row and from the composer's branch chip;
 // both hide their entry unless [gitBranchProvider] says the folder is a repo.
+
+import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -25,6 +27,67 @@ Future<void> showGitBranchSheet(BuildContext context, GitScope scope) => showApp
   isScrollControlled: true,
   builder: (_) => GitBranchSheet(scope: scope),
 );
+
+/// The composer's branch chip, beside the model pill: the fork glyph and the
+/// branch name, nothing else. It draws nothing until the folder reports a
+/// repository, so a conversation outside git keeps the row as it was.
+class GitBranchChip extends ConsumerWidget {
+  const GitBranchChip({super.key, required this.scope});
+
+  final GitScope? scope;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final scope = this.scope;
+    if (scope == null) return const SizedBox.shrink();
+    final info = ref.watch(gitBranchProvider(scope)).value;
+    if (info == null || !info.isRepo) return const SizedBox.shrink();
+    final l10n = context.l10n;
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
+    final dsh = DshColors.of(context);
+    final label = info.branch ?? l10n.remoteGitBranchDetached;
+    void open() => unawaited(showGitBranchSheet(context, scope));
+    return Padding(
+      padding: const EdgeInsets.only(left: 6),
+      child: Semantics(
+        button: true,
+        label: '${l10n.remoteGitBranch}: $label',
+        excludeSemantics: true,
+        onTap: open,
+        child: InkResponse(
+          key: const ValueKey('composer-branch'),
+          onTap: open,
+          borderRadius: BorderRadius.circular(20),
+          child: Container(
+            constraints: const BoxConstraints(minHeight: 36, maxWidth: 140),
+            padding: const EdgeInsets.symmetric(horizontal: 10),
+            decoration: ShapeDecoration(color: colors.onSurface.withValues(alpha: 0.06), shape: const StadiumBorder()),
+            child: Center(
+              widthFactor: 1,
+              heightFactor: 1,
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(AppIcons.fork, size: 15, color: dsh.textTertiary),
+                  const SizedBox(width: 5),
+                  Flexible(
+                    child: Text(
+                      label,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: theme.textTheme.labelMedium?.copyWith(fontSize: 12.5, color: dsh.textTertiary),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
 
 class GitBranchSheet extends ConsumerStatefulWidget {
   const GitBranchSheet({super.key, required this.scope});

@@ -32,7 +32,6 @@ import '../../../state/hosts_state.dart';
 import '../../../state/phone_state.dart';
 import '../../../state/session_modes.dart';
 import '../../../state/system_actions_state.dart';
-import '../../../state/git_branch_state.dart';
 import '../../common/app_sheet.dart';
 import '../../common/list_page_row.dart';
 import '../../common/risk_notice.dart';
@@ -44,7 +43,6 @@ import '../../phone/phone_control_screen.dart' show PhoneConfirmModeText;
 import '../../phone/system_actions_page.dart';
 import '../../theme/app_icons.dart';
 import '../../theme/theme.dart';
-import '../../workspace/git_branch_sheet.dart';
 
 /// Where a picked attachment comes from.
 enum AttachSource { gallery, camera, files }
@@ -298,8 +296,6 @@ class _ThisChatCardState extends ConsumerState<_ThisChatCard> {
     final modes = ref.watch(sessionModesProvider(widget.sessionId));
     if (_plan == modes.plan) _plan = null;
     final plan = _plan ?? modes.plan;
-    final git = ref.watch(gitBranchProvider(GitScope.session(widget.sessionId))).value;
-    final branchLabel = git == null || !git.isRepo ? null : git.branch ?? l10n.remoteGitBranchDetached;
     return ListPageCard(
       title: l10n.nearbyThisChat,
       margin: const EdgeInsets.symmetric(horizontal: PlusPanelMetrics.side),
@@ -319,13 +315,6 @@ class _ThisChatCardState extends ConsumerState<_ThisChatCard> {
             trailing: Switch.adaptive(value: plan, onChanged: _busy ? null : (v) => unawaited(_togglePlan(v))),
           ),
         ),
-        if (branchLabel != null)
-          ListPageRow(
-            icon: AppIcons.fork,
-            title: l10n.remoteGitBranch,
-            value: branchLabel,
-            onTap: () => unawaited(showGitBranchSheet(context, GitScope.session(widget.sessionId))),
-          ),
       ],
     );
   }
