@@ -4,6 +4,7 @@
 // 「管理工作区」. Picking one filters the drawer and new conversations start
 // there (official sidebar: `dsh-client-ui-workspace`).
 
+import 'package:dsh_client/dsh_client.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
