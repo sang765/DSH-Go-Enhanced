@@ -242,9 +242,17 @@ class _RoomMemory2 extends _ReceiptMemory {
     Object room, {
     required FutureOr<CompanionMemoryTransport?> Function() transport,
     required int Function(String) estimateTokens,
+    String? characterId,
+    bool ready = true,
   }) {
     this.room = room;
-    super.enter(room, transport: transport, estimateTokens: estimateTokens);
+    super.enter(
+      room,
+      transport: transport,
+      estimateTokens: estimateTokens,
+      characterId: characterId,
+      ready: ready,
+    );
   }
 }
 
@@ -831,6 +839,7 @@ void main() {
       SharedPreferences.setMockInitialValues({'companion_touch_hint_done': true, 'companion_home_hint_done': true});
       CompanionStageEvents? stageEvents;
       late VoidCallback openAssistant;
+      late Database database;
       await tester.pumpWidget(
         _app(
           Consumer(
@@ -849,6 +858,17 @@ void main() {
               },
             ),
           ),
+          extra: [
+            companionMemoryOwnerProvider(root.absolute.path).overrideWith((ref) {
+              database = sqlite3.open('${root.path}/memory.sqlite');
+              final memory = CompanionMemoryOwner(
+                CompanionMemoryStore(database, nowMilliseconds: () => DateTime.now().millisecondsSinceEpoch),
+                CompanionLocal.at(root),
+              );
+              ref.onDispose(memory.dispose);
+              return memory;
+            }),
+          ],
         ),
       );
       await _stageUp(tester, () => stageEvents);
@@ -917,12 +937,21 @@ void main() {
         tester.view.viewInsets = FakeViewPadding(bottom: inset);
         await tester.pump();
       }
+      // Her page, seen and now hidden, is not made again: it reads the whole phone log.
+      var messageReads = 0;
+      database.trace = SqliteTraceCallback((event) {
+        final sql = event is SqliteTraceStatement ? event.sql ?? '' : '';
+        if (sql.contains('FROM memory_messages m JOIN') && !sql.contains('WHERE')) messageReads++;
+        return 0;
+      });
       stageEvents!.onMood('sleeping');
       await tester.pump();
+      database.trace = null;
       debugOnRebuildDirtyWidget = null;
       expect(rebuilt, [CompanionPage]);
+      expect(messageReads, 0);
 
-      await tester.pumpWidget(_app(const SizedBox()));
+      await tester.pumpWidget(const SizedBox());
       await tester.pump(const Duration(seconds: 10));
     });
 

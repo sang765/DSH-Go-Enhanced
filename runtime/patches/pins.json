@@ -354,6 +354,14 @@
         }
       }
     },
+    "file-reference-score-upper-bound.diff": {
+      "0.2.2-rc.1": {
+        "node_modules/@deepseek-ai/dsh-file-reference-local/lib/index.js": {
+          "after": "c3dd704df70e5bfe95f2812bffcea2df68848dd579836d21535a0e0329b4b07a",
+          "before": "d38a9bd0b98234315a9224a67c1357e5cce00a306c243641362a251e7f2692da"
+        }
+      }
+    },
     "fork-default-effort.diff": {
       "0.2.2-rc.1": {
         "node_modules/@deepseek-ai/dsh-api-session-controller/lib/index.js": {
@@ -500,6 +508,22 @@
         }
       }
     },
+    "office-data-buffer-scope.diff": {
+      "0.2.2-rc.1": {
+        "node_modules/@deepseek-ai/libreoffice-kit/lib/worker.js": {
+          "after": "93f4d4399bde1a37bf864b76bf4aa3b00e5186afd7dfd3f31e8188abf87eb18b",
+          "before": "03920e4616cc44adcf30d5f81ed07261889ed6f9956f7c5bde92747184c33137"
+        }
+      }
+    },
+    "office-parent-font-import.diff": {
+      "0.2.2-rc.1": {
+        "node_modules/@deepseek-ai/libreoffice-kit/lib/index.js": {
+          "after": "4ef0deba82ee8d293cc5b8424d06078d779708780629af2a90bb828297c9b041",
+          "before": "5583ce1754084cb63be913e67821282f484a14b43744f777fd10731af67e3c60"
+        }
+      }
+    },
     "ohos-api-gateway-idle.diff": {
       "0.2.2-rc.1": {
         "node_modules/@deepseek-ai/dsh-api-gateway/lib/index.js": {
@@ -511,8 +535,8 @@
     "ohos-attachment-diagnostic.diff": {
       "0.2.2-rc.1": {
         "node_modules/@deepseek-ai/dsh-llm-pi-ai/lib/index.js": {
-          "after": "7f47f3c34773c5d94e92e126af656d51fc2c5b53be67b58cbc572a76a44af7ad",
-          "before": "d15a5360ee8c1f6d9790493b0feb2c7afffc608c23ec9dbc55a51ff5cf41aae4"
+          "after": "e8a5b9f5d4187b4bd18f14f73180a0438731aa79ebc1369b682c3e4fc6849912",
+          "before": "e344108b2a9061faffb23bbcd5c342525f8f98e91fb1806cc1258224a58b53c4"
         }
       }
     },
@@ -643,8 +667,8 @@
     "ohos-piai-empty-models.diff": {
       "0.2.2-rc.1": {
         "node_modules/@deepseek-ai/dsh-llm-pi-ai/lib/index.js": {
-          "after": "e2efb75438bf2129ce48dea2ec6b2c554291aa8f9578002207113805370abb58",
-          "before": "7f47f3c34773c5d94e92e126af656d51fc2c5b53be67b58cbc572a76a44af7ad"
+          "after": "e344108b2a9061faffb23bbcd5c342525f8f98e91fb1806cc1258224a58b53c4",
+          "before": "c8072bf4b2f636c53524a1cb57e7c28f820a99a324dee8e1ba6644fd41471d32"
         }
       }
     },
@@ -2968,6 +2992,7 @@
       "glob-card-source-retention.diff",
       "file-reference-basename-match.diff",
       "file-reference-ranked-page.diff",
+      "file-reference-score-upper-bound.diff",
       "zzzzzzz-input-recovery.diff",
       "zzzzzzz-job-follow-removal.diff",
       "search-card-byte-budget.diff",
@@ -3141,13 +3166,16 @@
       "companion-screen-image.diff",
       "companion-screen-piai-image.diff",
       "companion-agent-model-call.diff",
+      "office-parent-font-import.diff",
       "companion-receipt-file-bytes.diff",
       "web-table-pipes.diff",
       "ohos-web-converter-lazy.diff",
       "office-converter-lazy.diff",
+      "office-data-buffer-scope.diff",
       "input-recovery.diff",
       "ohos-client-hmr-idle.diff",
-      "ohos-skill-root-events.diff"
+      "ohos-skill-root-events.diff",
+      "ohos-piai-empty-models.diff"
     ],
     "ohos": [
       "cordis-effect-dispose-completion.diff",
@@ -3192,6 +3220,7 @@
       "glob-card-source-retention.diff",
       "file-reference-basename-match.diff",
       "file-reference-ranked-page.diff",
+      "file-reference-score-upper-bound.diff",
       "zzzzzzz-input-recovery.diff",
       "zzzzzzz-job-follow-removal.diff",
       "search-card-byte-budget.diff",
@@ -3365,13 +3394,16 @@
       "companion-screen-image.diff",
       "companion-screen-piai-image.diff",
       "companion-agent-model-call.diff",
+      "office-parent-font-import.diff",
       "companion-receipt-file-bytes.diff",
       "web-table-pipes.diff",
       "ohos-web-converter-lazy.diff",
       "office-converter-lazy.diff",
+      "office-data-buffer-scope.diff",
       "input-recovery.diff",
       "ohos-client-hmr-idle.diff",
       "ohos-skill-root-events.diff",
+      "ohos-piai-empty-models.diff",
       "ohos-attachment-publication.diff",
       "ohos-attachment-diagnostic.diff",
       "ohos-hap-native-libraries.diff",
@@ -3405,7 +3437,6 @@
       "ohos-workspace-grant-paths.diff",
       "ohos-workspace-edit.diff",
       "ohos-image-codec.diff",
-      "ohos-piai-empty-models.diff",
       "ohos-mcp-start-close.diff",
       "ohos-jobs-active.diff",
       "ohos-piai-text-preabort.diff"
