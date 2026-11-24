@@ -3,6 +3,17 @@
 每个版本先中文、后英文。发版时把对应版本的正文（不含版本标题）作为 Release 正文，见 `docs/release.md`。
 
 
+## 1.3.0-sub.3 · 2026-11-25
+
+### 中文
+
+- **修复:插件列表按 App 语言显示。** 界面是英文时,插件名称和说明原来仍默认显示中文。现在「已安装」列表和插件详情会优先取插件提供的当前语言文本,没有对应翻译时照旧回退,不会因此变空。
+
+### English
+
+- **Fixed: the plugin list follows the app's language.** Plugin names and descriptions used to default to Chinese even with an English UI. The Installed list and the plugin sheet now prefer the plugin's text in the current language, falling back as before when a translation is missing, so nothing goes blank.
+
+
 ## 1.3.0-sub.2 · 2026-11-24
 
 ### 中文
