@@ -99,31 +99,31 @@ class _SheetRecedeSheetState extends State<SheetRecedeSheet> {
   final _statusBar = OverlayPortalController();
 
   @override
-  void initState() {
-    super.initState();
-    if (_available) _statusBar.show();
-  }
-
-  @override
   void didChangeDependencies() {
     super.didChangeDependencies();
     if (!_available) return;
-    final route = ModalRoute.of(context)?.animation;
+    // A sheet that can't sit the page back owns no route and no overlay: adding
+    // an empty portal around it changes where its semantics land in the tree.
+    final sits = _sitsBack(context);
+    final route = sits ? ModalRoute.of(context)?.animation : null;
     if (route == _route) return;
     if (_route != null) SheetRecede._remove(_route!);
     _route = route;
     if (route != null) SheetRecede._add(route);
+    if (sits && !_statusBar.isShowing) _statusBar.show();
+    if (!sits && _statusBar.isShowing) _statusBar.hide();
   }
 
   @override
   void dispose() {
     if (_route != null) SheetRecede._remove(_route!);
+    if (_statusBar.isShowing) _statusBar.hide();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    if (!_available) return widget.child;
+    if (!_available || !_sitsBack(context)) return widget.child;
     // The status bar reads the topmost region at its own height, which is outside the sheet's
     // clip, so this one goes on the overlay, above the sheet. It turns once the page has sat back
     // far enough to show the dark edge.

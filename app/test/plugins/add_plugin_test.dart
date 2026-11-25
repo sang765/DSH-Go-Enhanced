@@ -33,7 +33,7 @@ void main() {
           body: Center(
             child: Builder(
               builder: (context) => FilledButton(
-                onPressed: () => showAddPluginDialog(context: context, local: true),
+                onPressed: () => showAddPluginDialog(context, local: true),
                 child: const Text('open'),
               ),
             ),

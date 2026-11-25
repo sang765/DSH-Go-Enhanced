@@ -131,22 +131,6 @@ void main() {
     expect(tester.state(find.byKey(_page)), same(page));
   }, variant: TargetPlatformVariant.only(TargetPlatform.iOS));
 
-  testWidgets('Android sits the page back while a sheet is up too', (tester) async {
-    useScreen(tester);
-    await tester.pumpWidget(_app(fluid: true));
-    await tester.pump();
-    expect(tester.getRect(find.byKey(_page)).width, _screen);
-
-    await tester.tap(find.byKey(_open));
-    await tester.pumpAndSettle();
-    expect(tester.getRect(find.byKey(_page)).width, closeTo(_screen * SheetRecede.scale, 0.5));
-
-    await tester.tapAt(const Offset(_screen / 2, 100));
-    await tester.pumpAndSettle();
-    expect(SheetRecede.amount.value, 0);
-    expect(tester.getRect(find.byKey(_page)).width, _screen);
-  }, variant: TargetPlatformVariant.only(TargetPlatform.android));
-
   testWidgets('the status bar turns light over the dark edge, and back', (tester) async {
     useScreen(tester);
     await tester.pumpWidget(_app(fluid: true));
@@ -176,11 +160,19 @@ void main() {
     expect(tester.getRect(find.byKey(_page)).width, _screen);
   }, variant: TargetPlatformVariant.only(TargetPlatform.iOS));
 
-  testWidgets('on Android the page stays where it is', (tester) async {
+  testWidgets('on Android the page sits back while a sheet is up too', (tester) async {
     useScreen(tester);
     await tester.pumpWidget(_app(fluid: true));
+    await tester.pump();
+    expect(tester.getRect(find.byKey(_page)).width, _screen);
+
     await tester.tap(find.byKey(_open));
     await tester.pumpAndSettle();
+    expect(tester.getRect(find.byKey(_page)).width, closeTo(_screen * SheetRecede.scale, 0.5));
+
+    await tester.tapAt(const Offset(_screen / 2, 100));
+    await tester.pumpAndSettle();
+    expect(SheetRecede.amount.value, 0);
     expect(tester.getRect(find.byKey(_page)).width, _screen);
   }, variant: TargetPlatformVariant.only(TargetPlatform.android));
 }
