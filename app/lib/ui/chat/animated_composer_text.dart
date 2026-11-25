@@ -86,6 +86,11 @@ class AnimatedComposerTextState extends State<AnimatedComposerText> with SingleT
     super.initState();
     _text = widget.controller.text;
     _diff();
+    // A draft that is already there when the field mounts is not "typed":
+    // show it at once. Only later controller changes animate.
+    for (final glyph in _glyphs) {
+      glyph.phase = _GlyphPhase.steady;
+    }
     widget.controller.addListener(_onController);
   }
 
