@@ -3,6 +3,19 @@
 每个版本先中文、后英文。发版时把对应版本的正文（不含版本标题）作为 Release 正文，见 `docs/release.md`。
 
 
+## 1.3.0-sub.5 · 2026-11-25
+
+### 中文
+
+- **新增:插件图标也认 SVG 了。** 上版开始,已安装列表会回退到插件目录里的图标;这次连 `data:image/svg+xml` 图片和 `.svg` 链接也能直接渲染,像 `dsh-context` 这种只在包里放 SVG 的插件不用再显示首字母。图标内容不合法时照旧回退,不会让列表崩掉。
+- **验证情况。** 全量 CI 与 OHOS 编译均绿;真机显示仍需装上新版本确认。
+
+### English
+
+- **New: plugin icons can be SVG.** The previous release made the Installed list fall back to the plugin directory's icon; inline `data:image/svg+xml` images and `.svg` links now render too, so packages that only ship an SVG such as `dsh-context` no longer show an initial letter. Malformed icons still fall back instead of breaking the list.
+- **Testing.** Full CI and the OHOS compile are green; the on-device display still needs a check after installing the new build.
+
+
 ## 1.3.0-sub.4 · 2026-11-25
 
 ### 中文
