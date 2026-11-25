@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:dsh_app/state/connection_state.dart';
 import 'package:dsh_app/state/git_branch_state.dart';
 import 'package:dsh_app/state/git_repository_state.dart';
@@ -52,7 +54,7 @@ class _TreeCarrier extends DshCarrier {
         if (text == null) throw StateError('no file $path');
         return RpcOk({'text': text, 'lines': 0, 'eof': true, 'offset': 1, 'absolutePath': path});
     }
-    throw StateError('unexpected endpoint $endpoint');
+    return RpcOk(null);
   }
 
   @override
@@ -62,12 +64,27 @@ class _TreeCarrier extends DshCarrier {
   Future<void> close() async {}
 }
 
+/// A link that only answers the mux's ready handshake, so the client has a
+/// generation before the provider reads it. No workspace watch frames.
 class _QuietLink implements DshMuxLink {
-  @override
-  void start({required DshMuxFrameHandler onFrame, required DshMuxLossHandler onLost}) {}
+  DshMuxFrameHandler? _onFrame;
 
   @override
-  void open(String streamId, String endpoint, Map<String, Object?> payload) {}
+  void start({required DshMuxFrameHandler onFrame, required DshMuxLossHandler onLost}) {
+    _onFrame = onFrame;
+  }
+
+  @override
+  void open(String streamId, String endpoint, Map<String, Object?> payload) {
+    if (endpoint != r'$events') return;
+    scheduleMicrotask(
+      () => _onFrame?.call({
+        'type': 'item',
+        'streamId': streamId,
+        'value': {'type': 'ready', 'clientId': 'test', 'host': {'home': '/root'}},
+      }),
+    );
+  }
 
   @override
   void sendItem(String streamId, Object? value) {}
@@ -82,9 +99,11 @@ class _QuietLink implements DshMuxLink {
   Future<void> close(int code, String reason) async {}
 }
 
-DshClient _client(_TreeCarrier carrier) {
+Future<DshClient> _client(_TreeCarrier carrier) async {
   final client = DshClient.withCarrier(carrier, muxOptions: const MuxOptions(retryCaps: [Duration(milliseconds: 1)]));
   addTearDown(client.close);
+  // The provider skips the terminal tier while the mux has no generation.
+  await client.mux.ready(timeout: const Duration(seconds: 5));
   return client;
 }
 
@@ -278,14 +297,14 @@ void main() {
     carrier.children['.git/refs/heads/feature/team/topic'] = const [_subDir];
     carrier.children['.git/refs/heads/feature/team/topic/sub'] = const [_fixRef];
 
-    final info = await readGitBranch(_client(carrier), const GitScope.workspace('w'));
+    final info = await readGitBranch(await _client(carrier), const GitScope.workspace('w'));
     expect(info.isRepo, isTrue);
     expect(info.branches, ['feature/team/topic/sub/fix', 'main']);
   });
 
-  test('a client-replacing reconnect is a new git connection key, a relabel is not', () {
-    final first = _client(_TreeCarrier());
-    final second = _client(_TreeCarrier());
+  test('a client-replacing reconnect is a new git connection key, a relabel is not', () async {
+    final first = await _client(_TreeCarrier());
+    final second = await _client(_TreeCarrier());
     final original = gitConnectionKey(HostConnection(client: first, isLocal: false, hostId: 'same'));
     expect(
       original,
@@ -296,7 +315,7 @@ void main() {
   });
 
   test('a watched git state re-reads on its own while the chip is on screen', () async {
-    final client = _client(_TreeCarrier(terminals: true));
+    final client = await _client(_TreeCarrier(terminals: true));
     final service = _ProbeService({client: 'main'});
     _SwitchConnection.initial = HostConnection(client: client, isLocal: true);
     final container = ProviderContainer(
@@ -319,8 +338,8 @@ void main() {
   });
 
   test('a new client on the same Host re-reads the branch; a relabel does not', () async {
-    final first = _client(_TreeCarrier(terminals: true));
-    final second = _client(_TreeCarrier(terminals: true));
+    final first = await _client(_TreeCarrier(terminals: true));
+    final second = await _client(_TreeCarrier(terminals: true));
     final service = _ProbeService({first: 'main', second: 'develop'});
     _SwitchConnection.initial = HostConnection(client: first, isLocal: false, hostId: 'same');
     final container = ProviderContainer(
