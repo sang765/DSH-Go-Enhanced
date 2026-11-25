@@ -1,0 +1,63 @@
+import 'package:dsh_app/ui/chat/animated_composer_text.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_test/flutter_test.dart';
+
+Widget _host(TextEditingController controller) => MaterialApp(
+  home: Scaffold(
+    body: SizedBox(
+      width: 300,
+      height: 80,
+      child: AnimatedComposerText(
+        controller: controller,
+        style: const TextStyle(fontSize: 15, height: 1.45, color: Color(0xFF000000)),
+        textPad: 4,
+        maxLines: 6,
+        textDirection: TextDirection.ltr,
+      ),
+    ),
+  ),
+);
+
+void main() {
+  testWidgets('new glyphs settle and deleted glyphs leave', (tester) async {
+    final input = TextEditingController();
+    addTearDown(input.dispose);
+    await tester.pumpWidget(_host(input));
+
+    input.text = 'ab';
+    await tester.pump();
+    final state = tester.state<AnimatedComposerTextState>(find.byType(AnimatedComposerText));
+    expect(state.activeGlyphs, 2);
+    await tester.pump(const Duration(milliseconds: 600));
+    expect(state.activeGlyphs, 0);
+
+    input.text = 'a';
+    await tester.pump();
+    expect(state.activeGlyphs, 1);
+    await tester.pump(const Duration(milliseconds: 300));
+    expect(state.activeGlyphs, 0);
+  });
+
+  testWidgets('an edit in the middle only animates the new glyph', (tester) async {
+    final input = TextEditingController(text: 'abc');
+    addTearDown(input.dispose);
+    await tester.pumpWidget(_host(input));
+    final state = tester.state<AnimatedComposerTextState>(find.byType(AnimatedComposerText));
+    await tester.pump(const Duration(milliseconds: 600));
+
+    input.text = 'axbc';
+    await tester.pump();
+    expect(state.activeGlyphs, 1);
+  });
+
+  testWidgets('IME composing shows text without a letter-by-letter animation', (tester) async {
+    final input = TextEditingController();
+    addTearDown(input.dispose);
+    await tester.pumpWidget(_host(input));
+
+    input.value = const TextEditingValue(text: 'nh', composing: TextRange(start: 0, end: 2));
+    await tester.pump();
+    final state = tester.state<AnimatedComposerTextState>(find.byType(AnimatedComposerText));
+    expect(state.activeGlyphs, 0);
+  });
+}

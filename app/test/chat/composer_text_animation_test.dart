@@ -1,0 +1,52 @@
+import 'package:dsh_app/performance/performance_state.dart';
+import 'package:dsh_app/ui/chat/animated_composer_text.dart';
+import 'package:dsh_app/ui/chat/composer.dart';
+import 'package:dsh_app/ui/theme/motion.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_test/flutter_test.dart';
+
+import 'support/harness.dart';
+
+class _AnimationOn extends PerformancePrefsController {
+  @override
+  PerformancePrefs build() => const PerformancePrefs(textAnimation: true);
+}
+
+Widget _composer(TextEditingController input) => Scaffold(
+  body: Composer(
+    controller: input,
+    connected: true,
+    running: false,
+    onSend: () {},
+    onStop: () {},
+  ),
+);
+
+void main() {
+  testWidgets('the effect is off unless asked for and the fluid tier is on', (tester) async {
+    final input = TextEditingController(text: 'hello');
+    addTearDown(input.dispose);
+    await tester.pumpWidget(testApp(_composer(input)));
+
+    expect(tester.widget<TextField>(find.byType(TextField)).style?.color, isNot(Colors.transparent));
+    expect(find.byType(AnimatedComposerText), findsNothing);
+  });
+
+  testWidgets('fluid plus the opt-in pref paints over a transparent field', (tester) async {
+    final input = TextEditingController();
+    addTearDown(input.dispose);
+    await tester.pumpWidget(
+      testApp(
+        AppMotionScope(fluid: true, child: _composer(input)),
+        overrides: [performancePrefsProvider.overrideWith(() => _AnimationOn())],
+      ),
+    );
+
+    expect(tester.widget<TextField>(find.byType(TextField)).style?.color, Colors.transparent);
+    expect(find.byType(AnimatedComposerText), findsOneWidget);
+
+    input.text = 'abc';
+    await tester.pump();
+    expect(input.text, 'abc');
+  });
+}

@@ -124,6 +124,14 @@ class PerformancePage extends ConsumerWidget {
                 value: defaults.fluidMotion,
                 onChanged: (value) => unawaited(notifier.setFluid(value)),
               ),
+            if (!defaults.reduceMotion && !MediaQuery.disableAnimationsOf(context))
+              SettingsSwitchTile(
+                key: const ValueKey('performance-text-animation'),
+                spot: Spots.textAnimation,
+                subtitle: l10n.performanceTextAnimationHint,
+                value: prefs.textAnimation,
+                onChanged: (value) => unawaited(notifier.setTextAnimation(value)),
+              ),
             if (prefs.blur != null || prefs.animations != null || prefs.fluid != null)
               SettingsTile(
                 key: const ValueKey('performance-reset-effects'),

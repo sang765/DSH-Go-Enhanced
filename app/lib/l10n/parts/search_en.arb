@@ -70,6 +70,7 @@
   "searchKwBlur": "blur,glass,frosted",
   "searchKwAnimations": "animation,motion,reduce motion",
   "searchKwFluidMotion": "fluid,spring,bounce,glow,smooth",
+  "searchKwTextAnimation": "typing animation,letters,chat box,composer",
   "searchKwNotifyEnabled": "notifications on,turn off notifications",
   "searchKwNotifyDone": "reply done,finished",
   "searchKwNotifyFailed": "error,failed,stopped",

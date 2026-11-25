@@ -12,8 +12,10 @@ import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../l10n/l10n.dart';
+import '../../performance/performance_state.dart';
 import '../common/expand_reveal.dart';
 import '../common/smooth_size.dart';
 import '../fx/voice_glow/voice_beam.dart';
@@ -21,6 +23,7 @@ import '../pets/pet_perch.dart';
 import '../settings/voice_settings_page.dart';
 import '../theme/app_icons.dart';
 import '../theme/theme.dart';
+import 'animated_composer_text.dart';
 import 'voice/voice_controller.dart';
 import 'voice/voice_widgets.dart';
 import 'widgets/quote_chip.dart' show ClosingTrayChild;
@@ -37,7 +40,7 @@ const _lineHeight = 1.45;
 /// 语音([voice]):草稿为空时发送键是麦克风(和 ＋ 键同样的淡底圆);
 /// 听写时 ＋ 换成 ✕(取消)、发送键换成主色的停止键,中间文字处显示
 /// 识别结果,停止键左边是音量条。四颗键始终同一位置、同一尺寸。
-class Composer extends StatefulWidget {
+class Composer extends ConsumerStatefulWidget {
   const Composer({
     super.key,
     this.footer,
@@ -178,10 +181,14 @@ const double _keyGap = 6;
 /// The composer's own text, a step under body text.
 const double _fontSize = 15.0;
 
-class _ComposerState extends State<Composer> with SingleTickerProviderStateMixin {
+class _ComposerState extends ConsumerState<Composer> with SingleTickerProviderStateMixin {
   Duration? _lastEscape;
   // Keep the editor and its input connection when the footer changes the layout.
   final _fieldKey = GlobalKey();
+
+  /// Shared with the animated text layer so an overflowing draft scrolls in
+  /// step with the real editor. Unused (null on the field) when the effect is off.
+  final _textScroll = ScrollController();
   late final _draftEmpty = ValueNotifier(widget.controller.text.trim().isEmpty);
 
   void _draftChanged() {
@@ -295,6 +302,7 @@ class _ComposerState extends State<Composer> with SingleTickerProviderStateMixin
   void initState() {
     super.initState();
     widget.controller.addListener(_draftChanged);
+    _textScroll.addListener(_textScrolled);
     widget.voice?.onMessage = _voiceMessage;
     widget.focusNode?.addListener(_focusChanged);
   }
@@ -332,9 +340,14 @@ class _ComposerState extends State<Composer> with SingleTickerProviderStateMixin
     }
   }
 
+  void _textScrolled() {
+    if (mounted && _textScroll.hasClients) setState(() {});
+  }
+
   @override
   void dispose() {
     widget.controller.removeListener(_draftChanged);
+    _textScroll.dispose();
     _draftEmpty.dispose();
     widget.focusNode?.removeListener(_focusChanged);
     _openController.dispose();
@@ -388,6 +401,12 @@ class _ComposerState extends State<Composer> with SingleTickerProviderStateMixin
     voice?.ensureFresh();
     final themeStyle = DshThemeStyle.of(context);
     final themeHint = themeStyle.localized(themeStyle.components.composerHint);
+    // Opt-in, and only on the fluid tier: the default composer (and every
+    // golden that pictures it) keeps the exact same tree as before.
+    final animateText =
+        ref.watch(performancePrefsProvider.select((p) => p.textAnimation)) &&
+        ref.watch(performanceDefaultsProvider.select((p) => p.fluidMotion)) &&
+        AppMotion.fluid(context);
 
     // The chat page's pet stands on the composer's top edge (outside a pet
     // stage this is a plain pass-through).
@@ -455,7 +474,7 @@ class _ComposerState extends State<Composer> with SingleTickerProviderStateMixin
                     ),
                     child: KeyedSubtree(key: ValueKey(dictating), child: leading),
                   );
-            final field = Focus(
+            final editor = Focus(
               key: _fieldKey,
               canRequestFocus: false,
               skipTraversal: true,
@@ -484,8 +503,9 @@ class _ComposerState extends State<Composer> with SingleTickerProviderStateMixin
                   keyboardType: TextInputType.multiline,
                   textInputAction: TextInputAction.newline,
                   textCapitalization: TextCapitalization.sentences,
-                  style: textStyle,
+                  style: animateText ? textStyle?.copyWith(color: Colors.transparent) : textStyle,
                   cursorColor: theme.colorScheme.primary,
+                  scrollController: animateText ? _textScroll : null,
                   decoration: InputDecoration(
                     hintText: hint,
                     hintMaxLines: 1,
@@ -505,6 +525,25 @@ class _ComposerState extends State<Composer> with SingleTickerProviderStateMixin
                 ),
               ),
             );
+            final field = animateText
+                ? Stack(
+                    children: [
+                      editor,
+                      Positioned.fill(
+                        child: IgnorePointer(
+                          child: AnimatedComposerText(
+                            controller: widget.controller,
+                            style: textStyle ?? const TextStyle(fontSize: _fontSize, height: _lineHeight),
+                            textPad: textPad,
+                            maxLines: widget.maxLines,
+                            textDirection: Directionality.of(context),
+                            scrollOffset: _textScroll.hasClients ? _textScroll.offset : 0,
+                          ),
+                        ),
+                      ),
+                    ],
+                  )
+                : editor;
             final sendKey = _SendButton(
               mode: mode,
               busy: keyBusy,

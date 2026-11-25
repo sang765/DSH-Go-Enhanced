@@ -63,6 +63,7 @@ class PerformancePrefs {
     this.fluid,
     this.refreshRate = RefreshRateMode.auto,
     this.frameCache = true,
+    this.textAnimation = false,
     this.loaded = false,
   });
 
@@ -77,6 +78,10 @@ class PerformancePrefs {
   /// HarmonyOS's engine holds back one frame to smooth rate changes, at slightly more touch
   /// delay. A switch because the difference can only be judged on a device.
   final bool frameCache;
+
+  /// Per-letter animation in the chat composer. Opt-in: it hides the native
+  /// text and repaints every glyph, so it stays off until the user asks for it.
+  final bool textAnimation;
   final bool loaded;
 
   PerformancePrefs copyWith({
@@ -86,6 +91,7 @@ class PerformancePrefs {
     bool? fluid,
     RefreshRateMode? refreshRate,
     bool? frameCache,
+    bool? textAnimation,
     bool? loaded,
     bool resetEffects = false,
   }) => PerformancePrefs(
@@ -95,6 +101,7 @@ class PerformancePrefs {
     fluid: resetEffects ? null : fluid ?? this.fluid,
     refreshRate: refreshRate ?? this.refreshRate,
     frameCache: frameCache ?? this.frameCache,
+    textAnimation: resetEffects ? false : textAnimation ?? this.textAnimation,
     loaded: loaded ?? this.loaded,
   );
 }
