@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:dsh_client/dsh_client.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
 import '../../l10n/l10n.dart';
 import '../../state/plugins_state.dart';
@@ -12,9 +13,10 @@ import '../common/brief_notice.dart';
 import '../common/display_image.dart';
 
 /// Plugin icon, app-store style: a rounded square (continuous corners, about
-/// a quarter of the side) holding a lazily loaded https image or an inline
-/// PNG/JPEG/WebP data URL; anything else (SVG, failures, while loading) shows
-/// the first letter on an identity-tinted square.
+/// a quarter of the side) holding a lazily loaded https image, an inline
+/// PNG/JPEG/WebP data URL or an SVG (data URL or `.svg` link); anything else
+/// (failures, while loading) shows the first letter on an identity-tinted
+/// square.
 class PluginAvatar extends StatelessWidget {
   const PluginAvatar({super.key, required this.name, this.title, this.icon, this.size = 40});
 
@@ -26,8 +28,12 @@ class PluginAvatar extends StatelessWidget {
 
   static final Map<String, Uint8List?> _decoded = {};
 
+  static bool _isSvgData(String url) => url.startsWith('data:image/svg+xml');
+
+  static bool _isSvgUrl(String url) => Uri.tryParse(url)?.path.toLowerCase().endsWith('.svg') ?? false;
+
   static Uint8List? _bytes(String dataUrl) => _decoded.putIfAbsent(dataUrl, () {
-    if (!RegExp(r'^data:image/(?:png|jpeg|webp);base64,').hasMatch(dataUrl)) {
+    if (!RegExp(r'^data:image/(?:png|jpeg|webp);base64,').hasMatch(dataUrl) && !_isSvgData(dataUrl)) {
       return null;
     }
     try {
@@ -36,6 +42,14 @@ class PluginAvatar extends StatelessWidget {
       return null;
     }
   });
+
+  static bool _isUsableSvg(Uint8List bytes) {
+    try {
+      return utf8.decode(bytes).contains('<svg');
+    } on FormatException {
+      return false;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -64,24 +78,38 @@ class PluginAvatar extends StatelessWidget {
     if (source != null && source.startsWith('data:')) {
       final bytes = _bytes(source);
       if (bytes != null) {
-        image = Image(
-          image: displayed(MemoryImage(bytes)),
+        if (_isSvgData(source) && _isUsableSvg(bytes)) {
+          image = SvgPicture.memory(bytes, width: size, height: size, fit: BoxFit.cover);
+        } else if (!_isSvgData(source)) {
+          image = Image(
+            image: displayed(MemoryImage(bytes)),
+            width: size,
+            height: size,
+            fit: BoxFit.cover,
+            errorBuilder: (_, _, _) => fallback,
+          );
+        }
+      }
+    } else if (source != null && source.startsWith('https://')) {
+      if (_isSvgUrl(source)) {
+        image = SvgPicture.network(
+          source,
           width: size,
           height: size,
           fit: BoxFit.cover,
+          placeholderBuilder: (_) => fallback,
+        );
+      } else {
+        image = Image(
+          image: displayed(NetworkImage(source)),
+          width: size,
+          height: size,
+          fit: BoxFit.cover,
+          gaplessPlayback: true,
           errorBuilder: (_, _, _) => fallback,
+          frameBuilder: (context, child, frame, sync) => frame == null && !sync ? fallback : child,
         );
       }
-    } else if (source != null && source.startsWith('https://')) {
-      image = Image(
-        image: displayed(NetworkImage(source)),
-        width: size,
-        height: size,
-        fit: BoxFit.cover,
-        gaplessPlayback: true,
-        errorBuilder: (_, _, _) => fallback,
-        frameBuilder: (context, child, frame, sync) => frame == null && !sync ? fallback : child,
-      );
     }
     return SizedBox.square(
       dimension: size,
