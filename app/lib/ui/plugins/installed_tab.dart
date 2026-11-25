@@ -197,6 +197,9 @@ class BundleTile extends ConsumerWidget {
     final running = job?.isActive ?? false;
     // The official market's entry: a newer pinned version, or this one withdrawn.
     final listed = ref.watch(officialMarketProvider.select((c) => c.value?.byName[bundle.name]));
+    // A bundle rarely carries its own image; the plugin directory does. The
+    // web UI shows that catalog icon, so the native list falls back to it too.
+    final catalogIcon = ref.watch(marketCatalogProvider.select((c) => c.value?.byName[bundle.name]?.plugin.icon));
     final update =
         listed != null && marketInstallStatus(listed.plugin, [bundle]) == MarketInstallStatus.updateAvailable;
     final blocked = listed != null && marketBlockedInstall(listed, bundle);
@@ -251,7 +254,7 @@ class BundleTile extends ConsumerWidget {
     return Semantics(
       button: !readOnly,
       child: ListPageRow(
-        leading: PluginAvatar(name: bundle.name, title: title, icon: bundle.meta?.icon),
+        leading: PluginAvatar(name: bundle.name, title: title, icon: bundle.meta?.icon ?? catalogIcon),
         leadingWidth: 40,
         title: title,
         titleStyle: pluginRowTitle(context),

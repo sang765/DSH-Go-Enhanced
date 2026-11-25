@@ -453,9 +453,10 @@ class BundleSheet extends ConsumerWidget {
       }
     }
 
-    // Local installs can't be shared; a market entry adds the picture card.
+    // Local installs can't be shared; a market entry adds the picture card and
+    // the icon a bundle usually does not carry itself (the web UI shows it).
     final shareable = !gone && sharedPluginFromBundle(bundle) != null;
-    final market = shareable ? ref.watch(marketCatalogProvider.select((c) => c.value?.byName[bundle.name])) : null;
+    final market = ref.watch(marketCatalogProvider.select((c) => c.value?.byName[bundle.name]));
     // The official market's entry: a newer pinned version, or this one withdrawn.
     final listed = gone ? null : ref.watch(officialMarketProvider.select((c) => c.value?.byName[bundle.name]));
     final update = listed != null && marketInstallStatus(listed.plugin, [bundle]) == MarketInstallStatus.updateAvailable
@@ -487,7 +488,12 @@ class BundleSheet extends ConsumerWidget {
             padding: const EdgeInsets.fromLTRB(20, 4, 20, 16),
             children: [
               PluginHero(
-                avatar: PluginAvatar(name: bundle.name, title: shownDisplay, icon: bundle.meta?.icon, size: 64),
+                avatar: PluginAvatar(
+                  name: bundle.name,
+                  title: shownDisplay,
+                  icon: bundle.meta?.icon ?? market?.plugin.icon,
+                  size: 64,
+                ),
                 title: shownDisplay,
                 subtitle: shownDisplay == bundle.name ? '' : bundle.name,
                 monoSubtitle: true,
