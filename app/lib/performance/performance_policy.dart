@@ -72,6 +72,16 @@ class PerformancePrefs {
     this.textAnimationSlide = 10,
     this.textAnimationDelete = TextAnimationDelete.fallAway,
     this.textAnimationCursor = TextAnimationCursor.glide,
+    this.textAnimationLetters = true,
+    this.textAnimationSlideUp = true,
+    this.textAnimationUnblur = true,
+    this.textAnimationPop = false,
+    this.textAnimationTilt = false,
+    this.textAnimationTrail = true,
+    this.textAnimationCursorSpeed = 18,
+    this.textAnimationPopStrength = 100,
+    this.textAnimationTiltStrength = 100,
+    this.textAnimationEveryField = false,
     this.loaded = false,
   });
 
@@ -94,6 +104,16 @@ class PerformancePrefs {
   final double textAnimationSlide;
   final TextAnimationDelete textAnimationDelete;
   final TextAnimationCursor textAnimationCursor;
+  final bool textAnimationLetters;
+  final bool textAnimationSlideUp;
+  final bool textAnimationUnblur;
+  final bool textAnimationPop;
+  final bool textAnimationTilt;
+  final bool textAnimationTrail;
+  final int textAnimationCursorSpeed;
+  final int textAnimationPopStrength;
+  final int textAnimationTiltStrength;
+  final bool textAnimationEveryField;
   final bool loaded;
 
   PerformancePrefs copyWith({
@@ -108,6 +128,16 @@ class PerformancePrefs {
     double? textAnimationSlide,
     TextAnimationDelete? textAnimationDelete,
     TextAnimationCursor? textAnimationCursor,
+    bool? textAnimationLetters,
+    bool? textAnimationSlideUp,
+    bool? textAnimationUnblur,
+    bool? textAnimationPop,
+    bool? textAnimationTilt,
+    bool? textAnimationTrail,
+    int? textAnimationCursorSpeed,
+    int? textAnimationPopStrength,
+    int? textAnimationTiltStrength,
+    bool? textAnimationEveryField,
     bool? loaded,
     bool resetEffects = false,
   }) => PerformancePrefs(
@@ -122,6 +152,16 @@ class PerformancePrefs {
     textAnimationSlide: resetEffects ? 10 : textAnimationSlide ?? this.textAnimationSlide,
     textAnimationDelete: resetEffects ? TextAnimationDelete.fallAway : textAnimationDelete ?? this.textAnimationDelete,
     textAnimationCursor: resetEffects ? TextAnimationCursor.glide : textAnimationCursor ?? this.textAnimationCursor,
+    textAnimationLetters: resetEffects ? true : textAnimationLetters ?? this.textAnimationLetters,
+    textAnimationSlideUp: resetEffects ? true : textAnimationSlideUp ?? this.textAnimationSlideUp,
+    textAnimationUnblur: resetEffects ? true : textAnimationUnblur ?? this.textAnimationUnblur,
+    textAnimationPop: resetEffects ? false : textAnimationPop ?? this.textAnimationPop,
+    textAnimationTilt: resetEffects ? false : textAnimationTilt ?? this.textAnimationTilt,
+    textAnimationTrail: resetEffects ? true : textAnimationTrail ?? this.textAnimationTrail,
+    textAnimationCursorSpeed: resetEffects ? 18 : textAnimationCursorSpeed ?? this.textAnimationCursorSpeed,
+    textAnimationPopStrength: resetEffects ? 100 : textAnimationPopStrength ?? this.textAnimationPopStrength,
+    textAnimationTiltStrength: resetEffects ? 100 : textAnimationTiltStrength ?? this.textAnimationTiltStrength,
+    textAnimationEveryField: resetEffects ? false : textAnimationEveryField ?? this.textAnimationEveryField,
     loaded: loaded ?? this.loaded,
   );
 }

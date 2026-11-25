@@ -125,6 +125,16 @@ class PerformancePrefsController extends Notifier<PerformancePrefs> {
   static const textAnimationSlideKey = 'chat.text_animation.slide';
   static const textAnimationDeleteKey = 'chat.text_animation.delete';
   static const textAnimationCursorKey = 'chat.text_animation.cursor';
+  static const textAnimationLettersKey = 'chat.text_animation.letters';
+  static const textAnimationSlideUpKey = 'chat.text_animation.slide_up';
+  static const textAnimationUnblurKey = 'chat.text_animation.unblur';
+  static const textAnimationPopKey = 'chat.text_animation.pop';
+  static const textAnimationTiltKey = 'chat.text_animation.tilt';
+  static const textAnimationTrailKey = 'chat.text_animation.trail';
+  static const textAnimationCursorSpeedKey = 'chat.text_animation.cursor_speed';
+  static const textAnimationPopStrengthKey = 'chat.text_animation.pop_strength';
+  static const textAnimationTiltStrengthKey = 'chat.text_animation.tilt_strength';
+  static const textAnimationEveryFieldKey = 'chat.text_animation.every_field';
   late Future<void> ready;
 
   @override
@@ -153,6 +163,16 @@ class PerformancePrefsController extends Notifier<PerformancePrefs> {
         textAnimationCursor:
             TextAnimationCursor.values.asNameMap()[prefs.getString(textAnimationCursorKey)] ??
             TextAnimationCursor.glide,
+        textAnimationLetters: prefs.getBool(textAnimationLettersKey) ?? true,
+        textAnimationSlideUp: prefs.getBool(textAnimationSlideUpKey) ?? true,
+        textAnimationUnblur: prefs.getBool(textAnimationUnblurKey) ?? true,
+        textAnimationPop: prefs.getBool(textAnimationPopKey) ?? false,
+        textAnimationTilt: prefs.getBool(textAnimationTiltKey) ?? false,
+        textAnimationTrail: prefs.getBool(textAnimationTrailKey) ?? true,
+        textAnimationCursorSpeed: prefs.getInt(textAnimationCursorSpeedKey) ?? 18,
+        textAnimationPopStrength: prefs.getInt(textAnimationPopStrengthKey) ?? 100,
+        textAnimationTiltStrength: prefs.getInt(textAnimationTiltStrengthKey) ?? 100,
+        textAnimationEveryField: prefs.getBool(textAnimationEveryFieldKey) ?? false,
         loaded: true,
       );
       // The engine starts with it on, so only the other answer has anything to say.
@@ -194,6 +214,30 @@ class PerformancePrefsController extends Notifier<PerformancePrefs> {
       _save((s) => s.copyWith(textAnimationDelete: value), (p) => p.setString(textAnimationDeleteKey, value.name));
   Future<void> setTextAnimationCursor(TextAnimationCursor value) =>
       _save((s) => s.copyWith(textAnimationCursor: value), (p) => p.setString(textAnimationCursorKey, value.name));
+  Future<void> setTextAnimationLetters(bool value) =>
+      _save((s) => s.copyWith(textAnimationLetters: value), (p) => p.setBool(textAnimationLettersKey, value));
+  Future<void> setTextAnimationSlideUp(bool value) =>
+      _save((s) => s.copyWith(textAnimationSlideUp: value), (p) => p.setBool(textAnimationSlideUpKey, value));
+  Future<void> setTextAnimationUnblur(bool value) =>
+      _save((s) => s.copyWith(textAnimationUnblur: value), (p) => p.setBool(textAnimationUnblurKey, value));
+  Future<void> setTextAnimationPop(bool value) =>
+      _save((s) => s.copyWith(textAnimationPop: value), (p) => p.setBool(textAnimationPopKey, value));
+  Future<void> setTextAnimationTilt(bool value) =>
+      _save((s) => s.copyWith(textAnimationTilt: value), (p) => p.setBool(textAnimationTiltKey, value));
+  Future<void> setTextAnimationTrail(bool value) =>
+      _save((s) => s.copyWith(textAnimationTrail: value), (p) => p.setBool(textAnimationTrailKey, value));
+  Future<void> setTextAnimationCursorSpeed(int value) =>
+      _save((s) => s.copyWith(textAnimationCursorSpeed: value), (p) => p.setInt(textAnimationCursorSpeedKey, value));
+  Future<void> setTextAnimationPopStrength(int value) => _save(
+    (s) => s.copyWith(textAnimationPopStrength: value),
+    (p) => p.setInt(textAnimationPopStrengthKey, value),
+  );
+  Future<void> setTextAnimationTiltStrength(int value) => _save(
+    (s) => s.copyWith(textAnimationTiltStrength: value),
+    (p) => p.setInt(textAnimationTiltStrengthKey, value),
+  );
+  Future<void> setTextAnimationEveryField(bool value) =>
+      _save((s) => s.copyWith(textAnimationEveryField: value), (p) => p.setBool(textAnimationEveryFieldKey, value));
   Future<void> setFrameCache(bool value) async {
     await _save((s) => s.copyWith(frameCache: value), (p) => p.setBool(frameCacheKey, value));
     if (ref.mounted) _sendFrameCache(value);
@@ -213,6 +257,16 @@ class PerformancePrefsController extends Notifier<PerformancePrefs> {
     await p.remove(textAnimationSlideKey);
     await p.remove(textAnimationDeleteKey);
     await p.remove(textAnimationCursorKey);
+    await p.remove(textAnimationLettersKey);
+    await p.remove(textAnimationSlideUpKey);
+    await p.remove(textAnimationUnblurKey);
+    await p.remove(textAnimationPopKey);
+    await p.remove(textAnimationTiltKey);
+    await p.remove(textAnimationTrailKey);
+    await p.remove(textAnimationCursorSpeedKey);
+    await p.remove(textAnimationPopStrengthKey);
+    await p.remove(textAnimationTiltStrengthKey);
+    await p.remove(textAnimationEveryFieldKey);
   });
 }
 
@@ -245,6 +299,16 @@ Map<String, Object?> performanceDiagnostics(Ref ref) {
       'textAnimationSlide': prefs.textAnimationSlide,
       'textAnimationDelete': prefs.textAnimationDelete.name,
       'textAnimationCursor': prefs.textAnimationCursor.name,
+      'textAnimationLetters': prefs.textAnimationLetters,
+      'textAnimationSlideUp': prefs.textAnimationSlideUp,
+      'textAnimationUnblur': prefs.textAnimationUnblur,
+      'textAnimationPop': prefs.textAnimationPop,
+      'textAnimationTilt': prefs.textAnimationTilt,
+      'textAnimationTrail': prefs.textAnimationTrail,
+      'textAnimationCursorSpeed': prefs.textAnimationCursorSpeed,
+      'textAnimationPopStrength': prefs.textAnimationPopStrength,
+      'textAnimationTiltStrength': prefs.textAnimationTiltStrength,
+      'textAnimationEveryField': prefs.textAnimationEveryField,
       'refreshRate': prefs.refreshRate.name,
       if (ref.read(operatingSystemProvider) == 'ohos') 'frameCache': prefs.frameCache,
     },

@@ -7,6 +7,7 @@
 // glyphs that just arrived or are leaving. Nothing here edits the controller.
 
 import 'dart:math' as math;
+import 'dart:ui' show ImageFilter;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
@@ -14,8 +15,6 @@ import 'package:flutter/scheduler.dart';
 import '../../performance/performance_state.dart';
 import '../theme/motion.dart';
 
-const double _cursorStiffness = 220;
-const double _cursorDamping = 26;
 const int _trailLength = 8;
 
 enum _GlyphPhase { entering, steady, exiting }
@@ -57,6 +56,15 @@ class AnimatedComposerText extends StatefulWidget {
     this.cursorWidth = 2,
     this.deleteMode = TextAnimationDelete.fallAway,
     this.cursorMode = TextAnimationCursor.glide,
+    this.animateLetters = true,
+    this.slideUp = true,
+    this.unblur = false,
+    this.pop = false,
+    this.tilt = false,
+    this.trailEnabled = true,
+    this.cursorSpeed = 18,
+    this.popStrength = 100,
+    this.tiltStrength = 100,
   });
 
   final TextEditingController controller;
@@ -76,6 +84,15 @@ class AnimatedComposerText extends StatefulWidget {
   final double cursorWidth;
   final TextAnimationDelete deleteMode;
   final TextAnimationCursor cursorMode;
+  final bool animateLetters;
+  final bool slideUp;
+  final bool unblur;
+  final bool pop;
+  final bool tilt;
+  final bool trailEnabled;
+  final int cursorSpeed;
+  final int popStrength;
+  final int tiltStrength;
 
   @override
   AnimatedComposerTextState createState() => AnimatedComposerTextState();
@@ -193,7 +210,8 @@ class AnimatedComposerTextState extends State<AnimatedComposerText> with SingleT
         if (composing) reused.phase = _GlyphPhase.steady;
         next.add(reused);
       } else {
-        final glyph = _Glyph(_nextId++, cluster, composing ? _GlyphPhase.steady : _GlyphPhase.entering, _now);
+        final immediate = composing || !widget.animateLetters;
+        final glyph = _Glyph(_nextId++, cluster, immediate ? _GlyphPhase.steady : _GlyphPhase.entering, _now);
         glyph.batchIndex = created.clamp(0, AppMotion.staggerLimit);
         created++;
         next.add(glyph);
@@ -307,10 +325,12 @@ class AnimatedComposerTextState extends State<AnimatedComposerText> with SingleT
     final dt = (elapsed.inMicroseconds / 1000000).clamp(0.0, 0.032);
     if (_caretRect != null && dt > 0) {
       if (widget.cursorMode == TextAnimationCursor.glide) {
+        final stiffness = 80.0 + widget.cursorSpeed * 8.0;
+        final damping = math.sqrt(stiffness) * 2.4;
         final dx = _cursorTarget.dx - _cursor.dx;
         final dy = _cursorTarget.dy - _cursor.dy;
-        final vx = _cursorVelocity.dx + (_cursorStiffness * dx - _cursorDamping * _cursorVelocity.dx) * dt;
-        final vy = _cursorVelocity.dy + (_cursorStiffness * dy - _cursorDamping * _cursorVelocity.dy) * dt;
+        final vx = _cursorVelocity.dx + (stiffness * dx - damping * _cursorVelocity.dx) * dt;
+        final vy = _cursorVelocity.dy + (stiffness * dy - damping * _cursorVelocity.dy) * dt;
         _cursor = Offset(_cursor.dx + vx * dt, _cursor.dy + vy * dt);
         _cursorVelocity = Offset(vx, vy);
       } else {
@@ -318,7 +338,7 @@ class AnimatedComposerTextState extends State<AnimatedComposerText> with SingleT
         _cursorVelocity = Offset.zero;
       }
       if (_cursorMoving) {
-        if (_trail.isEmpty || (_trail.first - _cursor).distance > 1.5) {
+        if (widget.trailEnabled && (_trail.isEmpty || (_trail.first - _cursor).distance > 1.5)) {
           _trail.insert(0, _cursor);
           if (_trail.length > _trailLength) _trail.removeLast();
         }
@@ -360,6 +380,13 @@ class AnimatedComposerTextState extends State<AnimatedComposerText> with SingleT
             caretRect: _caretRect,
             trail: List<Offset>.of(_trail),
             deleteMode: widget.deleteMode,
+            slideUp: widget.slideUp,
+            unblur: widget.unblur,
+            pop: widget.pop,
+            tilt: widget.tilt,
+            trailEnabled: widget.trailEnabled,
+            popStrength: widget.popStrength,
+            tiltStrength: widget.tiltStrength,
           ),
           child: const SizedBox.expand(),
         );
@@ -387,6 +414,13 @@ class _GlyphPainter extends CustomPainter {
     required this.caretRect,
     required this.trail,
     required this.deleteMode,
+    required this.slideUp,
+    required this.unblur,
+    required this.pop,
+    required this.tilt,
+    required this.trailEnabled,
+    required this.popStrength,
+    required this.tiltStrength,
   });
 
   final List<_Glyph> glyphs;
@@ -406,6 +440,13 @@ class _GlyphPainter extends CustomPainter {
   final Rect? caretRect;
   final List<Offset> trail;
   final TextAnimationDelete deleteMode;
+  final bool slideUp;
+  final bool unblur;
+  final bool pop;
+  final bool tilt;
+  final bool trailEnabled;
+  final int popStrength;
+  final int tiltStrength;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -426,6 +467,7 @@ class _GlyphPainter extends CustomPainter {
       var dy = 0.0;
       var scale = 1.0;
       var rotate = 0.0;
+      var blurSigma = 0.0;
 
       if (glyph.phase == _GlyphPhase.entering) {
         // Only the first [AppMotion.staggerLimit] letters of a batch wait;
@@ -434,9 +476,18 @@ class _GlyphPainter extends CustomPainter {
         final local = ((elapsedMs - start) / letterDuration.inMilliseconds).clamp(0.0, 1.0);
         final eased = Curves.easeOut.transform(local);
         opacity = eased;
-        dy = (1 - eased) * slideDistance;
-        scale = 0.9 + 0.1 * AppMotion.popCurve.transform(local);
-        rotate = (1 - eased) * 0.08 * (glyph.id.isEven ? 1 : -1);
+        if (slideUp) dy = (1 - eased) * slideDistance;
+        if (pop) {
+          scale = 1 + (AppMotion.popCurve.transform(local) - 1) * (popStrength / 100) * 0.12;
+        }
+        if (tilt) {
+          rotate = 0.7 *
+              (tiltStrength / 100) *
+              math.pow(1 - eased, 1.2).toDouble() *
+              math.cos(local * 3.5 * math.pi) *
+              (glyph.id.isEven ? 1 : -1);
+        }
+        if (unblur) blurSigma = (1 - eased) * 8;
       } else if (glyph.phase == _GlyphPhase.exiting) {
         opacity = 1 - p;
         switch (deleteMode) {
@@ -477,14 +528,21 @@ class _GlyphPainter extends CustomPainter {
       if (rotate != 0) canvas.rotate(rotate);
       if (scale != 1) canvas.scale(scale, scale);
       canvas.translate(-cx, -cy);
+      if (blurSigma > 0) {
+        canvas.saveLayer(
+          rect.inflate(12).shift(pos - rect.topLeft),
+          Paint()..imageFilter = ImageFilter.blur(sigmaX: blurSigma, sigmaY: blurSigma),
+        );
+      }
       painter.paint(canvas, pos);
+      if (blurSigma > 0) canvas.restore();
       canvas.restore();
       if (!identical(painter, cached)) painter.dispose();
     }
 
     final caret = caretRect;
     if (caret != null) {
-      for (var i = trail.length - 1; i >= 1; i--) {
+      for (var i = trailEnabled ? trail.length - 1 : 0; i >= 1; i--) {
         final fade = 1 - i / trail.length;
         canvas.drawLine(
           trail[i] + origin,
@@ -517,5 +575,10 @@ class _GlyphPainter extends CustomPainter {
       oldDelegate.caretRect != caretRect ||
       oldDelegate.trail.length != trail.length ||
       oldDelegate.deleteMode != deleteMode ||
+      oldDelegate.slideUp != slideUp ||
+      oldDelegate.unblur != unblur ||
+      oldDelegate.pop != pop ||
+      oldDelegate.tilt != tilt ||
+      oldDelegate.trailEnabled != trailEnabled ||
       !identical(oldDelegate.glyphs, glyphs);
 }

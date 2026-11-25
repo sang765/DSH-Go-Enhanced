@@ -12766,6 +12766,75 @@ class L10nZh extends L10n {
   String get performanceTextAnimationCursorSteady => '静止';
 
   @override
+  String get performanceTextAnimationTryIt => '试一试';
+
+  @override
+  String get performanceTextAnimationTryHere => '在这里输入';
+
+  @override
+  String get performanceTextAnimationTryHint => '流畅地输入…';
+
+  @override
+  String get performanceTextAnimationTyping => '打字';
+
+  @override
+  String get performanceTextAnimationAdjust => '调整';
+
+  @override
+  String get performanceTextAnimationLetters => '逐字动画';
+
+  @override
+  String get performanceTextAnimationLettersHint => '每个字在原位淡入，粘贴的内容依次出现。';
+
+  @override
+  String get performanceTextAnimationSlideUp => '上浮';
+
+  @override
+  String get performanceTextAnimationSlideUpHint => '从下方稍微上浮到位。';
+
+  @override
+  String get performanceTextAnimationUnblur => '去模糊';
+
+  @override
+  String get performanceTextAnimationUnblurHint => '先模糊再变清晰。';
+
+  @override
+  String get performanceTextAnimationPop => '弹出';
+
+  @override
+  String get performanceTextAnimationPopHint => '带一点回弹地放大出现。';
+
+  @override
+  String get performanceTextAnimationPopStrength => '弹出强度';
+
+  @override
+  String get performanceTextAnimationTiltStrength => '倾斜强度';
+
+  @override
+  String get performanceTextAnimationTilt => '倾斜';
+
+  @override
+  String get performanceTextAnimationTiltHint => '落定时摆正。';
+
+  @override
+  String get performanceTextAnimationTrail => '拉伸拖尾';
+
+  @override
+  String get performanceTextAnimationTrailHint => '移动时在身后拉出尾巴。';
+
+  @override
+  String get performanceTextAnimationCursorSpeed => '光标速度';
+
+  @override
+  String get performanceTextAnimationCursorSpeedHint => '越高跟随越快。';
+
+  @override
+  String get performanceTextAnimationEveryField => '所有输入框';
+
+  @override
+  String get performanceTextAnimationEveryFieldHint => '搜索、资料与设置里的输入框也会生效，不只是聊天框。密码框从不动。';
+
+  @override
   String get performanceFollowMode => '效果跟随性能模式';
 
   @override

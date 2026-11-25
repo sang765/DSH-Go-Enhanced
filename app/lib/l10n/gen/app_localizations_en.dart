@@ -13464,7 +13464,7 @@ class L10nEn extends L10n {
   String get performanceTextAnimationDeleteDust => 'Turn to dust';
 
   @override
-  String get performanceTextAnimationDeleteNone => 'None';
+  String get performanceTextAnimationDeleteNone => 'Nothing';
 
   @override
   String get performanceTextAnimationCursor => 'Cursor';
@@ -13474,6 +13474,77 @@ class L10nEn extends L10n {
 
   @override
   String get performanceTextAnimationCursorSteady => 'Steady';
+
+  @override
+  String get performanceTextAnimationTryIt => 'Try it';
+
+  @override
+  String get performanceTextAnimationTryHere => 'Type here';
+
+  @override
+  String get performanceTextAnimationTryHint => 'Typing smoothly…';
+
+  @override
+  String get performanceTextAnimationTyping => 'Typing';
+
+  @override
+  String get performanceTextAnimationAdjust => 'Adjust';
+
+  @override
+  String get performanceTextAnimationLetters => 'Animate new letters';
+
+  @override
+  String get performanceTextAnimationLettersHint =>
+      'Each letter fades in at its spot. Pastes ripple in one after another.';
+
+  @override
+  String get performanceTextAnimationSlideUp => 'Slide up';
+
+  @override
+  String get performanceTextAnimationSlideUpHint => 'Rises into place from a little below.';
+
+  @override
+  String get performanceTextAnimationUnblur => 'Unblur';
+
+  @override
+  String get performanceTextAnimationUnblurHint => 'Starts blurry and comes into focus.';
+
+  @override
+  String get performanceTextAnimationPop => 'Pop';
+
+  @override
+  String get performanceTextAnimationPopHint => 'Grows in with a little bounce.';
+
+  @override
+  String get performanceTextAnimationPopStrength => 'Pop strength';
+
+  @override
+  String get performanceTextAnimationTiltStrength => 'Tilt strength';
+
+  @override
+  String get performanceTextAnimationTilt => 'Tilt';
+
+  @override
+  String get performanceTextAnimationTiltHint => 'Swings upright as it lands.';
+
+  @override
+  String get performanceTextAnimationTrail => 'Stretchy trail';
+
+  @override
+  String get performanceTextAnimationTrailHint => 'Stretches out behind itself as it moves.';
+
+  @override
+  String get performanceTextAnimationCursorSpeed => 'Cursor speed';
+
+  @override
+  String get performanceTextAnimationCursorSpeedHint => 'Higher catches up faster.';
+
+  @override
+  String get performanceTextAnimationEveryField => 'Every text field';
+
+  @override
+  String get performanceTextAnimationEveryFieldHint =>
+      'Search, profile and settings boxes too, not just the message box. Password fields never animate.';
 
   @override
   String get performanceFollowMode => 'Follow the performance mode';
