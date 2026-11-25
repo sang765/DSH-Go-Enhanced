@@ -11,6 +11,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 
+import '../../performance/performance_state.dart';
 import '../theme/motion.dart';
 
 const double _cursorStiffness = 220;
@@ -54,6 +55,8 @@ class AnimatedComposerText extends StatefulWidget {
     this.slideDistance = 10,
     required this.cursorColor,
     this.cursorWidth = 2,
+    this.deleteMode = TextAnimationDelete.fallAway,
+    this.cursorMode = TextAnimationCursor.glide,
   });
 
   final TextEditingController controller;
@@ -71,6 +74,8 @@ class AnimatedComposerText extends StatefulWidget {
   final double slideDistance;
   final Color cursorColor;
   final double cursorWidth;
+  final TextAnimationDelete deleteMode;
+  final TextAnimationCursor cursorMode;
 
   @override
   AnimatedComposerTextState createState() => AnimatedComposerTextState();
@@ -196,8 +201,14 @@ class AnimatedComposerTextState extends State<AnimatedComposerText> with SingleT
     }
 
     final kept = next.map((g) => g.id).toSet();
+    final animateDelete = widget.deleteMode != TextAnimationDelete.none;
     for (final glyph in oldById.values) {
-      if (glyph.phase == _GlyphPhase.exiting || kept.contains(glyph.id) || composing) continue;
+      if (!animateDelete ||
+          glyph.phase == _GlyphPhase.exiting ||
+          kept.contains(glyph.id) ||
+          composing) {
+        continue;
+      }
       glyph
         ..phase = _GlyphPhase.exiting
         ..started = _now;
@@ -205,8 +216,10 @@ class AnimatedComposerTextState extends State<AnimatedComposerText> with SingleT
     }
     // A deleted glyph keeps its old box while it falls away: the rest of the
     // line has already moved on, which is exactly what a falling letter wants.
-    for (final glyph in alreadyLeaving) {
-      if (!glyph.remove && _now - glyph.started < widget.deleteDuration) next.add(glyph);
+    if (animateDelete) {
+      for (final glyph in alreadyLeaving) {
+        if (!glyph.remove && _now - glyph.started < widget.deleteDuration) next.add(glyph);
+      }
     }
     _glyphs
       ..clear()
@@ -293,12 +306,17 @@ class AnimatedComposerTextState extends State<AnimatedComposerText> with SingleT
     // to the new glyph instead of snapping between two offsets.
     final dt = (elapsed.inMicroseconds / 1000000).clamp(0.0, 0.032);
     if (_caretRect != null && dt > 0) {
-      final dx = _cursorTarget.dx - _cursor.dx;
-      final dy = _cursorTarget.dy - _cursor.dy;
-      final vx = _cursorVelocity.dx + (_cursorStiffness * dx - _cursorDamping * _cursorVelocity.dx) * dt;
-      final vy = _cursorVelocity.dy + (_cursorStiffness * dy - _cursorDamping * _cursorVelocity.dy) * dt;
-      _cursor = Offset(_cursor.dx + vx * dt, _cursor.dy + vy * dt);
-      _cursorVelocity = Offset(vx, vy);
+      if (widget.cursorMode == TextAnimationCursor.glide) {
+        final dx = _cursorTarget.dx - _cursor.dx;
+        final dy = _cursorTarget.dy - _cursor.dy;
+        final vx = _cursorVelocity.dx + (_cursorStiffness * dx - _cursorDamping * _cursorVelocity.dx) * dt;
+        final vy = _cursorVelocity.dy + (_cursorStiffness * dy - _cursorDamping * _cursorVelocity.dy) * dt;
+        _cursor = Offset(_cursor.dx + vx * dt, _cursor.dy + vy * dt);
+        _cursorVelocity = Offset(vx, vy);
+      } else {
+        _cursor = _cursorTarget;
+        _cursorVelocity = Offset.zero;
+      }
       if (_cursorMoving) {
         if (_trail.isEmpty || (_trail.first - _cursor).distance > 1.5) {
           _trail.insert(0, _cursor);
@@ -341,6 +359,7 @@ class AnimatedComposerTextState extends State<AnimatedComposerText> with SingleT
             cursorOffset: _cursor,
             caretRect: _caretRect,
             trail: List<Offset>.of(_trail),
+            deleteMode: widget.deleteMode,
           ),
           child: const SizedBox.expand(),
         );
@@ -367,6 +386,7 @@ class _GlyphPainter extends CustomPainter {
     required this.cursorOffset,
     required this.caretRect,
     required this.trail,
+    required this.deleteMode,
   });
 
   final List<_Glyph> glyphs;
@@ -385,6 +405,7 @@ class _GlyphPainter extends CustomPainter {
   final Offset cursorOffset;
   final Rect? caretRect;
   final List<Offset> trail;
+  final TextAnimationDelete deleteMode;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -418,9 +439,19 @@ class _GlyphPainter extends CustomPainter {
         rotate = (1 - eased) * 0.08 * (glyph.id.isEven ? 1 : -1);
       } else if (glyph.phase == _GlyphPhase.exiting) {
         opacity = 1 - p;
-        dy = p * p * 18;
-        dx = (glyph.id % 3 - 1) * p * 6;
-        scale = 1 - 0.2 * p;
+        switch (deleteMode) {
+          case TextAnimationDelete.fallAway:
+            dy = p * p * 18;
+            dx = (glyph.id % 3 - 1) * p * 6;
+            scale = 1 - 0.2 * p;
+          case TextAnimationDelete.dust:
+            dy = -p * 10;
+            dx = ((glyph.id * 7) % 5 - 2) * p * 4;
+            scale = 1 - 0.6 * p;
+            rotate = p * (glyph.id.isEven ? 0.5 : -0.5);
+          case TextAnimationDelete.none:
+            opacity = 0;
+        }
       }
       if (opacity <= 0) continue;
 
@@ -485,5 +516,6 @@ class _GlyphPainter extends CustomPainter {
       oldDelegate.cursorOffset != cursorOffset ||
       oldDelegate.caretRect != caretRect ||
       oldDelegate.trail.length != trail.length ||
+      oldDelegate.deleteMode != deleteMode ||
       !identical(oldDelegate.glyphs, glyphs);
 }

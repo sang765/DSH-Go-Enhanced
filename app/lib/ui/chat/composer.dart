@@ -403,8 +403,19 @@ class _ComposerState extends ConsumerState<Composer> with SingleTickerProviderSt
     final themeHint = themeStyle.localized(themeStyle.components.composerHint);
     // Opt-in, and only on the fluid tier: the default composer (and every
     // golden that pictures it) keeps the exact same tree as before.
+    final textPrefs = ref.watch(
+      performancePrefsProvider.select(
+        (p) => (
+          enabled: p.textAnimation,
+          speed: p.textAnimationSpeed,
+          slide: p.textAnimationSlide,
+          delete: p.textAnimationDelete,
+          cursor: p.textAnimationCursor,
+        ),
+      ),
+    );
     final animateText =
-        ref.watch(performancePrefsProvider.select((p) => p.textAnimation)) &&
+        textPrefs.enabled &&
         ref.watch(performanceDefaultsProvider.select((p) => p.fluidMotion)) &&
         AppMotion.fluid(context);
 
@@ -540,6 +551,10 @@ class _ComposerState extends ConsumerState<Composer> with SingleTickerProviderSt
                             textDirection: Directionality.of(context),
                             scrollOffset: _textScroll.hasClients ? _textScroll.offset : 0,
                             cursorColor: theme.colorScheme.primary,
+                            letterDuration: Duration(milliseconds: textPrefs.speed),
+                            slideDistance: textPrefs.slide,
+                            deleteMode: textPrefs.delete,
+                            cursorMode: textPrefs.cursor,
                           ),
                         ),
                       ),

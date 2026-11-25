@@ -12733,6 +12733,39 @@ class L10nZh extends L10n {
   String get performanceTextAnimationHint => '聊天输入框里新字逐个出现，需要开启灵动动效';
 
   @override
+  String get performanceTextAnimationOptions => '输入文字动画设置';
+
+  @override
+  String get performanceTextAnimationOptionsHint => '单字速度、上移距离、删除效果与光标运动';
+
+  @override
+  String get performanceTextAnimationSpeed => '单字速度';
+
+  @override
+  String get performanceTextAnimationSlide => '上移距离';
+
+  @override
+  String get performanceTextAnimationDelete => '删除效果';
+
+  @override
+  String get performanceTextAnimationDeleteFallAway => '掉落';
+
+  @override
+  String get performanceTextAnimationDeleteDust => '化为碎屑';
+
+  @override
+  String get performanceTextAnimationDeleteNone => '无动画';
+
+  @override
+  String get performanceTextAnimationCursor => '光标';
+
+  @override
+  String get performanceTextAnimationCursorGlide => '滑动';
+
+  @override
+  String get performanceTextAnimationCursorSteady => '静止';
+
+  @override
   String get performanceFollowMode => '效果跟随性能模式';
 
   @override
@@ -19370,6 +19403,9 @@ class L10nZh extends L10n {
 
   @override
   String get searchKwTextAnimation => '打字动画,逐字,输入框,文字动效';
+
+  @override
+  String get searchKwTextAnimationOptions => '打字速度,上移距离,删除效果,光标运动';
 
   @override
   String get searchKwNotifyEnabled => '通知开关,关闭通知';

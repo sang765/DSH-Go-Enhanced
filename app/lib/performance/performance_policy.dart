@@ -1,6 +1,10 @@
 /// A default profile, not a benchmark score. Android owns the classification.
 enum DeviceTier { low, medium, high }
 
+enum TextAnimationDelete { fallAway, dust, none }
+
+enum TextAnimationCursor { glide, steady }
+
 enum PerformanceMode { auto, full, light }
 
 class PerformanceSnapshot {
@@ -64,6 +68,10 @@ class PerformancePrefs {
     this.refreshRate = RefreshRateMode.auto,
     this.frameCache = true,
     this.textAnimation = false,
+    this.textAnimationSpeed = 320,
+    this.textAnimationSlide = 10,
+    this.textAnimationDelete = TextAnimationDelete.fallAway,
+    this.textAnimationCursor = TextAnimationCursor.glide,
     this.loaded = false,
   });
 
@@ -82,6 +90,10 @@ class PerformancePrefs {
   /// Per-letter animation in the chat composer. Opt-in: it hides the native
   /// text and repaints every glyph, so it stays off until the user asks for it.
   final bool textAnimation;
+  final int textAnimationSpeed;
+  final double textAnimationSlide;
+  final TextAnimationDelete textAnimationDelete;
+  final TextAnimationCursor textAnimationCursor;
   final bool loaded;
 
   PerformancePrefs copyWith({
@@ -92,6 +104,10 @@ class PerformancePrefs {
     RefreshRateMode? refreshRate,
     bool? frameCache,
     bool? textAnimation,
+    int? textAnimationSpeed,
+    double? textAnimationSlide,
+    TextAnimationDelete? textAnimationDelete,
+    TextAnimationCursor? textAnimationCursor,
     bool? loaded,
     bool resetEffects = false,
   }) => PerformancePrefs(
@@ -102,6 +118,10 @@ class PerformancePrefs {
     refreshRate: refreshRate ?? this.refreshRate,
     frameCache: frameCache ?? this.frameCache,
     textAnimation: resetEffects ? false : textAnimation ?? this.textAnimation,
+    textAnimationSpeed: resetEffects ? 320 : textAnimationSpeed ?? this.textAnimationSpeed,
+    textAnimationSlide: resetEffects ? 10 : textAnimationSlide ?? this.textAnimationSlide,
+    textAnimationDelete: resetEffects ? TextAnimationDelete.fallAway : textAnimationDelete ?? this.textAnimationDelete,
+    textAnimationCursor: resetEffects ? TextAnimationCursor.glide : textAnimationCursor ?? this.textAnimationCursor,
     loaded: loaded ?? this.loaded,
   );
 }

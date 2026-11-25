@@ -121,6 +121,10 @@ class PerformancePrefsController extends Notifier<PerformancePrefs> {
   static const refreshRateKey = 'performance.refresh_rate';
   static const frameCacheKey = 'performance.frame_cache';
   static const textAnimationKey = 'chat.text_animation';
+  static const textAnimationSpeedKey = 'chat.text_animation.speed';
+  static const textAnimationSlideKey = 'chat.text_animation.slide';
+  static const textAnimationDeleteKey = 'chat.text_animation.delete';
+  static const textAnimationCursorKey = 'chat.text_animation.cursor';
   late Future<void> ready;
 
   @override
@@ -141,6 +145,14 @@ class PerformancePrefsController extends Notifier<PerformancePrefs> {
         refreshRate: RefreshRateMode.values.asNameMap()[prefs.getString(refreshRateKey)] ?? RefreshRateMode.auto,
         frameCache: prefs.getBool(frameCacheKey) ?? true,
         textAnimation: prefs.getBool(textAnimationKey) ?? false,
+        textAnimationSpeed: prefs.getInt(textAnimationSpeedKey) ?? 320,
+        textAnimationSlide: prefs.getDouble(textAnimationSlideKey) ?? 10,
+        textAnimationDelete:
+            TextAnimationDelete.values.asNameMap()[prefs.getString(textAnimationDeleteKey)] ??
+            TextAnimationDelete.fallAway,
+        textAnimationCursor:
+            TextAnimationCursor.values.asNameMap()[prefs.getString(textAnimationCursorKey)] ??
+            TextAnimationCursor.glide,
         loaded: true,
       );
       // The engine starts with it on, so only the other answer has anything to say.
@@ -174,6 +186,14 @@ class PerformancePrefsController extends Notifier<PerformancePrefs> {
       _save((s) => s.copyWith(refreshRate: mode), (p) => p.setString(refreshRateKey, mode.name));
   Future<void> setTextAnimation(bool value) =>
       _save((s) => s.copyWith(textAnimation: value), (p) => p.setBool(textAnimationKey, value));
+  Future<void> setTextAnimationSpeed(int value) =>
+      _save((s) => s.copyWith(textAnimationSpeed: value), (p) => p.setInt(textAnimationSpeedKey, value));
+  Future<void> setTextAnimationSlide(double value) =>
+      _save((s) => s.copyWith(textAnimationSlide: value), (p) => p.setDouble(textAnimationSlideKey, value));
+  Future<void> setTextAnimationDelete(TextAnimationDelete value) =>
+      _save((s) => s.copyWith(textAnimationDelete: value), (p) => p.setString(textAnimationDeleteKey, value.name));
+  Future<void> setTextAnimationCursor(TextAnimationCursor value) =>
+      _save((s) => s.copyWith(textAnimationCursor: value), (p) => p.setString(textAnimationCursorKey, value.name));
   Future<void> setFrameCache(bool value) async {
     await _save((s) => s.copyWith(frameCache: value), (p) => p.setBool(frameCacheKey, value));
     if (ref.mounted) _sendFrameCache(value);
@@ -189,6 +209,10 @@ class PerformancePrefsController extends Notifier<PerformancePrefs> {
     await p.remove(animationsKey);
     await p.remove(fluidKey);
     await p.remove(textAnimationKey);
+    await p.remove(textAnimationSpeedKey);
+    await p.remove(textAnimationSlideKey);
+    await p.remove(textAnimationDeleteKey);
+    await p.remove(textAnimationCursorKey);
   });
 }
 
@@ -217,6 +241,10 @@ Map<String, Object?> performanceDiagnostics(Ref ref) {
       'animationsOverride': prefs.animations,
       'fluidOverride': prefs.fluid,
       'textAnimation': prefs.textAnimation,
+      'textAnimationSpeed': prefs.textAnimationSpeed,
+      'textAnimationSlide': prefs.textAnimationSlide,
+      'textAnimationDelete': prefs.textAnimationDelete.name,
+      'textAnimationCursor': prefs.textAnimationCursor.name,
       'refreshRate': prefs.refreshRate.name,
       if (ref.read(operatingSystemProvider) == 'ohos') 'frameCache': prefs.frameCache,
     },

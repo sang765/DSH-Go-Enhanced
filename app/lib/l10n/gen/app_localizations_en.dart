@@ -13443,6 +13443,40 @@ class L10nEn extends L10n {
   String get performanceTextAnimationHint => 'New letters appear one by one in the chat box. Needs fluid motion on';
 
   @override
+  String get performanceTextAnimationOptions => 'Typing animation options';
+
+  @override
+  String get performanceTextAnimationOptionsHint =>
+      'Letter speed, slide distance, delete effect and cursor motion';
+
+  @override
+  String get performanceTextAnimationSpeed => 'Letter speed';
+
+  @override
+  String get performanceTextAnimationSlide => 'Slide distance';
+
+  @override
+  String get performanceTextAnimationDelete => 'Deleting letters';
+
+  @override
+  String get performanceTextAnimationDeleteFallAway => 'Fall away';
+
+  @override
+  String get performanceTextAnimationDeleteDust => 'Turn to dust';
+
+  @override
+  String get performanceTextAnimationDeleteNone => 'None';
+
+  @override
+  String get performanceTextAnimationCursor => 'Cursor';
+
+  @override
+  String get performanceTextAnimationCursorGlide => 'Glide';
+
+  @override
+  String get performanceTextAnimationCursorSteady => 'Steady';
+
+  @override
   String get performanceFollowMode => 'Follow the performance mode';
 
   @override
@@ -20421,6 +20455,9 @@ class L10nEn extends L10n {
 
   @override
   String get searchKwTextAnimation => 'typing animation,letters,chat box,composer';
+
+  @override
+  String get searchKwTextAnimationOptions => 'typing speed,letter slide,delete effect,cursor motion';
 
   @override
   String get searchKwNotifyEnabled => 'notifications on,turn off notifications';

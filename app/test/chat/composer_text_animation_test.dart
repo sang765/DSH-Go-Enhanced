@@ -12,6 +12,17 @@ class _AnimationOn extends PerformancePrefsController {
   PerformancePrefs build() => const PerformancePrefs(textAnimation: true);
 }
 
+class _AnimationConfigured extends PerformancePrefsController {
+  @override
+  PerformancePrefs build() => const PerformancePrefs(
+    textAnimation: true,
+    textAnimationSpeed: 480,
+    textAnimationSlide: 20,
+    textAnimationDelete: TextAnimationDelete.dust,
+    textAnimationCursor: TextAnimationCursor.steady,
+  );
+}
+
 Widget _composer(TextEditingController input) => Scaffold(
   body: Composer(
     controller: input,
@@ -50,5 +61,22 @@ void main() {
     input.text = 'abc';
     await tester.pump();
     expect(input.text, 'abc');
+  });
+
+  testWidgets('the configured speed, slide, delete and cursor reach the overlay', (tester) async {
+    final input = TextEditingController();
+    addTearDown(input.dispose);
+    await tester.pumpWidget(
+      testApp(
+        AppMotionScope(fluid: true, child: _composer(input)),
+        overrides: [performancePrefsProvider.overrideWith(() => _AnimationConfigured())],
+      ),
+    );
+
+    final overlay = tester.widget<AnimatedComposerText>(find.byType(AnimatedComposerText));
+    expect(overlay.letterDuration, const Duration(milliseconds: 480));
+    expect(overlay.slideDistance, 20);
+    expect(overlay.deleteMode, TextAnimationDelete.dust);
+    expect(overlay.cursorMode, TextAnimationCursor.steady);
   });
 }

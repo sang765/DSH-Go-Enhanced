@@ -23658,6 +23658,72 @@ abstract class L10n {
   /// **'聊天输入框里新字逐个出现，需要开启灵动动效'**
   String get performanceTextAnimationHint;
 
+  /// No description provided for @performanceTextAnimationOptions.
+  ///
+  /// In zh, this message translates to:
+  /// **'输入文字动画设置'**
+  String get performanceTextAnimationOptions;
+
+  /// No description provided for @performanceTextAnimationOptionsHint.
+  ///
+  /// In zh, this message translates to:
+  /// **'单字速度、上移距离、删除效果与光标运动'**
+  String get performanceTextAnimationOptionsHint;
+
+  /// No description provided for @performanceTextAnimationSpeed.
+  ///
+  /// In zh, this message translates to:
+  /// **'单字速度'**
+  String get performanceTextAnimationSpeed;
+
+  /// No description provided for @performanceTextAnimationSlide.
+  ///
+  /// In zh, this message translates to:
+  /// **'上移距离'**
+  String get performanceTextAnimationSlide;
+
+  /// No description provided for @performanceTextAnimationDelete.
+  ///
+  /// In zh, this message translates to:
+  /// **'删除效果'**
+  String get performanceTextAnimationDelete;
+
+  /// No description provided for @performanceTextAnimationDeleteFallAway.
+  ///
+  /// In zh, this message translates to:
+  /// **'掉落'**
+  String get performanceTextAnimationDeleteFallAway;
+
+  /// No description provided for @performanceTextAnimationDeleteDust.
+  ///
+  /// In zh, this message translates to:
+  /// **'化为碎屑'**
+  String get performanceTextAnimationDeleteDust;
+
+  /// No description provided for @performanceTextAnimationDeleteNone.
+  ///
+  /// In zh, this message translates to:
+  /// **'无动画'**
+  String get performanceTextAnimationDeleteNone;
+
+  /// No description provided for @performanceTextAnimationCursor.
+  ///
+  /// In zh, this message translates to:
+  /// **'光标'**
+  String get performanceTextAnimationCursor;
+
+  /// No description provided for @performanceTextAnimationCursorGlide.
+  ///
+  /// In zh, this message translates to:
+  /// **'滑动'**
+  String get performanceTextAnimationCursorGlide;
+
+  /// No description provided for @performanceTextAnimationCursorSteady.
+  ///
+  /// In zh, this message translates to:
+  /// **'静止'**
+  String get performanceTextAnimationCursorSteady;
+
   /// No description provided for @performanceFollowMode.
   ///
   /// In zh, this message translates to:
@@ -35651,6 +35717,12 @@ abstract class L10n {
   /// In zh, this message translates to:
   /// **'打字动画,逐字,输入框,文字动效'**
   String get searchKwTextAnimation;
+
+  /// No description provided for @searchKwTextAnimationOptions.
+  ///
+  /// In zh, this message translates to:
+  /// **'打字速度,上移距离,删除效果,光标运动'**
+  String get searchKwTextAnimationOptions;
 
   /// No description provided for @searchKwNotifyEnabled.
   ///

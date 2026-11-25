@@ -1069,6 +1069,13 @@ abstract final class Spots {
     keywords: (l) => l.searchKwTextAnimation,
     condition: SpotCondition.animationsOn,
   );
+  static final textAnimationOptions = SettingSpot(
+    'text-animation-options',
+    page: SettingsPageId.performance,
+    title: (l) => l.performanceTextAnimationOptions,
+    keywords: (l) => l.searchKwTextAnimationOptions,
+    condition: SpotCondition.animationsOn,
+  );
 
   // 通知.
   static final notifyEnabled = SettingSpot(
@@ -1329,6 +1336,7 @@ final _rows = <SettingSpot>[
   Spots.animations,
   Spots.fluidMotion,
   Spots.textAnimation,
+  Spots.textAnimationOptions,
   Spots.notifyEnabled,
   Spots.notifyDone,
   Spots.notifyFailed,

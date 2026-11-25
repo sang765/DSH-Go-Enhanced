@@ -71,6 +71,7 @@
   "searchKwAnimations": "animation,motion,reduce motion",
   "searchKwFluidMotion": "fluid,spring,bounce,glow,smooth",
   "searchKwTextAnimation": "typing animation,letters,chat box,composer",
+  "searchKwTextAnimationOptions": "typing speed,letter slide,delete effect,cursor motion",
   "searchKwNotifyEnabled": "notifications on,turn off notifications",
   "searchKwNotifyDone": "reply done,finished",
   "searchKwNotifyFailed": "error,failed,stopped",

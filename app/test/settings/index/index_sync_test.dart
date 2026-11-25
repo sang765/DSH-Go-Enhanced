@@ -257,7 +257,7 @@ void main() {
       SettingsPageId.performance,
       () => _app(tester, const PerformancePage(), _running()),
       // Only with animations on, which tests run without.
-      absent: {'fluid-motion', 'text-animation'},
+      absent: {'fluid-motion', 'text-animation', 'text-animation-options'},
     );
   });
 
