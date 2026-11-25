@@ -30876,7 +30876,6 @@ abstract class L10n {
   /// **'安装'**
   String get pluginsAddInstall;
 
-
   /// No description provided for @plugslotsSurfaceComposerTools.
   ///
   /// In zh, this message translates to:

@@ -16719,7 +16719,6 @@ class L10nZh extends L10n {
   @override
   String get pluginsAddInstall => '安装';
 
-
   @override
   String get plugslotsSurfaceComposerTools => '加号面板';
 

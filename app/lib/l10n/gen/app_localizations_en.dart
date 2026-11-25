@@ -17616,7 +17616,8 @@ class L10nEn extends L10n {
   String get pluginsAddRegistryHint => 'https://npm.example.com/';
 
   @override
-  String get pluginsAddRegistryHelp => 'Enter an https:// address without a query or fragment. If it needs a login, configure credentials on the Host.';
+  String get pluginsAddRegistryHelp =>
+      'Enter an https:// address without a query or fragment. If it needs a login, configure credentials on the Host.';
 
   @override
   String get pluginsAddInvalid => 'Enter a plugin name, repository URL, or directory path';
@@ -17626,7 +17627,6 @@ class L10nEn extends L10n {
 
   @override
   String get pluginsAddInstall => 'Install';
-
 
   @override
   String get plugslotsSurfaceComposerTools => 'Plus panel tools';
