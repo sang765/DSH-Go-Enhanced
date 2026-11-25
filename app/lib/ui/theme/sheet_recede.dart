@@ -1,6 +1,6 @@
-// iOS's page sheet: while a sheet is up, the page under it sits back a little, its corners round
+// The page sheet feel: while a sheet is up, the page under it sits back a little, its corners round
 // off and the status bar turns light over the dark edge that shows. It follows the sheet, finger
-// included. On the fluid tier and on phones only, and nothing at all on other platforms.
+// included. On the fluid tier and on phones only, on iOS and Android; nothing on desktop or web.
 
 import 'dart:async';
 import 'dart:math' as math;
@@ -12,7 +12,8 @@ import 'package:flutter/services.dart' show SystemUiOverlayStyle;
 import 'motion.dart';
 import 'shapes.dart';
 
-bool get _available => !kIsWeb && defaultTargetPlatform == TargetPlatform.iOS;
+bool get _available =>
+    !kIsWeb && (defaultTargetPlatform == TargetPlatform.iOS || defaultTargetPlatform == TargetPlatform.android);
 
 /// Sheets take over the whole screen's attention on a phone. A tablet's float in the middle and
 /// leave the page where it is, as the system's do.

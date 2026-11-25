@@ -1,4 +1,5 @@
-// What makes the shared UI feel at home on iOS, and stay as it was elsewhere.
+// What makes the shared UI feel at home on iOS, plus the sheet recede now shared
+// with Android. Everything else stays as it was.
 
 import 'package:dsh_app/ui/common/app_sheet.dart';
 import 'package:dsh_app/ui/common/overscroll_forwarder.dart';
@@ -129,6 +130,22 @@ void main() {
     expect(tester.getRect(find.byKey(_page)).width, _screen);
     expect(tester.state(find.byKey(_page)), same(page));
   }, variant: TargetPlatformVariant.only(TargetPlatform.iOS));
+
+  testWidgets('Android sits the page back while a sheet is up too', (tester) async {
+    useScreen(tester);
+    await tester.pumpWidget(_app(fluid: true));
+    await tester.pump();
+    expect(tester.getRect(find.byKey(_page)).width, _screen);
+
+    await tester.tap(find.byKey(_open));
+    await tester.pumpAndSettle();
+    expect(tester.getRect(find.byKey(_page)).width, closeTo(_screen * SheetRecede.scale, 0.5));
+
+    await tester.tapAt(const Offset(_screen / 2, 100));
+    await tester.pumpAndSettle();
+    expect(SheetRecede.amount.value, 0);
+    expect(tester.getRect(find.byKey(_page)).width, _screen);
+  }, variant: TargetPlatformVariant.only(TargetPlatform.android));
 
   testWidgets('the status bar turns light over the dark edge, and back', (tester) async {
     useScreen(tester);
