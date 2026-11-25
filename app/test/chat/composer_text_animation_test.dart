@@ -20,6 +20,13 @@ class _AnimationConfigured extends PerformancePrefsController {
     textAnimationSlide: 20,
     textAnimationDelete: TextAnimationDelete.dust,
     textAnimationCursor: TextAnimationCursor.steady,
+    textAnimationLetters: false,
+    textAnimationSlideUp: false,
+    textAnimationUnblur: true,
+    textAnimationPop: true,
+    textAnimationTilt: true,
+    textAnimationTrail: false,
+    textAnimationCursorSpeed: 30,
   );
 }
 
@@ -78,5 +85,12 @@ void main() {
     expect(overlay.slideDistance, 20);
     expect(overlay.deleteMode, TextAnimationDelete.dust);
     expect(overlay.cursorMode, TextAnimationCursor.steady);
+    expect(overlay.animateLetters, isFalse);
+    expect(overlay.slideUp, isFalse);
+    expect(overlay.unblur, isTrue);
+    expect(overlay.pop, isTrue);
+    expect(overlay.tilt, isTrue);
+    expect(overlay.trailEnabled, isFalse);
+    expect(overlay.cursorSpeed, 30);
   });
 }

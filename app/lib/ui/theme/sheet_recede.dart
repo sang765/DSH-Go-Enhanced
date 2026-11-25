@@ -52,7 +52,7 @@ abstract final class SheetRecede {
   /// a percent, which shows up as a hitch right as the sheet settles.
   static const _settleEpsilon = 0.0005;
 
-  static final _sheets = <Animation<double>>{};
+  static final _routes = <ModalRoute<dynamic>>{};
   static final _amount = ValueNotifier<double>(0);
 
   @visibleForTesting
@@ -60,8 +60,13 @@ abstract final class SheetRecede {
 
   static void _update() {
     var most = 0.0;
-    for (final sheet in _sheets) {
-      most = math.max(most, sheet.value);
+    for (final route in _routes) {
+      // A sheet under a pushed screen is not current any more. Its animation
+      // stays completed, so counting it would leave the old page shrunk behind
+      // the new screen — and rounded, with the status bar stuck light.
+      if (!route.isCurrent) continue;
+      final animation = route.animation;
+      if (animation != null) most = math.max(most, animation.value);
     }
     final progress = most.clamp(0.0, 1.0);
     _amount.value = progress < _settleEpsilon
@@ -71,14 +76,14 @@ abstract final class SheetRecede {
             : _recedeFrames.transform(progress);
   }
 
-  static void _add(Animation<double> sheet) {
-    if (_sheets.add(sheet)) sheet.addListener(_update);
+  static void _add(ModalRoute<dynamic> route) {
+    if (_routes.add(route)) route.animation?.addListener(_update);
     // A sheet comes and goes during a build, which can't rebuild the page.
     scheduleMicrotask(_update);
   }
 
-  static void _remove(Animation<double> sheet) {
-    if (_sheets.remove(sheet)) sheet.removeListener(_update);
+  static void _remove(ModalRoute<dynamic> route) {
+    if (_routes.remove(route)) route.animation?.removeListener(_update);
     scheduleMicrotask(_update);
   }
 }
@@ -127,7 +132,7 @@ class SheetRecedeSheet extends StatefulWidget {
 }
 
 class _SheetRecedeSheetState extends State<SheetRecedeSheet> {
-  Animation<double>? _route;
+  ModalRoute<dynamic>? _route;
   final _statusBar = OverlayPortalController();
 
   @override
@@ -137,7 +142,7 @@ class _SheetRecedeSheetState extends State<SheetRecedeSheet> {
     // A sheet that can't sit the page back owns no route and no overlay: adding
     // an empty portal around it changes where its semantics land in the tree.
     final sits = _sitsBack(context);
-    final route = sits ? ModalRoute.of(context)?.animation : null;
+    final route = sits ? ModalRoute.of(context) : null;
     if (route == _route) return;
     if (_route != null) SheetRecede._remove(_route!);
     _route = route;

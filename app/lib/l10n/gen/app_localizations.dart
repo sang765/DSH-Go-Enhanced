@@ -23724,6 +23724,114 @@ abstract class L10n {
   /// **'静止'**
   String get performanceTextAnimationCursorSteady;
 
+  /// No description provided for @performanceTextAnimationTyping.
+  ///
+  /// In zh, this message translates to:
+  /// **'打字'**
+  String get performanceTextAnimationTyping;
+
+  /// No description provided for @performanceTextAnimationAdjust.
+  ///
+  /// In zh, this message translates to:
+  /// **'调整'**
+  String get performanceTextAnimationAdjust;
+
+  /// No description provided for @performanceTextAnimationLetters.
+  ///
+  /// In zh, this message translates to:
+  /// **'逐字动画'**
+  String get performanceTextAnimationLetters;
+
+  /// No description provided for @performanceTextAnimationLettersHint.
+  ///
+  /// In zh, this message translates to:
+  /// **'每个字在原位淡入，粘贴的内容依次出现。'**
+  String get performanceTextAnimationLettersHint;
+
+  /// No description provided for @performanceTextAnimationSlideUp.
+  ///
+  /// In zh, this message translates to:
+  /// **'上浮'**
+  String get performanceTextAnimationSlideUp;
+
+  /// No description provided for @performanceTextAnimationSlideUpHint.
+  ///
+  /// In zh, this message translates to:
+  /// **'从下方稍微上浮到位。'**
+  String get performanceTextAnimationSlideUpHint;
+
+  /// No description provided for @performanceTextAnimationUnblur.
+  ///
+  /// In zh, this message translates to:
+  /// **'去模糊'**
+  String get performanceTextAnimationUnblur;
+
+  /// No description provided for @performanceTextAnimationUnblurHint.
+  ///
+  /// In zh, this message translates to:
+  /// **'先模糊再变清晰。'**
+  String get performanceTextAnimationUnblurHint;
+
+  /// No description provided for @performanceTextAnimationPop.
+  ///
+  /// In zh, this message translates to:
+  /// **'弹出'**
+  String get performanceTextAnimationPop;
+
+  /// No description provided for @performanceTextAnimationPopHint.
+  ///
+  /// In zh, this message translates to:
+  /// **'带一点回弹地放大出现。'**
+  String get performanceTextAnimationPopHint;
+
+  /// No description provided for @performanceTextAnimationTilt.
+  ///
+  /// In zh, this message translates to:
+  /// **'倾斜'**
+  String get performanceTextAnimationTilt;
+
+  /// No description provided for @performanceTextAnimationTiltHint.
+  ///
+  /// In zh, this message translates to:
+  /// **'落定时摆正。'**
+  String get performanceTextAnimationTiltHint;
+
+  /// No description provided for @performanceTextAnimationTrail.
+  ///
+  /// In zh, this message translates to:
+  /// **'拉伸拖尾'**
+  String get performanceTextAnimationTrail;
+
+  /// No description provided for @performanceTextAnimationTrailHint.
+  ///
+  /// In zh, this message translates to:
+  /// **'移动时在身后拉出尾巴。'**
+  String get performanceTextAnimationTrailHint;
+
+  /// No description provided for @performanceTextAnimationCursorSpeed.
+  ///
+  /// In zh, this message translates to:
+  /// **'光标速度'**
+  String get performanceTextAnimationCursorSpeed;
+
+  /// No description provided for @performanceTextAnimationCursorSpeedHint.
+  ///
+  /// In zh, this message translates to:
+  /// **'越高跟随越快。'**
+  String get performanceTextAnimationCursorSpeedHint;
+
+  /// No description provided for @performanceTextAnimationEveryField.
+  ///
+  /// In zh, this message translates to:
+  /// **'所有输入框'**
+  String get performanceTextAnimationEveryField;
+
+  /// No description provided for @performanceTextAnimationEveryFieldHint.
+  ///
+  /// In zh, this message translates to:
+  /// **'搜索、资料与设置里的输入框也会生效，不只是聊天框。密码框从不动。'**
+  String get performanceTextAnimationEveryFieldHint;
+
   /// No description provided for @performanceFollowMode.
   ///
   /// In zh, this message translates to:

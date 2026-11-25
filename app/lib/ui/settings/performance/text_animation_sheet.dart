@@ -62,6 +62,11 @@ class TextAnimationSheet extends ConsumerWidget {
       );
     }
 
+    Widget section(String label) => Padding(
+      padding: const EdgeInsets.only(top: 12, bottom: 4),
+      child: Text(label, style: theme.textTheme.labelLarge),
+    );
+
     return SafeArea(
       top: false,
       child: Column(
@@ -75,6 +80,38 @@ class TextAnimationSheet extends ConsumerWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
+                  section(l10n.performanceTextAnimationTyping),
+                  SettingsSwitchTile(
+                    title: l10n.performanceTextAnimationLetters,
+                    subtitle: l10n.performanceTextAnimationLettersHint,
+                    value: prefs.textAnimationLetters,
+                    onChanged: (v) => unawaited(notifier.setTextAnimationLetters(v)),
+                  ),
+                  SettingsSwitchTile(
+                    title: l10n.performanceTextAnimationSlideUp,
+                    subtitle: l10n.performanceTextAnimationSlideUpHint,
+                    value: prefs.textAnimationSlideUp,
+                    onChanged: (v) => unawaited(notifier.setTextAnimationSlideUp(v)),
+                  ),
+                  SettingsSwitchTile(
+                    title: l10n.performanceTextAnimationUnblur,
+                    subtitle: l10n.performanceTextAnimationUnblurHint,
+                    value: prefs.textAnimationUnblur,
+                    onChanged: (v) => unawaited(notifier.setTextAnimationUnblur(v)),
+                  ),
+                  SettingsSwitchTile(
+                    title: l10n.performanceTextAnimationPop,
+                    subtitle: l10n.performanceTextAnimationPopHint,
+                    value: prefs.textAnimationPop,
+                    onChanged: (v) => unawaited(notifier.setTextAnimationPop(v)),
+                  ),
+                  SettingsSwitchTile(
+                    title: l10n.performanceTextAnimationTilt,
+                    subtitle: l10n.performanceTextAnimationTiltHint,
+                    value: prefs.textAnimationTilt,
+                    onChanged: (v) => unawaited(notifier.setTextAnimationTilt(v)),
+                  ),
+                  section(l10n.performanceTextAnimationAdjust),
                   sliderRow(
                     label: l10n.performanceTextAnimationSpeed,
                     value: prefs.textAnimationSpeed.toDouble(),
@@ -93,6 +130,7 @@ class TextAnimationSheet extends ConsumerWidget {
                     shown: '${prefs.textAnimationSlide.round()} dp',
                     onChanged: (v) => unawaited(notifier.setTextAnimationSlide(v)),
                   ),
+                  section(l10n.performanceTextAnimationDelete),
                   SettingsSegmentTile<TextAnimationDelete>(
                     title: l10n.performanceTextAnimationDelete,
                     segments: [
@@ -103,14 +141,34 @@ class TextAnimationSheet extends ConsumerWidget {
                     selected: prefs.textAnimationDelete,
                     onChanged: (v) => unawaited(notifier.setTextAnimationDelete(v)),
                   ),
-                  SettingsSegmentTile<TextAnimationCursor>(
-                    title: l10n.performanceTextAnimationCursor,
-                    segments: [
-                      PillSegment(TextAnimationCursor.glide, l10n.performanceTextAnimationCursorGlide),
-                      PillSegment(TextAnimationCursor.steady, l10n.performanceTextAnimationCursorSteady),
-                    ],
-                    selected: prefs.textAnimationCursor,
-                    onChanged: (v) => unawaited(notifier.setTextAnimationCursor(v)),
+                  section(l10n.performanceTextAnimationCursor),
+                  SettingsSwitchTile(
+                    title: l10n.performanceTextAnimationCursorGlide,
+                    value: prefs.textAnimationCursor == TextAnimationCursor.glide,
+                    onChanged: (v) => unawaited(notifier.setTextAnimationCursor(
+                      v ? TextAnimationCursor.glide : TextAnimationCursor.steady,
+                    )),
+                  ),
+                  SettingsSwitchTile(
+                    title: l10n.performanceTextAnimationTrail,
+                    subtitle: l10n.performanceTextAnimationTrailHint,
+                    value: prefs.textAnimationTrail,
+                    onChanged: (v) => unawaited(notifier.setTextAnimationTrail(v)),
+                  ),
+                  sliderRow(
+                    label: l10n.performanceTextAnimationCursorSpeed,
+                    value: prefs.textAnimationCursorSpeed.toDouble(),
+                    min: 6,
+                    max: 40,
+                    step: 2,
+                    shown: '${prefs.textAnimationCursorSpeed}',
+                    onChanged: (v) => unawaited(notifier.setTextAnimationCursorSpeed(v.round())),
+                  ),
+                  SettingsSwitchTile(
+                    title: l10n.performanceTextAnimationEveryField,
+                    subtitle: l10n.performanceTextAnimationEveryFieldHint,
+                    value: prefs.textAnimationEveryField,
+                    onChanged: (v) => unawaited(notifier.setTextAnimationEveryField(v)),
                   ),
                   const SizedBox(height: 16),
                 ],

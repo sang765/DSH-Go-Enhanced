@@ -12,6 +12,8 @@ import 'package:flutter_test/flutter_test.dart';
 
 const _page = Key('page');
 const _open = Key('open');
+const _push = Key('push');
+const _pop = Key('pop');
 
 const _screen = 400.0;
 const _statusBar = 59.0;
@@ -28,7 +30,31 @@ Widget _app({required bool fluid}) => MaterialApp(
         builder: (context) => Center(
           child: TextButton(
             key: _open,
-            onPressed: () => showAppSheet<void>(context, builder: (_) => const SizedBox(height: 300)),
+            onPressed: () => showAppSheet<void>(
+              context,
+              builder: (_) => Column(
+                children: [
+                  const SizedBox(height: 300),
+                  TextButton(
+                    key: _push,
+                    onPressed: () => Navigator.of(context).push(
+                      MaterialPageRoute<void>(
+                        builder: (_) => Scaffold(
+                          body: Center(
+                            child: TextButton(
+                              key: _pop,
+                              onPressed: () => Navigator.of(context).pop(),
+                              child: const Text('back'),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                    child: const Text('push'),
+                  ),
+                ],
+              ),
+            ),
             child: const Text('open'),
           ),
         ),
@@ -129,6 +155,25 @@ void main() {
     expect(SheetRecede.amount.value, 0);
     expect(tester.getRect(find.byKey(_page)).width, _screen);
     expect(tester.state(find.byKey(_page)), same(page));
+  }, variant: TargetPlatformVariant.only(TargetPlatform.iOS));
+
+  testWidgets('pushing a screen from a sheet brings the page back, and popping restores the recede',
+      (tester) async {
+    useScreen(tester);
+    await tester.pumpWidget(_app(fluid: true));
+    await tester.pump();
+    await tester.tap(find.byKey(_open));
+    await tester.pumpAndSettle();
+    expect(tester.getRect(find.byKey(_page)).width, closeTo(_screen * SheetRecede.scale, 0.5));
+
+    await tester.tap(find.byKey(_push));
+    await tester.pumpAndSettle();
+    expect(SheetRecede.amount.value, 0);
+    expect(tester.getRect(find.byKey(_page)).width, _screen);
+
+    await tester.tap(find.byKey(_pop));
+    await tester.pumpAndSettle();
+    expect(tester.getRect(find.byKey(_page)).width, closeTo(_screen * SheetRecede.scale, 0.5));
   }, variant: TargetPlatformVariant.only(TargetPlatform.iOS));
 
   testWidgets('the status bar turns light over the dark edge, and back', (tester) async {
