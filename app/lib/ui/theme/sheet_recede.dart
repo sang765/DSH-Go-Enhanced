@@ -143,12 +143,19 @@ class _SheetRecedeSheetState extends State<SheetRecedeSheet> {
     // an empty portal around it changes where its semantics land in the tree.
     final sits = _sitsBack(context);
     final route = sits ? ModalRoute.of(context) : null;
-    if (route == _route) return;
+    if (route == _route) {
+      // A route pushed above the sheet flips isCurrent without replacing the
+      // route or moving its animation, so no listener fires. Depend on the
+      // modal scope's isCurrent change to recompute here.
+      scheduleMicrotask(SheetRecede._update);
+      return;
+    }
     if (_route != null) SheetRecede._remove(_route!);
     _route = route;
     if (route != null) SheetRecede._add(route);
     if (sits && !_statusBar.isShowing) _statusBar.show();
     if (!sits && _statusBar.isShowing) _statusBar.hide();
+    scheduleMicrotask(SheetRecede._update);
   }
 
   @override
