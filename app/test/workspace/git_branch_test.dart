@@ -57,6 +57,9 @@ class _TreeCarrier extends DshCarrier {
 
   @override
   Future<DshMuxLink> openLink(MuxOptions options) async => _QuietLink();
+
+  @override
+  Future<void> close() async {}
 }
 
 class _QuietLink implements DshMuxLink {
@@ -305,7 +308,7 @@ void main() {
     );
     addTearDown(container.dispose);
     const scope = GitScope.session('s', workspacePath: '/w');
-    final subscription = container.listen(gitBranchProvider(scope), (_, _));
+    final subscription = container.listen(gitBranchProvider(scope), (_, _) {});
     addTearDown(subscription.close);
 
     expect((await container.read(gitBranchProvider(scope).future)).branch, 'main');
@@ -329,7 +332,7 @@ void main() {
     addTearDown(container.dispose);
     const scope = GitScope.session('s', workspacePath: '/w');
     // Keep the autoDispose provider alive across the reconnect.
-    final subscription = container.listen(gitBranchProvider(scope), (_, _));
+    final subscription = container.listen(gitBranchProvider(scope), (_, _) {});
     addTearDown(subscription.close);
 
     expect((await container.read(gitBranchProvider(scope).future)).branch, 'main');
