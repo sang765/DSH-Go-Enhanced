@@ -3,6 +3,23 @@
 每个版本先中文、后英文。发版时把对应版本的正文（不含版本标题）作为 Release 正文，见 `docs/release.md`。
 
 
+## 1.3.0-sub.8 · 2026-11-25
+
+### 中文
+
+- **完善:输入文字动画的选项补齐到参考插件。** 「输入文字动画设置」新增「试一试」预览输入框,并把选项分成打字、调整、删除、光标四组:单字淡入/上浮、模糊、弹出与倾斜可以单独开关;速度 120–900 毫秒、上移 2–30 dp、弹出/倾斜强度 25–200%、光标速度 6–40 都可细调;删除效果新增「什么都不做」。选项按开关条件显示,父效果关闭时子选项不再占着位置。
+- **修复:从底部弹层打开新页面后,原来的页面不再卡在缩小状态。** 背景后退现在按当前路由重新计算:新页面盖上来时原页面恢复原尺寸,返回弹层后重新后退,关掉弹层才彻底复原。
+- **范围说明:「每个输入框都生效」目前只覆盖预览框和聊天输入框。** 开关会保存,但把效果铺到全 App 所有文本输入框是另一项改造,这个版本还没有做。
+- **验证情况。** 全量 CI 绿灯,代码审查没有问题;真机上的动画观感与流畅度仍需装上新版本确认。
+
+### English
+
+- **Completed: the typing-animation options now match the reference plugin.** The "Typing animation options" sheet gains a live "Try it" field and four groups — Typing, Adjust, Deleting and Cursor. Letters, slide-up, unblur, pop and tilt can be toggled independently; speed (120–900 ms), slide distance (2–30 dp), pop/tilt strength (25–200%) and cursor speed (6–40) are fine-tunable, and "Nothing" is available as the delete effect. Sub-options hide when their parent effect is off.
+- **Fixed: pushing a screen from a bottom sheet no longer leaves the old page shrunk.** Recede now recomputes from the current route: the page returns to full size under the pushed screen, sits back again when the sheet is current, and settles only when the sheet closes.
+- **Scope note.** "Every text field" is persisted but currently applies to the preview field and the chat composer only; applying it to all text fields across the app remains a separate change.
+- **Testing.** Full CI is green and the code review found no issues; the animation feel and smoothness still need a check on a real device.
+
+
 ## 1.3.0-sub.7 · 2026-11-25
 
 ### 中文
