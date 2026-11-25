@@ -110,7 +110,7 @@ class _PluginsScreenState extends ConsumerState<PluginsScreen> {
             tooltip: l10n.pluginsAddPlugin,
             onPressed: () async {
               final picked = await showAddPluginDialog(context, local: host!.kind == HostKind.local);
-              if (picked == null || !mounted) return;
+              if (picked == null || !context.mounted) return;
               await runPluginInstall(
                 context,
                 PluginInstallRequest(

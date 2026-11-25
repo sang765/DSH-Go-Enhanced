@@ -18,10 +18,14 @@ const addPluginNpmRegistry = 'https://registry.npmjs.org';
 /// URL or directory counts; a version suffix on an npm spec is dropped, while
 /// the leading `@` of a scoped package is kept.
 String addPluginName(String spec) {
-  var name = spec.trim().replaceFirst(RegExp(r'[\\/]+$'), '');
-  final slash = name.lastIndexOf(RegExp(r'[\\/]'));
-  if (slash >= 0) name = name.substring(slash + 1);
-  if (name.endsWith('.git')) name = name.substring(0, name.length - 4);
+  var name = spec.trim();
+  // A scoped npm name's slash is part of the name, not a directory separator.
+  if (!name.startsWith('@')) {
+    name = name.replaceFirst(RegExp(r'[\\/]+$'), '');
+    final slash = name.lastIndexOf(RegExp(r'[\\/]'));
+    if (slash >= 0) name = name.substring(slash + 1);
+    if (name.endsWith('.git')) name = name.substring(0, name.length - 4);
+  }
   final at = name.lastIndexOf('@');
   if (at > 0) name = name.substring(0, at);
   return name.isEmpty ? spec.trim() : name;
