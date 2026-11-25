@@ -1,7 +1,6 @@
 // The installed list and its detail sheet fall back to the plugin directory's
 // icon when the bundle itself has no image metadata (the web UI already does).
 
-import 'package:dsh_app/state/plugins_state.dart';
 import 'package:dsh_app/ui/plugins/installed_tab.dart';
 import 'package:dsh_app/ui/plugins/plugin_widgets.dart';
 import 'package:dsh_client/dsh_client.dart';
