@@ -6,6 +6,9 @@ import 'package:flutter/material.dart';
 
 import '../../l10n/l10n.dart';
 import '../common/app_dialog.dart';
+import '../common/app_select_field.dart';
+import '../common/choice_sheet.dart';
+import '../theme/app_icons.dart';
 import '../theme/theme.dart';
 
 /// What the dialog hands back to the install queue.
@@ -117,17 +120,16 @@ class _AddPluginDialogState extends State<_AddPluginDialog> {
               decoration: InputDecoration(labelText: l10n.pluginsInstallPlugin, hintText: l10n.pluginsAddHint),
             ),
             const SizedBox(height: 16),
-            DropdownButtonFormField<int>(
-              initialValue: _registry,
-              isExpanded: true,
-              decoration: InputDecoration(labelText: l10n.pluginsAddRegistry),
-              items: [
-                DropdownMenuItem(value: 0, child: Text(l10n.pluginsAddRegistryMirror)),
-                DropdownMenuItem(value: 1, child: Text(l10n.pluginsAddRegistryNpm)),
-                DropdownMenuItem(value: 2, child: Text(l10n.pluginsAddRegistryCustom)),
+            AppSelectField<int>(
+              label: l10n.pluginsAddRegistry,
+              selected: _registry,
+              choices: [
+                Choice(0, l10n.pluginsAddRegistryMirror, subtitle: addPluginMirrorRegistry, icon: AppIcons.webSearch),
+                Choice(1, l10n.pluginsAddRegistryNpm, subtitle: addPluginNpmRegistry, icon: AppIcons.artifacts),
+                Choice(2, l10n.pluginsAddRegistryCustom, subtitle: l10n.pluginsAddRegistryHint, icon: AppIcons.link),
               ],
               onChanged: (value) => setState(() {
-                _registry = value ?? 0;
+                _registry = value;
                 _error = null;
               }),
             ),
