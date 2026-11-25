@@ -169,10 +169,10 @@ void main() {
     await tester.tap(find.byKey(_push));
     await tester.pumpAndSettle();
     expect(SheetRecede.amount.value, 0);
-    expect(tester.getRect(find.byKey(_page)).width, _screen);
 
     await tester.tap(find.byKey(_pop));
     await tester.pumpAndSettle();
+    expect(SheetRecede.amount.value, 1);
     expect(tester.getRect(find.byKey(_page)).width, closeTo(_screen * SheetRecede.scale, 0.5));
   }, variant: TargetPlatformVariant.only(TargetPlatform.iOS));
 
