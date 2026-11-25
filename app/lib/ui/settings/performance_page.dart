@@ -8,6 +8,7 @@ import '../../performance/performance_state.dart';
 import '../../state/android_features.dart';
 import '../shell/page_frame.dart';
 import '../theme/app_icons.dart';
+import 'performance/text_animation_sheet.dart';
 import 'settings_widgets.dart';
 
 String performanceModeLabel(L10n l10n, PerformanceMode mode) => switch (mode) {
@@ -123,6 +124,21 @@ class PerformancePage extends ConsumerWidget {
                 subtitle: l10n.performanceFluidHint,
                 value: defaults.fluidMotion,
                 onChanged: (value) => unawaited(notifier.setFluid(value)),
+              ),
+            if (!defaults.reduceMotion && !MediaQuery.disableAnimationsOf(context))
+              SettingsSwitchTile(
+                key: const ValueKey('performance-text-animation'),
+                spot: Spots.textAnimation,
+                subtitle: l10n.performanceTextAnimationHint,
+                value: prefs.textAnimation,
+                onChanged: (value) => unawaited(notifier.setTextAnimation(value)),
+              ),
+            if (prefs.textAnimation && !defaults.reduceMotion && !MediaQuery.disableAnimationsOf(context))
+              SettingsTile(
+                key: const ValueKey('performance-text-animation-options'),
+                spot: Spots.textAnimationOptions,
+                subtitle: l10n.performanceTextAnimationOptionsHint,
+                onTap: () => unawaited(showTextAnimationSheet(context)),
               ),
             if (prefs.blur != null || prefs.animations != null || prefs.fluid != null)
               SettingsTile(

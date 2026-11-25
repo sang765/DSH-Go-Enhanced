@@ -70,6 +70,8 @@
   "searchKwBlur": "模糊,毛玻璃,玻璃",
   "searchKwAnimations": "动画,动效,减少动画",
   "searchKwFluidMotion": "灵动,弹性,回弹,光晕,丝滑",
+  "searchKwTextAnimation": "打字动画,逐字,输入框,文字动效",
+  "searchKwTextAnimationOptions": "打字速度,上移距离,删除效果,光标运动",
   "searchKwNotifyEnabled": "通知开关,关闭通知",
   "searchKwNotifyDone": "完成提醒,回复完成",
   "searchKwNotifyFailed": "出错提醒,失败",

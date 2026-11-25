@@ -8,12 +8,14 @@
 ### 中文
 
 - **改进:底部弹层的「背景后退」更顺了。** 背景缩小到 0.9(和 Mochy 一样),不再和弹层共用一条曲线:分三段关键帧走——弹层刚升起时先退一步、中间放慢、快到位时轻轻落住;最后 0.05% 直接归位,避免收尾一跳。
-- **验证情况。** 全量 CI 绿灯;真机上的动画观感仍需装上新版本确认。
+- **新增:聊天输入框的输入文字动画(设置 → 性能 → 界面效果)。** 开启后新字逐个淡入上浮,删除的字掉落或化屑,光标会弹性滑到新位置并留下淡淡的拖尾;同页的「输入文字动画设置」可调单字速度、上移距离、删除效果与光标样式。只在灵动动效档生效,默认关闭,IME 拼写过程不做逐字动画。
+- **验证情况。** 全量 CI 绿灯;真机上的动画观感与流畅度仍需装上新版本确认。
 
 ### English
 
 - **Improved: the sheet's recede animation is smoother.** The page behind scales to 0.9, like Mochy, and no longer shares the sheet's single curve: three keyframes step it back as the sheet rises, coast through the middle and land softly, with a tiny end threshold so it doesn't snap at the finish.
-- **Testing.** Full CI is green; the animation feel still needs a check on a real device.
+- **New: typing animation for the chat composer (Settings → Performance → Interface effects).** When enabled, new letters fade in and rise one by one, deleted letters fall away or turn to dust, and the caret glides to its new position with a faint trail. The "Typing animation options" sheet on the same page controls letter speed, slide distance, delete style and cursor style. It rides on the fluid tier, is off by default, and skips IME composition.
+- **Testing.** Full CI is green; the animation feel and smoothness still need a check on a real device.
 
 
 ## 1.3.0-sub.6 · 2026-11-25

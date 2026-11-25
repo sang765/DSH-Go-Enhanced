@@ -5,7 +5,6 @@
 import 'dart:async';
 import 'dart:math' as math;
 
-import 'package:flutter/animation.dart' show CurveTween, Tween, TweenSequence, TweenSequenceItem;
 import 'package:flutter/foundation.dart' show ValueListenable, defaultTargetPlatform, kIsWeb, visibleForTesting;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show SystemUiOverlayStyle;
