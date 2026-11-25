@@ -3,6 +3,19 @@
 每个版本先中文、后英文。发版时把对应版本的正文（不含版本标题）作为 Release 正文，见 `docs/release.md`。
 
 
+## 1.3.0-sub.7 · 2026-11-25
+
+### 中文
+
+- **改进:底部弹层的「背景后退」更顺了。** 背景缩小到 0.9(和 Mochy 一样),不再和弹层共用一条曲线:分三段关键帧走——弹层刚升起时先退一步、中间放慢、快到位时轻轻落住;最后 0.05% 直接归位,避免收尾一跳。
+- **验证情况。** 全量 CI 绿灯;真机上的动画观感仍需装上新版本确认。
+
+### English
+
+- **Improved: the sheet's recede animation is smoother.** The page behind scales to 0.9, like Mochy, and no longer shares the sheet's single curve: three keyframes step it back as the sheet rises, coast through the middle and land softly, with a tiny end threshold so it doesn't snap at the finish.
+- **Testing.** Full CI is green; the animation feel still needs a check on a real device.
+
+
 ## 1.3.0-sub.6 · 2026-11-25
 
 ### 中文
