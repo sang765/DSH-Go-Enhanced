@@ -12727,6 +12727,12 @@ class L10nZh extends L10n {
   String get performanceFluidHint => '弹性回弹、按压光晕、卡片展开成页面。几乎不增加耗电';
 
   @override
+  String get performanceTextAnimation => '输入文字动画';
+
+  @override
+  String get performanceTextAnimationHint => '聊天输入框里新字逐个出现，需要开启灵动动效';
+
+  @override
   String get performanceFollowMode => '效果跟随性能模式';
 
   @override
@@ -19361,6 +19367,9 @@ class L10nZh extends L10n {
 
   @override
   String get searchKwFluidMotion => '灵动,弹性,回弹,光晕,丝滑';
+
+  @override
+  String get searchKwTextAnimation => '打字动画,逐字,输入框,文字动效';
 
   @override
   String get searchKwNotifyEnabled => '通知开关,关闭通知';

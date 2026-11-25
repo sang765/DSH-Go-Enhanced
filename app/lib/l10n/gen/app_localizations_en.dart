@@ -13437,6 +13437,12 @@ class L10nEn extends L10n {
       'Springy releases, a soft glow under your finger, cards that open into pages. Costs almost no battery';
 
   @override
+  String get performanceTextAnimation => 'Typing animation';
+
+  @override
+  String get performanceTextAnimationHint => 'New letters appear one by one in the chat box. Needs fluid motion on';
+
+  @override
   String get performanceFollowMode => 'Follow the performance mode';
 
   @override
@@ -20412,6 +20418,9 @@ class L10nEn extends L10n {
 
   @override
   String get searchKwFluidMotion => 'fluid,spring,bounce,glow,smooth';
+
+  @override
+  String get searchKwTextAnimation => 'typing animation,letters,chat box,composer';
 
   @override
   String get searchKwNotifyEnabled => 'notifications on,turn off notifications';

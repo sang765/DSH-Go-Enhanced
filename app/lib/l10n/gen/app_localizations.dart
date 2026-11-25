@@ -23646,6 +23646,18 @@ abstract class L10n {
   /// **'弹性回弹、按压光晕、卡片展开成页面。几乎不增加耗电'**
   String get performanceFluidHint;
 
+  /// No description provided for @performanceTextAnimation.
+  ///
+  /// In zh, this message translates to:
+  /// **'输入文字动画'**
+  String get performanceTextAnimation;
+
+  /// No description provided for @performanceTextAnimationHint.
+  ///
+  /// In zh, this message translates to:
+  /// **'聊天输入框里新字逐个出现，需要开启灵动动效'**
+  String get performanceTextAnimationHint;
+
   /// No description provided for @performanceFollowMode.
   ///
   /// In zh, this message translates to:
@@ -35633,6 +35645,12 @@ abstract class L10n {
   /// In zh, this message translates to:
   /// **'灵动,弹性,回弹,光晕,丝滑'**
   String get searchKwFluidMotion;
+
+  /// No description provided for @searchKwTextAnimation.
+  ///
+  /// In zh, this message translates to:
+  /// **'打字动画,逐字,输入框,文字动效'**
+  String get searchKwTextAnimation;
 
   /// No description provided for @searchKwNotifyEnabled.
   ///
