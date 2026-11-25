@@ -6,12 +6,7 @@
 // keeps IME, selection, scrolling and key handling; this layer only draws
 // glyphs that just arrived or are leaving. Nothing here edits the controller.
 
-import 'dart:ui' show TextScaler;
-
-import 'package:characters/characters.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/rendering.dart';
 import 'package:flutter/scheduler.dart';
 
 import '../theme/motion.dart';

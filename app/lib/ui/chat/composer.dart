@@ -172,7 +172,7 @@ class Composer extends ConsumerStatefulWidget {
   }
 
   @override
-  State<Composer> createState() => _ComposerState();
+  ConsumerState<Composer> createState() => _ComposerState();
 }
 
 const double _keySize = 36;
