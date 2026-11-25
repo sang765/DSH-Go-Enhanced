@@ -13446,8 +13446,7 @@ class L10nEn extends L10n {
   String get performanceTextAnimationOptions => 'Typing animation options';
 
   @override
-  String get performanceTextAnimationOptionsHint =>
-      'Letter speed, slide distance, delete effect and cursor motion';
+  String get performanceTextAnimationOptionsHint => 'Letter speed, slide distance, delete effect and cursor motion';
 
   @override
   String get performanceTextAnimationSpeed => 'Letter speed';
