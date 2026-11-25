@@ -243,7 +243,10 @@ Future<void> _collectLooseRefs(
   Set<String> out,
   int depth,
 ) async {
-  if (depth > 3) return;
+  // Branch names can nest arbitrarily; three levels dropped real ones such as
+  // `feature/team/topic/fix`. Keep a generous bound so a Host that reports a
+  // cyclic listing cannot recurse forever.
+  if (depth > 16) return;
   final DshWorkspaceListing listing;
   try {
     listing = await client.listWorkspace(scope, path);
@@ -273,26 +276,37 @@ Future<String?> gitScopeCwd(DshClient client, GitScope scope) async {
   }
 }
 
+/// The connection a git read belongs to. A reconnect that replaces the client
+/// (SSH re-login, relay reconnect, a local engine restart with a new endpoint)
+/// gets a new key, so the chip re-reads instead of holding the old branch and
+/// dirty count. A retry that keeps the same client — including an
+/// `AsyncLoading`/`AsyncError` that retains its previous value — gets the same
+/// key, so an offline Host does not get a probe on every attempt.
+typedef GitConnectionKey = ({DshClient client, Object? generation, String? hostId, bool isLocal});
+
+GitConnectionKey? gitConnectionKey(HostConnection? connection) {
+  if (connection == null) return null;
+  final client = connection.client;
+  return (client: client, generation: client.mux.generation, hostId: connection.hostId, isLocal: connection.isLocal);
+}
+
 /// Live branch state of one scope.
 ///
 /// The first read runs both tiers; while the UI keeps the provider alive the
 /// watched paths below bring it up to date, so a branch the agent (or a
 /// terminal) creates or switches shows up without closing the sheet.
 final gitBranchProvider = FutureProvider.autoDispose.family<GitBranchInfo, GitScope>((ref, scope) async {
-  // A reconnect replaces the client and its connection object but not the
-  // host. Watching those objects would re-probe git on every retry — a storm
-  // on a Host that is offline. Watch only the host identity; the file watches
-  // below follow the branch as it moves, and a host switch rebuilds this.
-  final host = ref.watch(activeConnectionProvider.select((c) {
-    final connection = c.value;
-    return connection == null ? null : (connection.hostId, connection.isLocal);
-  }));
-  if (host == null) return GitBranchInfo.notRepo;
-  final client = ref.read(activeConnectionProvider).value?.client;
-  if (client == null) return GitBranchInfo.notRepo;
-  final generation = client.mux.generation;
-  bool current() => ref.mounted && client.mux.generation == generation;
-  final info = await readGitBranch(client, scope, service: ref.read(gitHostServiceProvider), stillCurrent: current);
+  final key = ref.watch(activeConnectionProvider.select((c) => gitConnectionKey(c.value)));
+  if (key == null) return GitBranchInfo.notRepo;
+  final client = key.client;
+  bool current() =>
+      ref.mounted &&
+      identical(ref.read(activeConnectionProvider).value?.client, client) &&
+      identical(client.mux.generation, key.generation);
+  // While the link is down a terminal cannot answer; asking one would sit
+  // through the probe timeout. The file tier and its watches carry us over.
+  final service = key.generation == null ? null : ref.read(gitHostServiceProvider);
+  final info = await readGitBranch(client, scope, service: service, stillCurrent: current);
   // A folder without a repository has nothing to follow, and a host that
   // cannot watch answers with an error; either way the next open re-reads.
   if (info.isRepo && ref.mounted) _followGitRefs(ref, client, scope, info);
@@ -300,14 +314,23 @@ final gitBranchProvider = FutureProvider.autoDispose.family<GitBranchInfo, GitSc
 });
 
 /// What a change in the repository can touch: the checked-out branch, the loose
-/// refs a new branch or a fetch creates, the packed refs it rewrites, and the
-/// index whose changes are what "uncommitted" means.
-const gitWatchTargets = ['.git/HEAD', '.git/refs/heads', '.git/refs/remotes', '.git/packed-refs', '.git/index'];
+/// refs a new branch or a fetch creates, the packed refs it rewrites, the index
+/// whose changes are what "staged" means, and the workspace root itself — an
+/// unstaged edit changes a file, not `.git/index`, so without the root watch
+/// the dirty dot only appears after a stage or a commit.
+const gitWatchTargets = [
+  '',
+  '.git/HEAD',
+  '.git/refs/heads',
+  '.git/refs/remotes',
+  '.git/packed-refs',
+  '.git/index',
+];
 
 /// The paths to watch in the workspace root. A linked worktree keeps its git
-/// directory outside the folder, so its `.git` file is the only thing here to
-/// follow; the terminal tier still reads its branch on every re-read.
-List<String> gitWatchTargetsFor(GitBranchInfo info) => info.worktree ? const ['.git'] : gitWatchTargets;
+/// directory outside the folder, so its `.git` file is the only git path here;
+/// the root watch still catches its unstaged edits.
+List<String> gitWatchTargetsFor(GitBranchInfo info) => info.worktree ? const ['', '.git'] : gitWatchTargets;
 
 /// Whether a watch frame means the branch state may have moved.
 bool gitWatchNeedsReread(DshWorkspaceWatchFrame frame) => frame is DshWorkspaceWatchChange;

@@ -115,8 +115,8 @@ class MarketPluginSheet extends ConsumerWidget {
     final title = entry.title(locale);
     final description = entry.summary(locale);
     final translation = ref.watch(pluginTranslationProvider);
-    final shownTitle = translation.of(title) ?? title;
-    final shownDescription = description == null ? null : translation.of(description) ?? description;
+    final shownTitle = translation.of(title, to: locale) ?? title;
+    final shownDescription = description == null ? null : translation.of(description, to: locale) ?? description;
     final translatable = [title, ?description].where((text) => pluginNeedsTranslation(text, locale)).toList();
     final readme = ref.watch(pluginReadmeProvider(plugin.name));
 
@@ -168,7 +168,7 @@ class MarketPluginSheet extends ConsumerWidget {
                   if (entry.featured) PluginBadge(l10n.hubPluginFeatured, tone: PluginBadgeTone.featured),
                   if (entry.webOnly) PluginBadge(l10n.hubPluginWebOnly),
                 ],
-                action: translatable.isEmpty ? null : _TranslateButton(texts: translatable),
+                action: translatable.isEmpty ? null : _TranslateButton(texts: translatable, locale: locale),
               ),
               const SizedBox(height: 20),
               PluginStats([
@@ -470,8 +470,8 @@ class BundleSheet extends ConsumerWidget {
     // sheet follows the app's language when the plugin translated its name.
     final displayTitle = display == bundle.title() ? bundle.title(locale) : display;
     final translation = ref.watch(pluginTranslationProvider);
-    final shownDisplay = translation.of(displayTitle) ?? displayTitle;
-    final shownSummary = summary == null ? null : translation.of(summary) ?? summary;
+    final shownDisplay = translation.of(displayTitle, to: locale) ?? displayTitle;
+    final shownSummary = summary == null ? null : translation.of(summary, to: locale) ?? summary;
     final translatable = [displayTitle, ?summary].where((text) => pluginNeedsTranslation(text, locale)).toList();
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -495,7 +495,7 @@ class BundleSheet extends ConsumerWidget {
                   if (bundle.official) PluginBadge(l10n.hubPluginOfficial, tone: PluginBadgeTone.official),
                   if (update != null) PluginBadge(l10n.marketUpdateAvailable, tone: PluginBadgeTone.official),
                 ],
-                action: translatable.isEmpty ? null : _TranslateButton(texts: translatable),
+                action: translatable.isEmpty ? null : _TranslateButton(texts: translatable, locale: locale),
               ),
               if (blocked) ...[
                 const SizedBox(height: 16),
@@ -785,16 +785,20 @@ class _ReadmeSection extends StatelessWidget {
 /// Translates a sheet's name and description in place; the originals stay
 /// underneath the cache and come back the moment the sheet is reopened.
 class _TranslateButton extends ConsumerWidget {
-  const _TranslateButton({required this.texts});
+  const _TranslateButton({required this.texts, required this.locale});
 
   final List<String> texts;
+
+  /// The sheet's UI locale. The translate write and the sheet's reads use the
+  /// same value, so a cached copy is only shown in the language it was made for.
+  final String locale;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = context.l10n;
     final translation = ref.watch(pluginTranslationProvider);
-    final pending = texts.any(translation.isPending);
-    final translated = texts.isNotEmpty && texts.every((text) => translation.of(text) != null);
+    final pending = texts.any((text) => translation.isPending(text, to: locale));
+    final translated = texts.isNotEmpty && texts.every((text) => translation.of(text, to: locale) != null);
     return IconButton(
       icon: pending
           ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2))
@@ -805,11 +809,11 @@ class _TranslateButton extends ConsumerWidget {
           : () async {
               final notifier = ref.read(pluginTranslationProvider.notifier);
               for (final text in texts) {
-                await notifier.translate(text, from: 'zh-CN', to: 'en');
+                await notifier.translate(text, from: 'zh-CN', to: locale);
                 if (!context.mounted) return;
               }
               final state = ref.read(pluginTranslationProvider);
-              if (texts.any(state.hasFailed) && context.mounted) {
+              if (texts.any((text) => state.hasFailed(text, to: locale)) && context.mounted) {
                 ScaffoldMessenger.maybeOf(context)?.showSnackBar(SnackBar(content: Text(l10n.pluginsTranslateFailed)));
               }
             },

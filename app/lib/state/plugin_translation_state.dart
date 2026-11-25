@@ -56,9 +56,14 @@ final _han = RegExp(r'[\u3400-\u9fff]');
 bool pluginNeedsTranslation(String text, String locale) =>
     locale.toLowerCase().startsWith('en') && _han.hasMatch(text);
 
+/// Cache, pending and failed keys. The target language is part of the key:
+/// translating a field to `en` and to `zh` are independent entries, and an
+/// `en` translation must never be shown when the UI switches to `zh`.
+String _translationKey(String text, String to) => '$to:$text';
+
 /// The translated copies of metadata the person asked for, kept for the
-/// session. Pending and failed are per text so one bad field never blocks
-/// the other field's button.
+/// session. Pending and failed are per field and locale so one bad field never
+/// blocks the other field's button.
 @immutable
 class PluginTranslationState {
   const PluginTranslationState({
@@ -71,9 +76,15 @@ class PluginTranslationState {
   final Set<String> pending;
   final Set<String> failed;
 
-  String? of(String text) => cache[text];
-  bool isPending(String text) => pending.contains(text);
-  bool hasFailed(String text) => failed.contains(text);
+  /// Reads are gated by [to], the language the caller is rendering. Callers
+  /// pass the UI locale; the `en` default is only for English-only callers.
+  String? of(String text, {String to = 'en'}) => cache[_translationKey(text, to)];
+
+  /// Whether this field is in flight for [to].
+  bool isPending(String text, {String to = 'en'}) => pending.contains(_translationKey(text, to));
+
+  /// Whether this field failed for [to].
+  bool hasFailed(String text, {String to = 'en'}) => failed.contains(_translationKey(text, to));
 }
 
 class PluginTranslation extends Notifier<PluginTranslationState> {
@@ -86,28 +97,29 @@ class PluginTranslation extends Notifier<PluginTranslationState> {
     required String to,
   }) async {
     final current = state;
-    if (text.isEmpty || current.cache.containsKey(text) || current.pending.contains(text)) return;
+    final key = _translationKey(text, to);
+    if (text.isEmpty || current.cache.containsKey(key) || current.pending.contains(key)) return;
     state = PluginTranslationState(
       cache: current.cache,
-      pending: {...current.pending, text},
-      failed: {...current.failed}..remove(text),
+      pending: {...current.pending, key},
+      failed: {...current.failed}..remove(key),
     );
     try {
       final result = await ref.read(myMemoryTranslatorProvider)(text, from: from, to: to);
       final now = state;
       state = PluginTranslationState(
         cache: result.trim().isNotEmpty && result.trim() != text.trim()
-            ? {...now.cache, text: result}
+            ? {...now.cache, key: result}
             : now.cache,
-        pending: {...now.pending}..remove(text),
+        pending: {...now.pending}..remove(key),
         failed: now.failed,
       );
     } catch (_) {
       final now = state;
       state = PluginTranslationState(
         cache: now.cache,
-        pending: {...now.pending}..remove(text),
-        failed: {...now.failed, text},
+        pending: {...now.pending}..remove(key),
+        failed: {...now.failed, key},
       );
     }
   }
