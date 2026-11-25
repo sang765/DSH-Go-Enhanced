@@ -16687,6 +16687,40 @@ class L10nZh extends L10n {
   String get pluginsTranslateFailed => '翻译失败，显示原文';
 
   @override
+  String get pluginsAddPlugin => '添加插件';
+
+  @override
+  String get pluginsAddHint => 'npm 包名、GitHub 仓库地址或主机上的本地目录';
+
+  @override
+  String get pluginsAddRegistry => '安装源';
+
+  @override
+  String get pluginsAddRegistryMirror => '国内镜像';
+
+  @override
+  String get pluginsAddRegistryNpm => '官方 npm 源';
+
+  @override
+  String get pluginsAddRegistryCustom => '自定义地址';
+
+  @override
+  String get pluginsAddRegistryHint => 'https://npm.example.com/';
+
+  @override
+  String get pluginsAddRegistryHelp => '填写不带查询参数和片段的 https:// 地址；如需登录，请在主机上配置凭据。';
+
+  @override
+  String get pluginsAddInvalid => '请填写插件名、仓库地址或目录路径';
+
+  @override
+  String get pluginsAddInvalidRegistry => '请填写不带查询参数和片段的 https:// 地址';
+
+  @override
+  String get pluginsAddInstall => '安装';
+
+
+  @override
   String get plugslotsSurfaceComposerTools => '加号面板';
 
   @override

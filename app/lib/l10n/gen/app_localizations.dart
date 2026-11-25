@@ -30810,6 +30810,73 @@ abstract class L10n {
   /// **'翻译失败，显示原文'**
   String get pluginsTranslateFailed;
 
+  /// No description provided for @pluginsAddPlugin.
+  ///
+  /// In zh, this message translates to:
+  /// **'添加插件'**
+  String get pluginsAddPlugin;
+
+  /// No description provided for @pluginsAddHint.
+  ///
+  /// In zh, this message translates to:
+  /// **'npm 包名、GitHub 仓库地址或主机上的本地目录'**
+  String get pluginsAddHint;
+
+  /// No description provided for @pluginsAddRegistry.
+  ///
+  /// In zh, this message translates to:
+  /// **'安装源'**
+  String get pluginsAddRegistry;
+
+  /// No description provided for @pluginsAddRegistryMirror.
+  ///
+  /// In zh, this message translates to:
+  /// **'国内镜像'**
+  String get pluginsAddRegistryMirror;
+
+  /// No description provided for @pluginsAddRegistryNpm.
+  ///
+  /// In zh, this message translates to:
+  /// **'官方 npm 源'**
+  String get pluginsAddRegistryNpm;
+
+  /// No description provided for @pluginsAddRegistryCustom.
+  ///
+  /// In zh, this message translates to:
+  /// **'自定义地址'**
+  String get pluginsAddRegistryCustom;
+
+  /// No description provided for @pluginsAddRegistryHint.
+  ///
+  /// In zh, this message translates to:
+  /// **'https://npm.example.com/'**
+  String get pluginsAddRegistryHint;
+
+  /// No description provided for @pluginsAddRegistryHelp.
+  ///
+  /// In zh, this message translates to:
+  /// **'填写不带查询参数和片段的 https:// 地址；如需登录，请在主机上配置凭据。'**
+  String get pluginsAddRegistryHelp;
+
+  /// No description provided for @pluginsAddInvalid.
+  ///
+  /// In zh, this message translates to:
+  /// **'请填写插件名、仓库地址或目录路径'**
+  String get pluginsAddInvalid;
+
+  /// No description provided for @pluginsAddInvalidRegistry.
+  ///
+  /// In zh, this message translates to:
+  /// **'请填写不带查询参数和片段的 https:// 地址'**
+  String get pluginsAddInvalidRegistry;
+
+  /// No description provided for @pluginsAddInstall.
+  ///
+  /// In zh, this message translates to:
+  /// **'安装'**
+  String get pluginsAddInstall;
+
+
   /// No description provided for @plugslotsSurfaceComposerTools.
   ///
   /// In zh, this message translates to:

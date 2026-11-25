@@ -17595,6 +17595,40 @@ class L10nEn extends L10n {
   String get pluginsTranslateFailed => 'Couldn\'t translate; showing the original';
 
   @override
+  String get pluginsAddPlugin => 'Add plugin';
+
+  @override
+  String get pluginsAddHint => 'npm package, GitHub repository, or local directory on the Host';
+
+  @override
+  String get pluginsAddRegistry => 'Registry';
+
+  @override
+  String get pluginsAddRegistryMirror => 'Mainland China mirror';
+
+  @override
+  String get pluginsAddRegistryNpm => 'Official npm registry';
+
+  @override
+  String get pluginsAddRegistryCustom => 'Custom address';
+
+  @override
+  String get pluginsAddRegistryHint => 'https://npm.example.com/';
+
+  @override
+  String get pluginsAddRegistryHelp => 'Enter an https:// address without a query or fragment. If it needs a login, configure credentials on the Host.';
+
+  @override
+  String get pluginsAddInvalid => 'Enter a plugin name, repository URL, or directory path';
+
+  @override
+  String get pluginsAddInvalidRegistry => 'Use an https:// address without a query or fragment';
+
+  @override
+  String get pluginsAddInstall => 'Install';
+
+
+  @override
   String get plugslotsSurfaceComposerTools => 'Plus panel tools';
 
   @override

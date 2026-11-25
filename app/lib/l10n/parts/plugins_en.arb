@@ -378,5 +378,16 @@
         "type": "int"
       }
     }
-  }
+  },
+  "pluginsAddPlugin": "Add plugin",
+  "pluginsAddHint": "npm package, GitHub repository, or local directory on the Host",
+  "pluginsAddRegistry": "Registry",
+  "pluginsAddRegistryMirror": "Mainland China mirror",
+  "pluginsAddRegistryNpm": "Official npm registry",
+  "pluginsAddRegistryCustom": "Custom address",
+  "pluginsAddRegistryHint": "https://npm.example.com/",
+  "pluginsAddRegistryHelp": "Enter an https:// address without a query or fragment. If it needs a login, configure credentials on the Host.",
+  "pluginsAddInvalid": "Enter a plugin name, repository URL, or directory path",
+  "pluginsAddInvalidRegistry": "Use an https:// address without a query or fragment",
+  "pluginsAddInstall": "Install"
 }

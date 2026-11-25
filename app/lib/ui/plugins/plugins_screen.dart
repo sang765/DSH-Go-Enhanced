@@ -12,8 +12,10 @@ import '../common/segmented_pill.dart';
 import '../features/feature_kit.dart';
 import '../shell/page_frame.dart';
 import '../theme/app_icons.dart';
+import 'add_plugin_sheet.dart';
 import 'installed_tab.dart';
 import 'market_tab.dart';
+import 'plugin_actions.dart';
 
 enum PluginsTab { installed, market }
 
@@ -102,6 +104,23 @@ class _PluginsScreenState extends ConsumerState<PluginsScreen> {
           tooltip: l10n.pluginsRefresh,
           onPressed: _refreshing ? null : () => unawaited(_refresh()),
         ),
+        if (host?.canInstall ?? false)
+          GlassIconButton(
+            icon: AppIcons.add,
+            tooltip: l10n.pluginsAddPlugin,
+            onPressed: () async {
+              final picked = await showAddPluginDialog(context, local: host!.kind == HostKind.local);
+              if (picked == null || !mounted) return;
+              await runPluginInstall(
+                context,
+                PluginInstallRequest(
+                  name: addPluginName(picked.spec),
+                  spec: picked.spec,
+                  registry: picked.registry,
+                ),
+              );
+            },
+          ),
       ],
       slivers: [
         SliverToBoxAdapter(

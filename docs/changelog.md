@@ -3,6 +3,29 @@
 每个版本先中文、后英文。发版时把对应版本的正文（不含版本标题）作为 Release 正文，见 `docs/release.md`。
 
 
+## 1.3.0-sub.4 · 2026-11-25
+
+### 中文
+
+- **修复:分支状态会自己刷新。** 在别的终端提交或切分支后,输入框旁的分支 chip 和分支面板每 30 秒、回到 App、打开面板时都会重新读取,不必关掉对话再进来;本地未暂存的改动也会让小圆点跟着变。
+- **修复:重连后分支不再卡旧值。** SSH 重新登录、中继重连、本机引擎换了地址或令牌这类“换了客户端”的重连会重新探测 git;单纯的网络重试不会反复打扰主机。
+- **修复:更深层的分支名也能列出来。** 文件探测不再在第三层目录就停下,`feature/team/topic/sub/fix` 这种名字也能正常识别。
+- **修复:插件翻译跟着界面语言走。** 在英文界面翻译过的插件说明,切到中文后不再残留英文译文,也不会因为翻译按钮消失而无法还原。
+- **修复:已安装插件在原生界面也有图标。** 以前原生只认插件自带的图片,大多数插件没有,所以只显示首字母;现在会回退到插件目录里的图标,和网页端一致,插件自带的图标仍优先。
+- **新增:原生界面也能自由添加插件。** 「插件」页右上角多了 `+`,和网页端一样可以填 npm 包名、GitHub 仓库地址或主机上的本地目录,并选择国内镜像、官方 npm 源或自定义 https 源;安装进度、失败原因和重启提示沿用原有流程。不能安装的主机不会显示这个按钮。
+- **验证情况。** 全量 CI 与 OHOS 编译均绿;真机上的分支切换、克隆、图标显示和新安装流程仍需装上新版本后确认。
+
+### English
+
+- **Fixed: git branch state refreshes itself.** After a commit or a branch switch in another terminal, the composer chip and the branch sheet re-read every 30 seconds, when the app resumes and when the sheet opens — no need to leave the chat. Unstaged edits now update the dirty dot as well.
+- **Fixed: a reconnect no longer freezes the branch on an old value.** Reconnects that replace the client — SSH re-login, relay reconnect, a local engine with a new address or token — re-probe git, while a plain retry does not spam the host.
+- **Fixed: deeply nested branch names are listed.** The file probe no longer stops at the third directory level, so names like `feature/team/topic/sub/fix` are recognised.
+- **Fixed: plugin translations follow the UI language.** A description translated while the UI was English no longer stays in English after switching to Chinese, and the translate button no longer disappears with no way to undo it.
+- **Fixed: installed plugins have icons in the native UI too.** Native used to read only an image shipped inside the bundle, which most plugins do not have, so it showed an initial letter. It now falls back to the plugin directory's icon, matching the web UI; a bundle's own icon still wins.
+- **New: free-form plugin installation in the native UI.** A `+` action on the Plugins screen accepts an npm package name, a GitHub repository URL or a directory on the Host, with a choice of the China mirror, the official npm registry or a custom https registry. Progress, failure reasons and restart prompts reuse the existing install flow; the button is hidden on Hosts that cannot install.
+- **Testing.** Full CI and the OHOS compile are green. Branch switching, cloning, icon display and the new install flow still need a real-device check after installing the new build.
+
+
 ## 1.3.0-sub.3 · 2026-11-25
 
 ### 中文
