@@ -13,6 +13,7 @@ Widget _host(TextEditingController controller) => MaterialApp(
         textPad: 4,
         maxLines: 6,
         textDirection: TextDirection.ltr,
+        cursorColor: const Color(0xFF0000FF),
       ),
     ),
   ),
@@ -59,5 +60,19 @@ void main() {
     await tester.pump();
     final state = tester.state<AnimatedComposerTextState>(find.byType(AnimatedComposerText));
     expect(state.activeGlyphs, 0);
+  });
+
+  testWidgets('moving the selection glides the caret without animating glyphs', (tester) async {
+    final input = TextEditingController(text: 'abc');
+    addTearDown(input.dispose);
+    await tester.pumpWidget(_host(input));
+    final state = tester.state<AnimatedComposerTextState>(find.byType(AnimatedComposerText));
+    expect(state.activeGlyphs, 0);
+
+    input.selection = const TextSelection.collapsed(offset: 2);
+    await tester.pump();
+    expect(state.activeGlyphs, 0);
+    await tester.pump(const Duration(milliseconds: 250));
+    expect(tester.takeException(), isNull);
   });
 }

@@ -6,10 +6,16 @@
 // keeps IME, selection, scrolling and key handling; this layer only draws
 // glyphs that just arrived or are leaving. Nothing here edits the controller.
 
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 
 import '../theme/motion.dart';
+
+const double _cursorStiffness = 220;
+const double _cursorDamping = 26;
+const int _trailLength = 8;
 
 enum _GlyphPhase { entering, steady, exiting }
 
@@ -46,6 +52,8 @@ class AnimatedComposerText extends StatefulWidget {
     this.letterDuration = const Duration(milliseconds: 320),
     this.deleteDuration = const Duration(milliseconds: 200),
     this.slideDistance = 10,
+    required this.cursorColor,
+    this.cursorWidth = 2,
   });
 
   final TextEditingController controller;
@@ -61,6 +69,8 @@ class AnimatedComposerText extends StatefulWidget {
   final Duration letterDuration;
   final Duration deleteDuration;
   final double slideDistance;
+  final Color cursorColor;
+  final double cursorWidth;
 
   @override
   AnimatedComposerTextState createState() => AnimatedComposerTextState();
@@ -74,12 +84,24 @@ class AnimatedComposerTextState extends State<AnimatedComposerText> with SingleT
   int _nextId = 0;
   String _text = '';
   double _width = 0;
+  TextPainter? _whole;
+  int _selectionOffset = 0;
+  Rect? _caretRect;
+  Offset _cursorTarget = Offset.zero;
+  Offset _cursor = Offset.zero;
+  Offset _cursorVelocity = Offset.zero;
+  bool _cursorReady = false;
+  final List<Offset> _trail = <Offset>[];
 
   /// Number of glyphs still moving; used by tests to check that a batch ends.
   @visibleForTesting
   int get activeGlyphs => _glyphs.where((g) => g.phase != _GlyphPhase.steady).length;
 
   bool get _active => _glyphs.any((g) => g.phase != _GlyphPhase.steady);
+
+  bool get _cursorMoving =>
+      _caretRect != null &&
+      ((_cursorTarget - _cursor).distanceSquared > 0.25 || _cursorVelocity.distanceSquared > 0.25);
 
   @override
   void initState() {
@@ -90,6 +112,12 @@ class AnimatedComposerTextState extends State<AnimatedComposerText> with SingleT
     // show it at once. Only later controller changes animate.
     for (final glyph in _glyphs) {
       glyph.phase = _GlyphPhase.steady;
+    }
+    _selectionOffset = widget.controller.selection.baseOffset;
+    _updateCaretTarget();
+    if (!_cursorReady) {
+      _cursor = _cursorTarget;
+      _cursorReady = true;
     }
     widget.controller.addListener(_onController);
   }
@@ -112,6 +140,7 @@ class AnimatedComposerTextState extends State<AnimatedComposerText> with SingleT
   void dispose() {
     widget.controller.removeListener(_onController);
     _ticker.dispose();
+    _whole?.dispose();
     for (final glyph in _glyphs) {
       glyph.painter?.dispose();
     }
@@ -120,14 +149,21 @@ class AnimatedComposerTextState extends State<AnimatedComposerText> with SingleT
 
   void _onController() {
     if (!mounted) return;
-    final text = widget.controller.text;
-    if (text == _text) return;
+    final value = widget.controller.value;
+    final textChanged = value.text != _text;
+    final selectionChanged = value.selection.baseOffset != _selectionOffset;
+    if (!textChanged && !selectionChanged) return;
     setState(() {
-      _text = text;
-      _diff();
-      _relayout();
+      if (textChanged) {
+        _text = value.text;
+        _diff();
+        _relayout();
+      } else {
+        _updateCaretTarget();
+      }
+      _selectionOffset = value.selection.baseOffset;
     });
-    if (_active) _ticker.start();
+    if (_active || _cursorMoving) _ticker.start();
   }
 
   void _diff() {
@@ -180,13 +216,15 @@ class AnimatedComposerTextState extends State<AnimatedComposerText> with SingleT
   void _relayout() {
     if (_width <= 0) return;
     final scaler = MediaQuery.textScalerOf(context);
-    final whole = TextPainter(
+    _whole?.dispose();
+    _whole = TextPainter(
       text: TextSpan(text: _text, style: widget.style),
       textDirection: widget.textDirection,
       maxLines: widget.maxLines,
       textScaler: scaler,
       locale: widget.locale,
     )..layout(maxWidth: _width);
+    final whole = _whole!;
 
     var offset = 0;
     for (final glyph in _glyphs) {
@@ -206,7 +244,37 @@ class AnimatedComposerTextState extends State<AnimatedComposerText> with SingleT
       glyph.rect = boxes.isEmpty ? null : boxes.first.toRect();
       offset += glyph.text.length;
     }
-    whole.dispose();
+    _updateCaretTarget();
+  }
+
+  Rect? _caretRectAt(int offset) {
+    final painter = _whole;
+    if (painter == null) return null;
+    final safe = math.max(0, math.min(offset, _text.length));
+    final boxes = painter.getBoxesForSelection(TextSelection.collapsed(offset: safe));
+    if (boxes.isNotEmpty) return boxes.first.toRect();
+    if (safe > 0) {
+      final before = painter.getBoxesForSelection(TextSelection(baseOffset: safe - 1, extentOffset: safe));
+      if (before.isNotEmpty) {
+        final box = before.last.toRect();
+        final x = widget.textDirection == TextDirection.rtl ? box.left : box.right;
+        return Rect.fromLTWH(x, box.top, 0, box.height);
+      }
+    }
+    final fontSize = widget.style.fontSize ?? 15;
+    return Rect.fromLTWH(0, 0, 0, fontSize * 1.45);
+  }
+
+  void _updateCaretTarget() {
+    _caretRect = _caretRectAt(widget.controller.selection.baseOffset);
+    final rect = _caretRect;
+    if (rect == null) return;
+    final x = widget.textDirection == TextDirection.rtl ? rect.right : rect.left;
+    _cursorTarget = Offset(x, rect.top);
+    if (!_cursorReady) {
+      _cursor = _cursorTarget;
+      _cursorReady = true;
+    }
   }
 
   void _tick(Duration elapsed) {
@@ -220,7 +288,29 @@ class AnimatedComposerTextState extends State<AnimatedComposerText> with SingleT
       }
     }
     _glyphs.removeWhere((glyph) => glyph.remove);
-    if (!_active) _ticker.stop();
+
+    // A spring, not a tween: a fast retype keeps the caret's speed and glides
+    // to the new glyph instead of snapping between two offsets.
+    final dt = (elapsed.inMicroseconds / 1000000).clamp(0.0, 0.032);
+    if (_caretRect != null && dt > 0) {
+      final dx = _cursorTarget.dx - _cursor.dx;
+      final dy = _cursorTarget.dy - _cursor.dy;
+      final vx = _cursorVelocity.dx + (_cursorStiffness * dx - _cursorDamping * _cursorVelocity.dx) * dt;
+      final vy = _cursorVelocity.dy + (_cursorStiffness * dy - _cursorDamping * _cursorVelocity.dy) * dt;
+      _cursor = Offset(_cursor.dx + vx * dt, _cursor.dy + vy * dt);
+      _cursorVelocity = Offset(vx, vy);
+      if (_cursorMoving) {
+        if (_trail.isEmpty || (_trail.first - _cursor).distance > 1.5) {
+          _trail.insert(0, _cursor);
+          if (_trail.length > _trailLength) _trail.removeLast();
+        }
+      } else {
+        _cursor = _cursorTarget;
+        _cursorVelocity = Offset.zero;
+        _trail.clear();
+      }
+    }
+    if (!_active && !_cursorMoving) _ticker.stop();
     if (mounted) setState(() {});
   }
 
@@ -246,6 +336,11 @@ class AnimatedComposerTextState extends State<AnimatedComposerText> with SingleT
             direction: widget.textDirection,
             scaler: MediaQuery.textScalerOf(context),
             locale: widget.locale,
+            cursorColor: widget.cursorColor,
+            cursorWidth: widget.cursorWidth,
+            cursorOffset: _cursor,
+            caretRect: _caretRect,
+            trail: List<Offset>.of(_trail),
           ),
           child: const SizedBox.expand(),
         );
@@ -267,6 +362,11 @@ class _GlyphPainter extends CustomPainter {
     required this.direction,
     required this.scaler,
     required this.locale,
+    required this.cursorColor,
+    required this.cursorWidth,
+    required this.cursorOffset,
+    required this.caretRect,
+    required this.trail,
   });
 
   final List<_Glyph> glyphs;
@@ -280,6 +380,11 @@ class _GlyphPainter extends CustomPainter {
   final TextDirection direction;
   final TextScaler scaler;
   final Locale? locale;
+  final Color cursorColor;
+  final double cursorWidth;
+  final Offset cursorOffset;
+  final Rect? caretRect;
+  final List<Offset> trail;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -345,6 +450,30 @@ class _GlyphPainter extends CustomPainter {
       canvas.restore();
       if (!identical(painter, cached)) painter.dispose();
     }
+
+    final caret = caretRect;
+    if (caret != null) {
+      for (var i = trail.length - 1; i >= 1; i--) {
+        final fade = 1 - i / trail.length;
+        canvas.drawLine(
+          trail[i] + origin,
+          trail[i - 1] + origin,
+          Paint()
+            ..color = cursorColor.withValues(alpha: 0.25 * fade)
+            ..strokeWidth = cursorWidth * fade
+            ..strokeCap = StrokeCap.round,
+        );
+      }
+      final pulse = 0.55 + 0.45 * math.sin(now.inMilliseconds / 190);
+      canvas.drawLine(
+        Offset(cursorOffset.dx, caret.top + origin.dy),
+        Offset(cursorOffset.dx, caret.bottom + origin.dy),
+        Paint()
+          ..color = cursorColor.withValues(alpha: pulse)
+          ..strokeWidth = cursorWidth
+          ..strokeCap = StrokeCap.round,
+      );
+    }
     canvas.restore();
   }
 
@@ -353,5 +482,8 @@ class _GlyphPainter extends CustomPainter {
       oldDelegate.now != now ||
       oldDelegate.scrollOffset != scrollOffset ||
       oldDelegate.textPad != textPad ||
+      oldDelegate.cursorOffset != cursorOffset ||
+      oldDelegate.caretRect != caretRect ||
+      oldDelegate.trail.length != trail.length ||
       !identical(oldDelegate.glyphs, glyphs);
 }

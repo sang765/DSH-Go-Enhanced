@@ -29,6 +29,7 @@ void main() {
     await tester.pumpWidget(testApp(_composer(input)));
 
     expect(tester.widget<TextField>(find.byType(TextField)).style?.color, isNot(Colors.transparent));
+    expect(tester.widget<TextField>(find.byType(TextField)).showCursor, isTrue);
     expect(find.byType(AnimatedComposerText), findsNothing);
   });
 
@@ -43,6 +44,7 @@ void main() {
     );
 
     expect(tester.widget<TextField>(find.byType(TextField)).style?.color, Colors.transparent);
+    expect(tester.widget<TextField>(find.byType(TextField)).showCursor, isFalse);
     expect(find.byType(AnimatedComposerText), findsOneWidget);
 
     input.text = 'abc';

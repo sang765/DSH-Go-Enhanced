@@ -505,6 +505,7 @@ class _ComposerState extends ConsumerState<Composer> with SingleTickerProviderSt
                   textCapitalization: TextCapitalization.sentences,
                   style: animateText ? textStyle?.copyWith(color: Colors.transparent) : textStyle,
                   cursorColor: theme.colorScheme.primary,
+                  showCursor: !animateText,
                   scrollController: animateText ? _textScroll : null,
                   decoration: InputDecoration(
                     hintText: hint,
@@ -538,6 +539,7 @@ class _ComposerState extends ConsumerState<Composer> with SingleTickerProviderSt
                             maxLines: widget.maxLines,
                             textDirection: Directionality.of(context),
                             scrollOffset: _textScroll.hasClients ? _textScroll.offset : 0,
+                            cursorColor: theme.colorScheme.primary,
                           ),
                         ),
                       ),
