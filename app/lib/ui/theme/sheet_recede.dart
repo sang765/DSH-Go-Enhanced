@@ -5,6 +5,7 @@
 import 'dart:async';
 import 'dart:math' as math;
 
+import 'package:flutter/animation.dart' show CurveTween, Tween, TweenSequence, TweenSequenceItem;
 import 'package:flutter/foundation.dart' show ValueListenable, defaultTargetPlatform, kIsWeb, visibleForTesting;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show SystemUiOverlayStyle;
@@ -21,8 +22,36 @@ bool _sitsBack(BuildContext context) => AppMotion.fluid(context) && MediaQuery.s
 
 /// How far the open sheets have the page sat back, from 0 to 1.
 abstract final class SheetRecede {
-  /// How small the page gets, all the way back.
-  static const scale = 0.94;
+  /// How small the page gets, all the way back. Mochy's RecedeScale.
+  static const scale = 0.9;
+
+  /// Mochy's MenuEasing (CubicBezier 0.57, 0.53, 0, 1), used for its 440 ms
+  /// sheet presence. The sheet here rises in 380 ms, so the keyframe weights
+  /// keep the same shape on our shorter clock.
+  static const _mochyEase = Cubic(0.57, 0.53, 0, 1);
+
+  /// Three keyframes shaped after Mochy's no-bounce, low-stiffness spring:
+  /// the page slips back as the sheet clears the bottom, coasts through the
+  /// middle, then lands softly. The sheet's own curve comes from its animation
+  /// style; this times the page separately instead of riding in lockstep.
+  static final _recedeFrames = TweenSequence<double>([
+    TweenSequenceItem(
+      tween: Tween(begin: 0.0, end: 0.62).chain(CurveTween(curve: _mochyEase)),
+      weight: 44,
+    ),
+    TweenSequenceItem(
+      tween: Tween(begin: 0.62, end: 0.94).chain(CurveTween(curve: Curves.easeInOut)),
+      weight: 36,
+    ),
+    TweenSequenceItem(
+      tween: Tween(begin: 0.94, end: 1.0).chain(CurveTween(curve: Curves.easeOut)),
+      weight: 20,
+    ),
+  ]);
+
+  /// Mochy's PopupSpring visibilityThreshold: don't snap the last fraction of
+  /// a percent, which shows up as a hitch right as the sheet settles.
+  static const _settleEpsilon = 0.0005;
 
   static final _sheets = <Animation<double>>{};
   static final _amount = ValueNotifier<double>(0);
@@ -35,8 +64,12 @@ abstract final class SheetRecede {
     for (final sheet in _sheets) {
       most = math.max(most, sheet.value);
     }
-    // The same rise as the sheet, which only takes a curve through its own animation style.
-    _amount.value = AppMotion.sheetRise.transform(most.clamp(0.0, 1.0));
+    final progress = most.clamp(0.0, 1.0);
+    _amount.value = progress < _settleEpsilon
+        ? 0
+        : progress > 1 - _settleEpsilon
+            ? 1
+            : _recedeFrames.transform(progress);
   }
 
   static void _add(Animation<double> sheet) {
