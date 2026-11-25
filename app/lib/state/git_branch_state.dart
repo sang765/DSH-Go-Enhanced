@@ -290,15 +290,26 @@ GitConnectionKey? gitConnectionKey(HostConnection? connection) {
   return (client: client, generation: client.mux.generation, hostId: connection.hostId, isLocal: connection.isLocal);
 }
 
+/// How often a live git state re-reads while a chip or a sheet keeps it alive.
+/// A commit or a checkout in another terminal is not guaranteed to produce a
+/// workspace watch frame, so the watches alone can leave the dirty count stale.
+final gitRefreshIntervalProvider = Provider<Duration>((_) => const Duration(seconds: 30));
+
 /// Live branch state of one scope.
 ///
 /// The first read runs both tiers; while the UI keeps the provider alive the
-/// watched paths below bring it up to date, so a branch the agent (or a
-/// terminal) creates or switches shows up without closing the sheet.
+/// watched paths below — and a slow periodic read — bring it up to date, so a
+/// branch the agent (or a terminal) creates or switches shows up without
+/// closing the sheet.
 final gitBranchProvider = FutureProvider.autoDispose.family<GitBranchInfo, GitScope>((ref, scope) async {
+  final interval = ref.watch(gitRefreshIntervalProvider);
   final key = ref.watch(activeConnectionProvider.select((c) => gitConnectionKey(c.value)));
   if (key == null) return GitBranchInfo.notRepo;
   final client = key.client;
+  void refresh() {
+    if (ref.mounted) ref.invalidateSelf();
+  }
+
   bool current() =>
       ref.mounted &&
       identical(ref.read(activeConnectionProvider).value?.client, client) &&
@@ -308,8 +319,13 @@ final gitBranchProvider = FutureProvider.autoDispose.family<GitBranchInfo, GitSc
   final service = key.generation == null ? null : ref.read(gitHostServiceProvider);
   final info = await readGitBranch(client, scope, service: service, stillCurrent: current);
   // A folder without a repository has nothing to follow, and a host that
-  // cannot watch answers with an error; either way the next open re-reads.
+  // cannot watch answers with an error; either way the next read tries again.
   if (info.isRepo && ref.mounted) _followGitRefs(ref, client, scope, info);
+  // Start the slow refresh only after the first read, so an unmount or a host
+  // switch during that first probe cannot leave a timer behind.
+  final timer = Timer.periodic(interval, (_) => refresh());
+  ref.onDispose(timer.cancel);
+  ref.onResume(refresh);
   return info;
 });
 

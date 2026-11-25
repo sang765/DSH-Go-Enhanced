@@ -245,6 +245,16 @@ class _GitBranchSheetState extends ConsumerState<GitBranchSheet> with GitBranchS
   @override
   GitScope get gitBranchScope => widget.scope;
 
+  @override
+  void initState() {
+    super.initState();
+    // The composer's chip can keep this provider alive with an old snapshot.
+    // Re-read right after the sheet's first frame so what is shown is current.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) ref.invalidate(gitBranchProvider(widget.scope));
+    });
+  }
+
   Future<void> _createBranch() async {
     final l10n = context.l10n;
     final name = await showTextPrompt(
@@ -273,7 +283,9 @@ class _GitBranchSheetState extends ConsumerState<GitBranchSheet> with GitBranchS
     final info = ref.watch(gitBranchProvider(widget.scope));
     const margin = EdgeInsets.fromLTRB(SheetTitleBar.inset, 0, SheetTitleBar.inset, 12);
     final body = info.when(
-      skipLoadingOnRefresh: false,
+      // A periodic re-read keeps the last known branch on screen; only the
+      // first load has nothing to fall back to.
+      skipLoadingOnRefresh: true,
       loading: () => const Padding(
         padding: EdgeInsets.symmetric(vertical: 24),
         child: Center(child: QuietSpinner()),

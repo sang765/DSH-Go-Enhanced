@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:dsh_app/state/connection_state.dart';
 import 'package:dsh_app/state/git_branch_state.dart';
 import 'package:dsh_app/state/git_repository_state.dart';
@@ -7,50 +5,141 @@ import 'package:dsh_client/dsh_client.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-/// A Host whose workspace is an in-memory tree, with no terminals: the file
-/// tier is the only one, so every re-read lists the tree again.
-class _TreeClient extends DshClient {
-  _TreeClient() : super(DshConnection(Uri.parse('http://127.0.0.1:9')));
+/// A carrier whose workspace is an in-memory tree. `DshClient`'s workspace and
+/// terminal APIs are extensions, so a fake carrier — not a client subclass — is
+/// the seam that answers them.
+class _TreeCarrier extends DshCarrier {
+  _TreeCarrier({this.terminals = false, Map<String, String>? files, Map<String, List<DshWorkspaceEntry>>? children})
+    : files = files ?? <String, String>{},
+      children = children ?? <String, List<DshWorkspaceEntry>>{};
 
-  final files = <String, String>{};
-  final children = <String, List<DshWorkspaceEntry>>{};
-  final watchFrames = StreamController<DshWorkspaceWatchFrame>.broadcast();
+  /// Terminal capability is only needed by the provider tests, where the
+  /// probe itself is replaced; the file-tier tests answer no endpoint at all.
+  final bool terminals;
+  final Map<String, String> files;
+  final Map<String, List<DshWorkspaceEntry>> children;
   int lists = 0;
 
   @override
-  bool get supportsTerminals => false;
+  String get kind => 'fake';
 
   @override
-  Future<DshWorkspaceListing> listWorkspace(String sessionId, String path) async {
-    lists++;
-    return DshWorkspaceListing(path: path, entries: children[path] ?? const <DshWorkspaceEntry>[]);
+  DshTracer? get tracer => null;
+
+  @override
+  bool get supportsUplink => false;
+
+  @override
+  bool allowsEndpoint(String endpoint) => terminals && endpoint.startsWith('terminal/');
+
+  @override
+  Future<RpcResult> call(String endpoint, Map<String, Object?> args, {Duration? timeout}) async {
+    switch (endpoint) {
+      case 'workspaceFiles/list':
+        lists++;
+        final raw = args['path'] as String? ?? '';
+        final path = raw == '.' ? '' : raw;
+        return RpcOk({
+          'path': path,
+          'entries': [
+            for (final entry in children[path] ?? const <DshWorkspaceEntry>[])
+              {'name': entry.name, 'type': entry.type.name},
+          ],
+        });
+      case 'workspaceFiles/read':
+        final path = args['path'] as String? ?? '';
+        final text = files[path];
+        if (text == null) throw StateError('no file $path');
+        return RpcOk({'text': text, 'lines': 0, 'eof': true, 'offset': 1, 'absolutePath': path});
+    }
+    throw StateError('unexpected endpoint $endpoint');
   }
 
   @override
-  Future<DshWorkspaceText> readWorkspaceText(
-    String sessionId,
-    String path, {
-    int offset = 1,
-    int limit = 500,
-  }) async => DshWorkspaceText(text: files[path] ?? '', lines: 0, eof: true, offset: offset);
+  Future<DshMuxLink> openLink(MuxOptions options) async => _QuietLink();
+}
+
+class _QuietLink implements DshMuxLink {
+  @override
+  void start({required DshMuxFrameHandler onFrame, required DshMuxLossHandler onLost}) {}
 
   @override
-  Stream<DshWorkspaceWatchFrame> watchWorkspace(String sessionId, String path) => watchFrames.stream;
+  void open(String streamId, String endpoint, Map<String, Object?> payload) {}
+
+  @override
+  void sendItem(String streamId, Object? value) {}
+
+  @override
+  void endUplink(String streamId) {}
+
+  @override
+  void cancel(String streamId) {}
+
+  @override
+  Future<void> close(int code, String reason) async {}
 }
 
-_TreeClient _repoWithBranch(String branch) {
-  final client = _TreeClient();
-  const dir = DshWorkspaceEntry(name: '.git', type: DshWorkspaceEntryType.directory);
-  client.children[''] = const [dir];
-  client.files['.git/HEAD'] = 'ref: refs/heads/$branch\n';
+DshClient _client(_TreeCarrier carrier) {
+  final client = DshClient.withCarrier(carrier, muxOptions: const MuxOptions(retryCaps: [Duration(milliseconds: 1)]));
+  addTearDown(client.close);
   return client;
 }
+
+_TreeCarrier _repoCarrier(String branch) => _TreeCarrier(
+  files: {'.git/HEAD': 'ref: refs/heads/$branch\n'},
+  children: {'': const [DshWorkspaceEntry(name: '.git', type: DshWorkspaceEntryType.directory)]},
+);
 
 const _nestedDir = DshWorkspaceEntry(name: 'feature', type: DshWorkspaceEntryType.directory);
 const _teamDir = DshWorkspaceEntry(name: 'team', type: DshWorkspaceEntryType.directory);
 const _topicDir = DshWorkspaceEntry(name: 'topic', type: DshWorkspaceEntryType.directory);
 const _subDir = DshWorkspaceEntry(name: 'sub', type: DshWorkspaceEntryType.directory);
 const _fixRef = DshWorkspaceEntry(name: 'fix', type: DshWorkspaceEntryType.file);
+
+/// The probe tier replaced in provider tests: no terminal, just the branch
+/// each client would report.
+class _ProbeService implements GitHostService {
+  _ProbeService(this.branches);
+
+  final Map<DshClient, String> branches;
+  int calls = 0;
+
+  @override
+  Future<GitProbeState?> probe({
+    required DshClient client,
+    required String sessionId,
+    required bool Function() stillCurrent,
+  }) async {
+    calls++;
+    final branch = branches[client];
+    if (branch == null) return null;
+    return GitProbeState(
+      branch: branch,
+      changedFiles: 0,
+      branches: [branch],
+      remotes: const [],
+      worktree: false,
+    );
+  }
+
+  @override
+  Future<GitCloneOutcome> clone({
+    required DshClient client,
+    required GitRepoSpec spec,
+    required String parentPath,
+    required bool Function() stillCurrent,
+    void Function(String)? onProgress,
+  }) => throw UnimplementedError();
+
+  @override
+  Future<GitCheckoutOutcome> checkout({
+    required DshClient client,
+    required String cwd,
+    required String branch,
+    required bool Function() stillCurrent,
+    bool create = false,
+  }) => throw UnimplementedError();
+}
 
 /// The active connection, switchable mid-test to model a reconnect that
 /// publishes a new client for the same Host.
@@ -179,21 +268,21 @@ void main() {
   });
 
   test('loose refs several directory levels deep are still branches', () async {
-    final client = _repoWithBranch('main');
-    client.children['.git/refs/heads'] = const [_nestedDir];
-    client.children['.git/refs/heads/feature'] = const [_teamDir];
-    client.children['.git/refs/heads/feature/team'] = const [_topicDir];
-    client.children['.git/refs/heads/feature/team/topic'] = const [_subDir];
-    client.children['.git/refs/heads/feature/team/topic/sub'] = const [_fixRef];
+    final carrier = _repoCarrier('main');
+    carrier.children['.git/refs/heads'] = const [_nestedDir];
+    carrier.children['.git/refs/heads/feature'] = const [_teamDir];
+    carrier.children['.git/refs/heads/feature/team'] = const [_topicDir];
+    carrier.children['.git/refs/heads/feature/team/topic'] = const [_subDir];
+    carrier.children['.git/refs/heads/feature/team/topic/sub'] = const [_fixRef];
 
-    final info = await readGitBranch(client, const GitScope.workspace('w'));
+    final info = await readGitBranch(_client(carrier), const GitScope.workspace('w'));
     expect(info.isRepo, isTrue);
     expect(info.branches, ['feature/team/topic/sub/fix', 'main']);
   });
 
   test('a client-replacing reconnect is a new git connection key, a relabel is not', () {
-    final first = _TreeClient();
-    final second = _TreeClient();
+    final first = _client(_TreeCarrier());
+    final second = _client(_TreeCarrier());
     final original = gitConnectionKey(HostConnection(client: first, isLocal: false, hostId: 'same'));
     expect(
       original,
@@ -203,52 +292,59 @@ void main() {
     expect(gitConnectionKey(null), isNull);
   });
 
-  test('an unstaged edit in the workspace root re-reads the dirty count', () async {
-    final client = _repoWithBranch('main');
+  test('a watched git state re-reads on its own while the chip is on screen', () async {
+    final client = _client(_TreeCarrier(terminals: true));
+    final service = _ProbeService({client: 'main'});
     _SwitchConnection.initial = HostConnection(client: client, isLocal: true);
     final container = ProviderContainer(
-      overrides: [activeConnectionProvider.overrideWith((ref) => ref.watch(_switchConnection))],
+      overrides: [
+        activeConnectionProvider.overrideWith((ref) => ref.watch(_switchConnection)),
+        gitHostServiceProvider.overrideWithValue(service),
+        gitRefreshIntervalProvider.overrideWithValue(const Duration(milliseconds: 25)),
+      ],
     );
     addTearDown(container.dispose);
-    addTearDown(client.watchFrames.close);
-    const scope = GitScope.workspace('w');
-    final subscription = container.listen(gitBranchProvider(scope), (_, __) {});
+    const scope = GitScope.session('s', workspacePath: '/w');
+    final subscription = container.listen(gitBranchProvider(scope), (_, _));
     addTearDown(subscription.close);
 
     expect((await container.read(gitBranchProvider(scope).future)).branch, 'main');
-    final before = client.lists;
-    // An unstaged file edit changes the root, not `.git/index`.
-    client.watchFrames.add(const DshWorkspaceWatchChange(absolutePath: '/w/notes.txt', version: 'v2'));
-    await Future<void>.delayed(const Duration(milliseconds: 250));
-    expect(client.lists, greaterThan(before));
+    final before = service.calls;
+    // A commit in another terminal needs no workspace watch frame.
+    await Future<void>.delayed(const Duration(milliseconds: 120));
+    expect(service.calls, greaterThan(before));
   });
 
   test('a new client on the same Host re-reads the branch; a relabel does not', () async {
-    final first = _repoWithBranch('main');
-    final second = _repoWithBranch('develop');
+    final first = _client(_TreeCarrier(terminals: true));
+    final second = _client(_TreeCarrier(terminals: true));
+    final service = _ProbeService({first: 'main', second: 'develop'});
     _SwitchConnection.initial = HostConnection(client: first, isLocal: false, hostId: 'same');
     final container = ProviderContainer(
-      overrides: [activeConnectionProvider.overrideWith((ref) => ref.watch(_switchConnection))],
+      overrides: [
+        activeConnectionProvider.overrideWith((ref) => ref.watch(_switchConnection)),
+        gitHostServiceProvider.overrideWithValue(service),
+      ],
     );
     addTearDown(container.dispose);
-    const scope = GitScope.workspace('w');
+    const scope = GitScope.session('s', workspacePath: '/w');
     // Keep the autoDispose provider alive across the reconnect.
-    final subscription = container.listen(gitBranchProvider(scope), (_, __) {});
+    final subscription = container.listen(gitBranchProvider(scope), (_, _));
     addTearDown(subscription.close);
 
     expect((await container.read(gitBranchProvider(scope).future)).branch, 'main');
-    final afterFirst = first.lists;
+    final afterFirst = service.calls;
 
     container.read(_switchConnection.notifier).use(
           HostConnection(client: first, label: 'renamed', isLocal: false, hostId: 'same'),
         );
     expect((await container.read(gitBranchProvider(scope).future)).branch, 'main');
-    expect(first.lists, afterFirst, reason: 'a label change keeps the same client');
+    expect(service.calls, afterFirst, reason: 'a label change keeps the same client');
 
     container.read(_switchConnection.notifier).use(
           HostConnection(client: second, isLocal: false, hostId: 'same'),
         );
     expect((await container.read(gitBranchProvider(scope).future)).branch, 'develop');
-    expect(second.lists, greaterThan(0));
+    expect(service.calls, greaterThan(afterFirst));
   });
 }
