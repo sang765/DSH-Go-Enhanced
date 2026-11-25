@@ -12796,6 +12796,12 @@ class L10nZh extends L10n {
   String get performanceTextAnimationPopHint => '带一点回弹地放大出现。';
 
   @override
+  String get performanceTextAnimationPopStrength => '弹出强度';
+
+  @override
+  String get performanceTextAnimationTiltStrength => '倾斜强度';
+
+  @override
   String get performanceTextAnimationTilt => '倾斜';
 
   @override

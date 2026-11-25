@@ -418,6 +418,8 @@ class _ComposerState extends ConsumerState<Composer> with SingleTickerProviderSt
           tilt: p.textAnimationTilt,
           trail: p.textAnimationTrail,
           cursorSpeed: p.textAnimationCursorSpeed,
+          popStrength: p.textAnimationPopStrength,
+          tiltStrength: p.textAnimationTiltStrength,
         ),
       ),
     );
@@ -569,6 +571,8 @@ class _ComposerState extends ConsumerState<Composer> with SingleTickerProviderSt
                             tilt: textPrefs.tilt,
                             trailEnabled: textPrefs.trail,
                             cursorSpeed: textPrefs.cursorSpeed,
+                            popStrength: textPrefs.popStrength,
+                            tiltStrength: textPrefs.tiltStrength,
                           ),
                         ),
                       ),

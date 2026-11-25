@@ -132,6 +132,8 @@ class PerformancePrefsController extends Notifier<PerformancePrefs> {
   static const textAnimationTiltKey = 'chat.text_animation.tilt';
   static const textAnimationTrailKey = 'chat.text_animation.trail';
   static const textAnimationCursorSpeedKey = 'chat.text_animation.cursor_speed';
+  static const textAnimationPopStrengthKey = 'chat.text_animation.pop_strength';
+  static const textAnimationTiltStrengthKey = 'chat.text_animation.tilt_strength';
   static const textAnimationEveryFieldKey = 'chat.text_animation.every_field';
   late Future<void> ready;
 
@@ -168,6 +170,8 @@ class PerformancePrefsController extends Notifier<PerformancePrefs> {
         textAnimationTilt: prefs.getBool(textAnimationTiltKey) ?? false,
         textAnimationTrail: prefs.getBool(textAnimationTrailKey) ?? true,
         textAnimationCursorSpeed: prefs.getInt(textAnimationCursorSpeedKey) ?? 18,
+        textAnimationPopStrength: prefs.getInt(textAnimationPopStrengthKey) ?? 100,
+        textAnimationTiltStrength: prefs.getInt(textAnimationTiltStrengthKey) ?? 100,
         textAnimationEveryField: prefs.getBool(textAnimationEveryFieldKey) ?? false,
         loaded: true,
       );
@@ -224,6 +228,14 @@ class PerformancePrefsController extends Notifier<PerformancePrefs> {
       _save((s) => s.copyWith(textAnimationTrail: value), (p) => p.setBool(textAnimationTrailKey, value));
   Future<void> setTextAnimationCursorSpeed(int value) =>
       _save((s) => s.copyWith(textAnimationCursorSpeed: value), (p) => p.setInt(textAnimationCursorSpeedKey, value));
+  Future<void> setTextAnimationPopStrength(int value) => _save(
+    (s) => s.copyWith(textAnimationPopStrength: value),
+    (p) => p.setInt(textAnimationPopStrengthKey, value),
+  );
+  Future<void> setTextAnimationTiltStrength(int value) => _save(
+    (s) => s.copyWith(textAnimationTiltStrength: value),
+    (p) => p.setInt(textAnimationTiltStrengthKey, value),
+  );
   Future<void> setTextAnimationEveryField(bool value) =>
       _save((s) => s.copyWith(textAnimationEveryField: value), (p) => p.setBool(textAnimationEveryFieldKey, value));
   Future<void> setFrameCache(bool value) async {
@@ -252,6 +264,8 @@ class PerformancePrefsController extends Notifier<PerformancePrefs> {
     await p.remove(textAnimationTiltKey);
     await p.remove(textAnimationTrailKey);
     await p.remove(textAnimationCursorSpeedKey);
+    await p.remove(textAnimationPopStrengthKey);
+    await p.remove(textAnimationTiltStrengthKey);
     await p.remove(textAnimationEveryFieldKey);
   });
 }
@@ -292,6 +306,8 @@ Map<String, Object?> performanceDiagnostics(Ref ref) {
       'textAnimationTilt': prefs.textAnimationTilt,
       'textAnimationTrail': prefs.textAnimationTrail,
       'textAnimationCursorSpeed': prefs.textAnimationCursorSpeed,
+      'textAnimationPopStrength': prefs.textAnimationPopStrength,
+      'textAnimationTiltStrength': prefs.textAnimationTiltStrength,
       'textAnimationEveryField': prefs.textAnimationEveryField,
       'refreshRate': prefs.refreshRate.name,
       if (ref.read(operatingSystemProvider) == 'ohos') 'frameCache': prefs.frameCache,

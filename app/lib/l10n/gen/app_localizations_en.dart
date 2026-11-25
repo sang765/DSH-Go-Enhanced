@@ -13506,6 +13506,12 @@ class L10nEn extends L10n {
   String get performanceTextAnimationPopHint => 'Grows in with a little bounce.';
 
   @override
+  String get performanceTextAnimationPopStrength => 'Pop strength';
+
+  @override
+  String get performanceTextAnimationTiltStrength => 'Tilt strength';
+
+  @override
   String get performanceTextAnimationTilt => 'Tilt';
 
   @override

@@ -7,6 +7,7 @@
 // glyphs that just arrived or are leaving. Nothing here edits the controller.
 
 import 'dart:math' as math;
+import 'dart:ui' show ImageFilter;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
@@ -62,6 +63,8 @@ class AnimatedComposerText extends StatefulWidget {
     this.tilt = false,
     this.trailEnabled = true,
     this.cursorSpeed = 18,
+    this.popStrength = 100,
+    this.tiltStrength = 100,
   });
 
   final TextEditingController controller;
@@ -88,6 +91,8 @@ class AnimatedComposerText extends StatefulWidget {
   final bool tilt;
   final bool trailEnabled;
   final int cursorSpeed;
+  final int popStrength;
+  final int tiltStrength;
 
   @override
   AnimatedComposerTextState createState() => AnimatedComposerTextState();
@@ -380,6 +385,8 @@ class AnimatedComposerTextState extends State<AnimatedComposerText> with SingleT
             pop: widget.pop,
             tilt: widget.tilt,
             trailEnabled: widget.trailEnabled,
+            popStrength: widget.popStrength,
+            tiltStrength: widget.tiltStrength,
           ),
           child: const SizedBox.expand(),
         );
@@ -412,6 +419,8 @@ class _GlyphPainter extends CustomPainter {
     required this.pop,
     required this.tilt,
     required this.trailEnabled,
+    required this.popStrength,
+    required this.tiltStrength,
   });
 
   final List<_Glyph> glyphs;
@@ -436,6 +445,8 @@ class _GlyphPainter extends CustomPainter {
   final bool pop;
   final bool tilt;
   final bool trailEnabled;
+  final int popStrength;
+  final int tiltStrength;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -466,9 +477,17 @@ class _GlyphPainter extends CustomPainter {
         final eased = Curves.easeOut.transform(local);
         opacity = eased;
         if (slideUp) dy = (1 - eased) * slideDistance;
-        if (pop) scale = 0.9 + 0.1 * AppMotion.popCurve.transform(local);
-        if (tilt) rotate = (1 - eased) * 0.08 * (glyph.id.isEven ? 1 : -1);
-        if (unblur) blurSigma = (1 - eased) * 3;
+        if (pop) {
+          scale = 1 + (AppMotion.popCurve.transform(local) - 1) * (popStrength / 100) * 0.12;
+        }
+        if (tilt) {
+          rotate = 0.7 *
+              (tiltStrength / 100) *
+              math.pow(1 - eased, 1.2).toDouble() *
+              math.cos(local * 3.5 * math.pi) *
+              (glyph.id.isEven ? 1 : -1);
+        }
+        if (unblur) blurSigma = (1 - eased) * 8;
       } else if (glyph.phase == _GlyphPhase.exiting) {
         opacity = 1 - p;
         switch (deleteMode) {

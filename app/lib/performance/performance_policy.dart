@@ -79,6 +79,8 @@ class PerformancePrefs {
     this.textAnimationTilt = false,
     this.textAnimationTrail = true,
     this.textAnimationCursorSpeed = 18,
+    this.textAnimationPopStrength = 100,
+    this.textAnimationTiltStrength = 100,
     this.textAnimationEveryField = false,
     this.loaded = false,
   });
@@ -109,6 +111,8 @@ class PerformancePrefs {
   final bool textAnimationTilt;
   final bool textAnimationTrail;
   final int textAnimationCursorSpeed;
+  final int textAnimationPopStrength;
+  final int textAnimationTiltStrength;
   final bool textAnimationEveryField;
   final bool loaded;
 
@@ -131,6 +135,8 @@ class PerformancePrefs {
     bool? textAnimationTilt,
     bool? textAnimationTrail,
     int? textAnimationCursorSpeed,
+    int? textAnimationPopStrength,
+    int? textAnimationTiltStrength,
     bool? textAnimationEveryField,
     bool? loaded,
     bool resetEffects = false,
@@ -153,6 +159,8 @@ class PerformancePrefs {
     textAnimationTilt: resetEffects ? false : textAnimationTilt ?? this.textAnimationTilt,
     textAnimationTrail: resetEffects ? true : textAnimationTrail ?? this.textAnimationTrail,
     textAnimationCursorSpeed: resetEffects ? 18 : textAnimationCursorSpeed ?? this.textAnimationCursorSpeed,
+    textAnimationPopStrength: resetEffects ? 100 : textAnimationPopStrength ?? this.textAnimationPopStrength,
+    textAnimationTiltStrength: resetEffects ? 100 : textAnimationTiltStrength ?? this.textAnimationTiltStrength,
     textAnimationEveryField: resetEffects ? false : textAnimationEveryField ?? this.textAnimationEveryField,
     loaded: loaded ?? this.loaded,
   );

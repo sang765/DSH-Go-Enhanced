@@ -23784,6 +23784,18 @@ abstract class L10n {
   /// **'带一点回弹地放大出现。'**
   String get performanceTextAnimationPopHint;
 
+  /// No description provided for @performanceTextAnimationPopStrength.
+  ///
+  /// In zh, this message translates to:
+  /// **'弹出强度'**
+  String get performanceTextAnimationPopStrength;
+
+  /// No description provided for @performanceTextAnimationTiltStrength.
+  ///
+  /// In zh, this message translates to:
+  /// **'倾斜强度'**
+  String get performanceTextAnimationTiltStrength;
+
   /// No description provided for @performanceTextAnimationTilt.
   ///
   /// In zh, this message translates to:

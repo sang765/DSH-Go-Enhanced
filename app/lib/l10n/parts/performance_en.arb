@@ -37,6 +37,8 @@
   "performanceTextAnimationUnblurHint": "Starts blurry and comes into focus.",
   "performanceTextAnimationPop": "Pop",
   "performanceTextAnimationPopHint": "Grows in with a little bounce.",
+  "performanceTextAnimationPopStrength": "Pop strength",
+  "performanceTextAnimationTiltStrength": "Tilt strength",
   "performanceTextAnimationTilt": "Tilt",
   "performanceTextAnimationTiltHint": "Swings upright as it lands.",
   "performanceTextAnimationTrail": "Stretchy trail",

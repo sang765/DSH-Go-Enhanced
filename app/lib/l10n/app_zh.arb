@@ -7505,6 +7505,8 @@
   "performanceTextAnimationUnblurHint": "先模糊再变清晰。",
   "performanceTextAnimationPop": "弹出",
   "performanceTextAnimationPopHint": "带一点回弹地放大出现。",
+  "performanceTextAnimationPopStrength": "弹出强度",
+  "performanceTextAnimationTiltStrength": "倾斜强度",
   "performanceTextAnimationTilt": "倾斜",
   "performanceTextAnimationTiltHint": "落定时摆正。",
   "performanceTextAnimationTrail": "拉伸拖尾",
