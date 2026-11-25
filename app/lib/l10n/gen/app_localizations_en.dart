@@ -13443,15 +13443,6 @@ class L10nEn extends L10n {
   String get performanceTextAnimationHint => 'New letters appear one by one in the chat box. Needs fluid motion on';
 
   @override
-  String get performanceTextAnimationTryIt => 'Try it';
-
-  @override
-  String get performanceTextAnimationTryHere => 'Type here';
-
-  @override
-  String get performanceTextAnimationTryHint => 'Typing smoothly…';
-
-  @override
   String get performanceTextAnimationOptions => 'Typing animation options';
 
   @override
@@ -13485,6 +13476,15 @@ class L10nEn extends L10n {
   String get performanceTextAnimationCursorSteady => 'Steady';
 
   @override
+  String get performanceTextAnimationTryIt => 'Try it';
+
+  @override
+  String get performanceTextAnimationTryHere => 'Type here';
+
+  @override
+  String get performanceTextAnimationTryHint => 'Typing smoothly…';
+
+  @override
   String get performanceTextAnimationTyping => 'Typing';
 
   @override
@@ -13494,7 +13494,8 @@ class L10nEn extends L10n {
   String get performanceTextAnimationLetters => 'Animate new letters';
 
   @override
-  String get performanceTextAnimationLettersHint => 'Each letter fades in at its spot. Pastes ripple in one after another.';
+  String get performanceTextAnimationLettersHint =>
+      'Each letter fades in at its spot. Pastes ripple in one after another.';
 
   @override
   String get performanceTextAnimationSlideUp => 'Slide up';
@@ -13542,7 +13543,8 @@ class L10nEn extends L10n {
   String get performanceTextAnimationEveryField => 'Every text field';
 
   @override
-  String get performanceTextAnimationEveryFieldHint => 'Search, profile and settings boxes too, not just the message box. Password fields never animate.';
+  String get performanceTextAnimationEveryFieldHint =>
+      'Search, profile and settings boxes too, not just the message box. Password fields never animate.';
 
   @override
   String get performanceFollowMode => 'Follow the performance mode';

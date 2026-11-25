@@ -23658,24 +23658,6 @@ abstract class L10n {
   /// **'聊天输入框里新字逐个出现，需要开启灵动动效'**
   String get performanceTextAnimationHint;
 
-  /// No description provided for @performanceTextAnimationTryIt.
-  ///
-  /// In zh, this message translates to:
-  /// **'试一试'**
-  String get performanceTextAnimationTryIt;
-
-  /// No description provided for @performanceTextAnimationTryHere.
-  ///
-  /// In zh, this message translates to:
-  /// **'在这里输入'**
-  String get performanceTextAnimationTryHere;
-
-  /// No description provided for @performanceTextAnimationTryHint.
-  ///
-  /// In zh, this message translates to:
-  /// **'流畅地输入…'**
-  String get performanceTextAnimationTryHint;
-
   /// No description provided for @performanceTextAnimationOptions.
   ///
   /// In zh, this message translates to:
@@ -23741,6 +23723,24 @@ abstract class L10n {
   /// In zh, this message translates to:
   /// **'静止'**
   String get performanceTextAnimationCursorSteady;
+
+  /// No description provided for @performanceTextAnimationTryIt.
+  ///
+  /// In zh, this message translates to:
+  /// **'试一试'**
+  String get performanceTextAnimationTryIt;
+
+  /// No description provided for @performanceTextAnimationTryHere.
+  ///
+  /// In zh, this message translates to:
+  /// **'在这里输入'**
+  String get performanceTextAnimationTryHere;
+
+  /// No description provided for @performanceTextAnimationTryHint.
+  ///
+  /// In zh, this message translates to:
+  /// **'流畅地输入…'**
+  String get performanceTextAnimationTryHint;
 
   /// No description provided for @performanceTextAnimationTyping.
   ///
