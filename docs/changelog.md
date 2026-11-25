@@ -3,6 +3,21 @@
 每个版本先中文、后英文。发版时把对应版本的正文（不含版本标题）作为 Release 正文，见 `docs/release.md`。
 
 
+## 1.3.0-sub.6 · 2026-11-25
+
+### 中文
+
+- **改进:插件页的「添加插件」不再用系统下拉菜单。** 注册源选择改成 App 自己的底部弹层:选项带图标和地址说明,当前项打勾,弹层不会再盖住「取消 / 安装」按钮。这个选择器也抽成了通用组件,其他下拉以后可以逐步换过来。
+- **新增:Android 也有底部弹层的「背景后退」效果。** 弹层升起时后面的页面会轻微缩小、四角变圆并让出状态栏位置,跟手移动;和 iOS 一样只在灵动动效 + 手机尺寸下启用,低端机或发热降档时自动关闭。
+- **验证情况。** 全量 CI 绿灯;真机上的弹层观感和状态栏图标颜色仍需装上新版本确认。
+
+### English
+
+- **Improved: the Add plugin dialog no longer uses a system dropdown.** The registry picker is now an app bottom sheet: options carry an icon and their address, the current one is ticked, and the menu no longer covers Cancel / Install. The control is shared, so other dropdowns can migrate later.
+- **New: the sheet "recede" effect comes to Android.** While a sheet rises, the page behind scales down slightly, rounds its corners and leaves room for the status bar, following the sheet and the finger. As on iOS it stays on the fluid tier and phones only, and switches off on low-end or thermally limited devices.
+- **Testing.** Full CI is green; the sheet feel and status-bar icon colour still need a check on a real device.
+
+
 ## 1.3.0-sub.5 · 2026-11-25
 
 ### 中文
