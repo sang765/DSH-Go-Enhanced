@@ -13443,6 +13443,15 @@ class L10nEn extends L10n {
   String get performanceTextAnimationHint => 'New letters appear one by one in the chat box. Needs fluid motion on';
 
   @override
+  String get performanceTextAnimationTryIt => 'Try it';
+
+  @override
+  String get performanceTextAnimationTryHere => 'Type here';
+
+  @override
+  String get performanceTextAnimationTryHint => 'Typing smoothly…';
+
+  @override
   String get performanceTextAnimationOptions => 'Typing animation options';
 
   @override
@@ -13464,7 +13473,7 @@ class L10nEn extends L10n {
   String get performanceTextAnimationDeleteDust => 'Turn to dust';
 
   @override
-  String get performanceTextAnimationDeleteNone => 'None';
+  String get performanceTextAnimationDeleteNone => 'Nothing';
 
   @override
   String get performanceTextAnimationCursor => 'Cursor';

@@ -165,7 +165,7 @@ class PerformancePrefsController extends Notifier<PerformancePrefs> {
             TextAnimationCursor.glide,
         textAnimationLetters: prefs.getBool(textAnimationLettersKey) ?? true,
         textAnimationSlideUp: prefs.getBool(textAnimationSlideUpKey) ?? true,
-        textAnimationUnblur: prefs.getBool(textAnimationUnblurKey) ?? false,
+        textAnimationUnblur: prefs.getBool(textAnimationUnblurKey) ?? true,
         textAnimationPop: prefs.getBool(textAnimationPopKey) ?? false,
         textAnimationTilt: prefs.getBool(textAnimationTiltKey) ?? false,
         textAnimationTrail: prefs.getBool(textAnimationTrailKey) ?? true,

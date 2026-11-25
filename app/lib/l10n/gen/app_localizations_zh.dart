@@ -12733,6 +12733,15 @@ class L10nZh extends L10n {
   String get performanceTextAnimationHint => '聊天输入框里新字逐个出现，需要开启灵动动效';
 
   @override
+  String get performanceTextAnimationTryIt => '试一试';
+
+  @override
+  String get performanceTextAnimationTryHere => '在这里输入';
+
+  @override
+  String get performanceTextAnimationTryHint => '流畅地输入…';
+
+  @override
   String get performanceTextAnimationOptions => '输入文字动画设置';
 
   @override
