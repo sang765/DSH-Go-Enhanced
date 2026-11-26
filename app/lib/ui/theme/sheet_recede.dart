@@ -62,11 +62,14 @@ abstract final class SheetRecede {
     var most = 0.0;
     for (final route in _routes) {
       // A sheet under a pushed screen is not current any more. Its animation
-      // stays completed, so counting it would leave the old page shrunk behind
-      // the new screen — and rounded, with the status bar stuck light.
-      if (!route.isCurrent) continue;
+      // stays completed, so ignoring it brings the old page back to full size.
+      // A popping route is also not current, but its animation is reversing:
+      // keep following that, or the page snaps back instead of growing with
+      // the sheet as it goes down.
       final animation = route.animation;
-      if (animation != null) most = math.max(most, animation.value);
+      if (animation == null) continue;
+      if (!route.isCurrent && animation.status != AnimationStatus.reverse) continue;
+      most = math.max(most, animation.value);
     }
     final progress = most.clamp(0.0, 1.0);
     _amount.value = progress < _settleEpsilon
