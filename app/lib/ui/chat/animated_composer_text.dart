@@ -201,11 +201,13 @@ class AnimatedComposerTextState extends State<AnimatedComposerText> with SingleT
       oldWidget.controller.removeListener(_onController);
       widget.controller.addListener(_onController);
       _text = widget.controller.text;
+      final initial = <_Glyph>[];
+      for (final cluster in _text.characters) {
+        initial.add(_Glyph(_nextId++, cluster, _GlyphPhase.steady, _now));
+      }
       _glyphs
         ..clear()
-        ..addAll(
-          for (final cluster in _text.characters) _Glyph(_nextId++, cluster, _GlyphPhase.steady, _now),
-        );
+        ..addAll(initial);
       _bits.clear();
       _relayout();
     } else if (oldWidget.style != widget.style || oldWidget.maxLines != widget.maxLines) {
@@ -250,16 +252,20 @@ class AnimatedComposerTextState extends State<AnimatedComposerText> with SingleT
     final old = _text.characters.toList();
     if (_glyphs.length != old.length) {
       // A glyph list out of sync with the text cannot be indexed safely.
+      final restored = <_Glyph>[];
+      for (final cluster in old) {
+        restored.add(_Glyph(_nextId++, cluster, _GlyphPhase.steady, _now));
+      }
       _glyphs
         ..clear()
-        ..addAll(
-          for (final cluster in old) _Glyph(_nextId++, cluster, _GlyphPhase.steady, _now),
-        );
+        ..addAll(restored);
     }
 
     var start = 0;
     final shared = math.min(old.length, incoming.length);
-    while (start < shared && old[start] == incoming[start]) start++;
+    while (start < shared && old[start] == incoming[start]) {
+      start++;
+    }
     var suffix = 0;
     while (suffix < old.length - start &&
         suffix < incoming.length - start &&
@@ -365,7 +371,9 @@ class AnimatedComposerTextState extends State<AnimatedComposerText> with SingleT
         ));
       }
     }
-    while (_bits.length > _maxBits) _bits.removeAt(0);
+    while (_bits.length > _maxBits) {
+      _bits.removeAt(0);
+    }
   }
 
   void _relayout() {
@@ -386,12 +394,12 @@ class AnimatedComposerTextState extends State<AnimatedComposerText> with SingleT
       final blank = glyph.text.trim().isEmpty;
       final painter = blank
           ? null
-          : TextPainter(
+          : (TextPainter(
               text: TextSpan(text: glyph.text, style: widget.style),
               textDirection: widget.textDirection,
               textScaler: scaler,
               locale: widget.locale,
-            )..layout(maxWidth: _width);
+            )..layout(maxWidth: _width));
       glyph.painter?.dispose();
       glyph.painter = painter;
       glyph.width = painter?.width ?? 0;
