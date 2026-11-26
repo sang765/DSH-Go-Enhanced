@@ -2,9 +2,10 @@
 // SPDX-License-Identifier: MIT
 // See THIRD_PARTY_NOTICES.md.
 //
-// Paints the composer's draft over a transparent EditableText. The real field
-// keeps IME, selection, scrolling and key handling; this layer only draws
-// glyphs that just arrived or are leaving. Nothing here edits the controller.
+// Port of ValencedPlugins' TypingFx (plugins/textanimation). A transparent
+// TextField keeps IME, selection, scrolling and key handling; this layer paints
+// what the plugin draws over the native EditText: staggered letters, particle
+// delete effects and a gliding caret. The controller is never edited here.
 
 import 'dart:math' as math;
 import 'dart:ui' show ImageFilter;
@@ -13,11 +14,16 @@ import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 
 import '../../performance/performance_state.dart';
-import '../theme/motion.dart';
 
-const int _trailLength = 8;
+/// Plugin caps: at most this many clusters animate per edit, at most this many
+/// particles survive at once, and clearing more than this many letters with one
+/// backspace skips the effect.
+const int _maxAnimated = 150;
+const int _maxBits = 220;
+const int _maxClearEffect = 3;
+const int _dustPerGlyph = 7;
 
-enum _GlyphPhase { entering, steady, exiting }
+enum _GlyphPhase { entering, steady }
 
 class _Glyph {
   _Glyph(this.id, this.text, this.phase, this.started);
@@ -29,16 +35,45 @@ class _Glyph {
   TextPainter? painter;
   Rect? rect;
   double width = 0;
-  bool remove = false;
-  int batchIndex = 0;
+}
+
+class _Bit {
+  _Bit({
+    required this.text,
+    required this.x,
+    required this.y,
+    required this.vx,
+    required this.vy,
+    required this.angle,
+    required this.spin,
+    required this.size,
+    required this.born,
+    required this.life,
+    required this.color,
+    required this.gravity,
+  });
+
+  final String? text;
+  double x;
+  double y;
+  double vx;
+  double vy;
+  double angle; // radians
+  final double spin; // radians per second
+  final double size;
+  final Duration born;
+  final Duration life;
+  final Color color;
+  final double gravity; // logical pixels per second squared
 }
 
 /// The animated text layer above the composer's [TextField].
 ///
-/// Text is grouped by grapheme cluster (emoji and combining marks stay whole)
-/// and reuses a glyph id whenever the same cluster survives an edit, so typing
-/// in the middle does not restart every letter. IME composition is drawn
-/// without animation: the IME may rewrite the text several times per word.
+/// Glyphs are grapheme clusters (emoji and combining marks stay whole). The
+/// edit diff is the plugin's common-prefix / common-suffix scan, so only the
+/// letters that actually arrived animate — a paste ripples in, an edit in the
+/// middle leaves the rest alone. IME composition is drawn without animation:
+/// the IME rewrites the same word several times per keystroke.
 class AnimatedComposerText extends StatefulWidget {
   const AnimatedComposerText({
     super.key,
@@ -50,7 +85,6 @@ class AnimatedComposerText extends StatefulWidget {
     this.locale,
     this.scrollOffset = 0,
     this.letterDuration = const Duration(milliseconds: 320),
-    this.deleteDuration = const Duration(milliseconds: 200),
     this.slideDistance = 10,
     required this.cursorColor,
     this.cursorWidth = 2,
@@ -58,7 +92,7 @@ class AnimatedComposerText extends StatefulWidget {
     this.cursorMode = TextAnimationCursor.glide,
     this.animateLetters = true,
     this.slideUp = true,
-    this.unblur = false,
+    this.unblur = true,
     this.pop = false,
     this.tilt = false,
     this.trailEnabled = true,
@@ -75,10 +109,8 @@ class AnimatedComposerText extends StatefulWidget {
   final Locale? locale;
   final double scrollOffset;
 
-  /// How long one letter takes to settle. A batch of new letters is staggered
-  /// by [AppMotion.stagger], capped at [AppMotion.staggerLimit] letters.
+  /// Duration of one letter, including its ease-out settle (plugin: 320 ms).
   final Duration letterDuration;
-  final Duration deleteDuration;
   final double slideDistance;
   final Color cursorColor;
   final double cursorWidth;
@@ -101,6 +133,8 @@ class AnimatedComposerText extends StatefulWidget {
 @visibleForTesting
 class AnimatedComposerTextState extends State<AnimatedComposerText> with SingleTickerProviderStateMixin {
   final List<_Glyph> _glyphs = <_Glyph>[];
+  final List<_Bit> _bits = <_Bit>[];
+  final math.Random _random = math.Random();
   late final Ticker _ticker = Ticker(_tick, debugLabel: 'AnimatedComposerText');
   Duration _now = Duration.zero;
   int _nextId = 0;
@@ -108,39 +142,55 @@ class AnimatedComposerTextState extends State<AnimatedComposerText> with SingleT
   double _width = 0;
   TextPainter? _whole;
   int _selectionOffset = 0;
+
   Rect? _caretRect;
-  Offset _cursorTarget = Offset.zero;
-  Offset _cursor = Offset.zero;
-  Offset _cursorVelocity = Offset.zero;
+  double _targetX = 0;
+  double _targetTop = 0;
+  double _curX = 0;
+  double _curTop = 0;
+  double _curBottom = 0;
+  double _trailX = 0;
   bool _cursorReady = false;
-  final List<Offset> _trail = <Offset>[];
+  Duration _lastMove = Duration.zero;
 
-  /// Number of glyphs still moving; used by tests to check that a batch ends.
+  /// Number of letters still settling. Bits are tracked separately because a
+  /// deleted letter leaves the glyph list and becomes a particle.
   @visibleForTesting
-  int get activeGlyphs => _glyphs.where((g) => g.phase != _GlyphPhase.steady).length;
+  int get activeGlyphs => _glyphs.where((g) => g.phase == _GlyphPhase.entering).length;
 
-  bool get _active => _glyphs.any((g) => g.phase != _GlyphPhase.steady);
+  @visibleForTesting
+  int get activeBits => _bits.length;
 
-  bool get _cursorMoving =>
-      _caretRect != null &&
-      ((_cursorTarget - _cursor).distanceSquared > 0.25 || _cursorVelocity.distanceSquared > 0.25);
+  bool get _active => activeGlyphs > 0 || _bits.isNotEmpty;
+
+  bool get _cursorMoving {
+    if (_caretRect == null) return false;
+    return (_targetX - _curX).abs() > 0.3 ||
+        (_targetTop - _curTop).abs() > 0.3 ||
+        (_curX - _trailX).abs() > 0.3;
+  }
+
+  double get _cursorAlpha {
+    if (!_cursorMoving) return 1;
+    final since = (_now - _lastMove).inMilliseconds;
+    if (since < 500) return 1;
+    // Plugin: fade in place of blinking once the caret has been still a while.
+    return 0.5 + 0.5 * math.cos(2 * math.pi * (since - 500) / 1100);
+  }
+
+  double get _fontSize => widget.style.fontSize ?? 15;
 
   @override
   void initState() {
     super.initState();
     _text = widget.controller.text;
-    _diff();
-    // A draft that is already there when the field mounts is not "typed":
-    // show it at once. Only later controller changes animate.
-    for (final glyph in _glyphs) {
-      glyph.phase = _GlyphPhase.steady;
+    // A draft already present when the field mounts was not "typed": show it
+    // at once and only animate later controller changes.
+    for (final cluster in _text.characters) {
+      _glyphs.add(_Glyph(_nextId++, cluster, _GlyphPhase.steady, Duration.zero));
     }
     _selectionOffset = widget.controller.selection.baseOffset;
     _updateCaretTarget();
-    if (!_cursorReady) {
-      _cursor = _cursorTarget;
-      _cursorReady = true;
-    }
     widget.controller.addListener(_onController);
   }
 
@@ -151,7 +201,14 @@ class AnimatedComposerTextState extends State<AnimatedComposerText> with SingleT
       oldWidget.controller.removeListener(_onController);
       widget.controller.addListener(_onController);
       _text = widget.controller.text;
-      _diff();
+      final initial = <_Glyph>[];
+      for (final cluster in _text.characters) {
+        initial.add(_Glyph(_nextId++, cluster, _GlyphPhase.steady, _now));
+      }
+      _glyphs
+        ..clear()
+        ..addAll(initial);
+      _bits.clear();
       _relayout();
     } else if (oldWidget.style != widget.style || oldWidget.maxLines != widget.maxLines) {
       _relayout();
@@ -177,8 +234,7 @@ class AnimatedComposerTextState extends State<AnimatedComposerText> with SingleT
     if (!textChanged && !selectionChanged) return;
     setState(() {
       if (textChanged) {
-        _text = value.text;
-        _diff();
+        _diff(value.text);
         _relayout();
       } else {
         _updateCaretTarget();
@@ -188,60 +244,136 @@ class AnimatedComposerTextState extends State<AnimatedComposerText> with SingleT
     if (_active || _cursorMoving) _ticker.start();
   }
 
-  void _diff() {
-    // While the IME is composing, every intermediate revision is a rewrite of
-    // the same word. Show it immediately and let the IME's underline do its job.
+  /// Plugin's onEdit: common prefix + common suffix, snapped to grapheme edges
+  /// (Dart's [StringCharacters] already yields whole clusters).
+  void _diff(String next) {
     final composing = widget.controller.value.composing.isValid;
-    final incoming = _text.characters.toList();
-    final oldById = <int, _Glyph>{for (final glyph in _glyphs) glyph.id: glyph};
-    final alreadyLeaving = _glyphs.where((g) => g.phase == _GlyphPhase.exiting).toList();
-    final available = <String, List<_Glyph>>{};
-    for (final glyph in _glyphs) {
-      if (glyph.phase == _GlyphPhase.exiting) continue;
-      (available[glyph.text] ??= <_Glyph>[]).add(glyph);
+    final incoming = next.characters.toList();
+    final old = _text.characters.toList();
+    if (_glyphs.length != old.length) {
+      // A glyph list out of sync with the text cannot be indexed safely.
+      final restored = <_Glyph>[];
+      for (final cluster in old) {
+        restored.add(_Glyph(_nextId++, cluster, _GlyphPhase.steady, _now));
+      }
+      _glyphs
+        ..clear()
+        ..addAll(restored);
     }
 
-    final next = <_Glyph>[];
-    var created = 0;
-    for (final cluster in incoming) {
-      final pool = available[cluster];
-      if (pool != null && pool.isNotEmpty) {
-        final reused = pool.removeAt(0);
-        if (composing) reused.phase = _GlyphPhase.steady;
-        next.add(reused);
-      } else {
-        final immediate = composing || !widget.animateLetters;
-        final glyph = _Glyph(_nextId++, cluster, immediate ? _GlyphPhase.steady : _GlyphPhase.entering, _now);
-        glyph.batchIndex = created.clamp(0, AppMotion.staggerLimit);
-        created++;
-        next.add(glyph);
-      }
+    var start = 0;
+    final shared = math.min(old.length, incoming.length);
+    while (start < shared && old[start] == incoming[start]) {
+      start++;
+    }
+    var suffix = 0;
+    while (suffix < old.length - start &&
+        suffix < incoming.length - start &&
+        old[old.length - 1 - suffix] == incoming[incoming.length - 1 - suffix]) {
+      suffix++;
+    }
+    final insEnd = incoming.length - suffix;
+    final delEnd = old.length - suffix;
+
+    final nextGlyphs = <_Glyph>[..._glyphs.sublist(0, math.min(start, _glyphs.length))];
+    final removed = <_Glyph>[];
+
+    // Deleted letters do not fade in place: the plugin turns them into bits.
+    // Clearing a whole long draft in one backspace is deliberately not animated.
+    final spawnBits = widget.deleteMode != TextAnimationDelete.none &&
+        !composing &&
+        !(incoming.isEmpty && delEnd - start > _maxClearEffect);
+    for (var i = start; i < math.min(delEnd, _glyphs.length); i++) {
+      if (spawnBits) _spawnBits(_glyphs[i]);
+      removed.add(_glyphs[i]);
+    }
+    for (final glyph in removed) {
+      glyph.painter?.dispose();
     }
 
-    final kept = next.map((g) => g.id).toSet();
-    final animateDelete = widget.deleteMode != TextAnimationDelete.none;
-    for (final glyph in oldById.values) {
-      if (!animateDelete ||
-          glyph.phase == _GlyphPhase.exiting ||
-          kept.contains(glyph.id) ||
-          composing) {
-        continue;
-      }
-      glyph
-        ..phase = _GlyphPhase.exiting
-        ..started = _now;
-      next.add(glyph);
+    // Letters after the deleted run keep their identity; their boxes are
+    // recomputed in _relayout so they shift into the new positions.
+    for (var i = delEnd; i < _glyphs.length; i++) {
+      nextGlyphs.add(_glyphs[i]);
     }
-    // A deleted glyph keeps its old box while it falls away: the rest of the
-    // line has already moved on, which is exactly what a falling letter wants.
-    if (animateDelete) {
-      for (final glyph in alreadyLeaving) {
-        if (!glyph.remove && _now - glyph.started < widget.deleteDuration) next.add(glyph);
+
+    final inserted = <_Glyph>[];
+    for (var i = start; i < insEnd; i++) {
+      final cluster = incoming[i];
+      final animate = !composing &&
+          widget.animateLetters &&
+          cluster.trim().isNotEmpty &&
+          inserted.length < _maxAnimated;
+      inserted.add(
+        _Glyph(
+          _nextId++,
+          cluster,
+          animate ? _GlyphPhase.entering : _GlyphPhase.steady,
+          _now,
+        ),
+      );
+    }
+    if (inserted.length > 1) {
+      final gap = math.min(32, 520 / inserted.length).round();
+      for (var i = 0; i < inserted.length; i++) {
+        if (inserted[i].phase == _GlyphPhase.entering) {
+          inserted[i].started = _now + Duration(milliseconds: gap * i);
+        }
       }
     }
+    nextGlyphs.insertAll(math.min(start, nextGlyphs.length), inserted);
+
+    _text = next;
     _glyphs
       ..clear()
-      ..addAll(next);
+      ..addAll(nextGlyphs);
+  }
+
+  void _spawnBits(_Glyph glyph) {
+    final rect = glyph.rect;
+    if (rect == null) return;
+    final baseline = rect.top + _fontSize * 0.82;
+    final color = widget.style.color ?? const Color(0xFF000000);
+    if (widget.deleteMode == TextAnimationDelete.fallAway) {
+      _bits.add(_Bit(
+        text: glyph.text,
+        x: rect.left,
+        y: baseline,
+        vx: _random.nextDouble() * 70 - 35,
+        vy: -(40 + _random.nextDouble() * 70),
+        angle: 0,
+        spin: (_random.nextDouble() * 360 - 180) * math.pi / 180,
+        size: 0,
+        born: _now,
+        life: const Duration(milliseconds: 620),
+        color: color,
+        gravity: 900,
+      ));
+    } else if (widget.deleteMode == TextAnimationDelete.dust) {
+      final cx = rect.left + rect.width / 2;
+      final cy = baseline - _fontSize * 0.35;
+      for (var i = 0; i < _dustPerGlyph; i++) {
+        final angle = _random.nextDouble() * 2 * math.pi;
+        final speed = 35 + _random.nextDouble() * 110;
+        _bits.add(_Bit(
+          text: null,
+          x: cx + (_random.nextDouble() - 0.5) * rect.width,
+          y: cy + (_random.nextDouble() - 0.5) * _fontSize * 0.5,
+          vx: math.cos(angle) * speed,
+          vy: math.sin(angle) * speed - 40,
+          angle: 0,
+          spin: 0,
+          size: 1.2 + _random.nextDouble() * 1.8,
+          born: _now,
+          life: Duration(milliseconds: 380 + _random.nextInt(220)),
+          color: color,
+          gravity: -60,
+        ));
+      }
+    }
+    while (_bits.length > _maxBits) {
+      _bits.removeAt(0);
+    }
   }
 
   void _relayout() {
@@ -259,16 +391,18 @@ class AnimatedComposerTextState extends State<AnimatedComposerText> with SingleT
 
     var offset = 0;
     for (final glyph in _glyphs) {
-      if (glyph.phase == _GlyphPhase.exiting) continue;
-      final painter = TextPainter(
-        text: TextSpan(text: glyph.text, style: widget.style),
-        textDirection: widget.textDirection,
-        textScaler: scaler,
-        locale: widget.locale,
-      )..layout(maxWidth: _width);
+      final blank = glyph.text.trim().isEmpty;
+      final painter = blank
+          ? null
+          : (TextPainter(
+              text: TextSpan(text: glyph.text, style: widget.style),
+              textDirection: widget.textDirection,
+              textScaler: scaler,
+              locale: widget.locale,
+            )..layout(maxWidth: _width));
       glyph.painter?.dispose();
       glyph.painter = painter;
-      glyph.width = painter.width;
+      glyph.width = painter?.width ?? 0;
       final boxes = whole.getBoxesForSelection(
         TextSelection(baseOffset: offset, extentOffset: offset + glyph.text.length),
       );
@@ -292,8 +426,16 @@ class AnimatedComposerTextState extends State<AnimatedComposerText> with SingleT
         return Rect.fromLTWH(x, box.top, 0, box.height);
       }
     }
-    final fontSize = widget.style.fontSize ?? 15;
-    return Rect.fromLTWH(0, 0, 0, fontSize * 1.45);
+    return Rect.fromLTWH(0, 0, 0, _fontSize * 1.45);
+  }
+
+  void _seedCursor() {
+    _curX = _targetX;
+    _curTop = _targetTop;
+    _curBottom = math.max(_targetTop + _fontSize * 1.2, _caretRect?.bottom ?? 0);
+    _trailX = _targetX;
+    _lastMove = _now;
+    _cursorReady = true;
   }
 
   void _updateCaretTarget() {
@@ -301,54 +443,55 @@ class AnimatedComposerTextState extends State<AnimatedComposerText> with SingleT
     final rect = _caretRect;
     if (rect == null) return;
     final x = widget.textDirection == TextDirection.rtl ? rect.right : rect.left;
-    _cursorTarget = Offset(x, rect.top);
-    if (!_cursorReady) {
-      _cursor = _cursorTarget;
-      _cursorReady = true;
+    if (x != _targetX || rect.top != _targetTop) {
+      _targetX = x;
+      _targetTop = rect.top;
+      _lastMove = _now;
     }
+    if (!_cursorReady) _seedCursor();
   }
 
   void _tick(Duration elapsed) {
     _now += elapsed;
-    for (final glyph in _glyphs) {
-      if (glyph.phase == _GlyphPhase.entering &&
-          _now - glyph.started >= widget.letterDuration + AppMotion.stagger * glyph.batchIndex) {
-        glyph.phase = _GlyphPhase.steady;
-      } else if (glyph.phase == _GlyphPhase.exiting && _now - glyph.started >= widget.deleteDuration) {
-        glyph.remove = true;
-      }
-    }
-    _glyphs.removeWhere((glyph) => glyph.remove);
+    final dt = (elapsed.inMicroseconds / 1000000).clamp(0.0, 0.032).toDouble();
 
-    // A spring, not a tween: a fast retype keeps the caret's speed and glides
-    // to the new glyph instead of snapping between two offsets.
-    final dt = (elapsed.inMicroseconds / 1000000).clamp(0.0, 0.032);
-    if (_caretRect != null && dt > 0) {
-      if (widget.cursorMode == TextAnimationCursor.glide) {
-        final stiffness = 80.0 + widget.cursorSpeed * 8.0;
-        final damping = math.sqrt(stiffness) * 2.4;
-        final dx = _cursorTarget.dx - _cursor.dx;
-        final dy = _cursorTarget.dy - _cursor.dy;
-        final vx = _cursorVelocity.dx + (stiffness * dx - damping * _cursorVelocity.dx) * dt;
-        final vy = _cursorVelocity.dy + (stiffness * dy - damping * _cursorVelocity.dy) * dt;
-        _cursor = Offset(_cursor.dx + vx * dt, _cursor.dy + vy * dt);
-        _cursorVelocity = Offset(vx, vy);
-      } else {
-        _cursor = _cursorTarget;
-        _cursorVelocity = Offset.zero;
-      }
-      if (_cursorMoving) {
-        if (widget.trailEnabled && (_trail.isEmpty || (_trail.first - _cursor).distance > 1.5)) {
-          _trail.insert(0, _cursor);
-          if (_trail.length > _trailLength) _trail.removeLast();
-        }
-      } else {
-        _cursor = _cursorTarget;
-        _cursorVelocity = Offset.zero;
-        _trail.clear();
+    for (final glyph in _glyphs) {
+      if (glyph.phase == _GlyphPhase.entering && _now >= glyph.started + widget.letterDuration) {
+        glyph.phase = _GlyphPhase.steady;
       }
     }
-    if (!_active && !_cursorMoving) _ticker.stop();
+
+    for (final bit in _bits) {
+      bit.vy += bit.gravity * dt;
+      bit.x += bit.vx * dt;
+      bit.y += bit.vy * dt;
+      bit.angle += bit.spin * dt;
+    }
+    _bits.removeWhere((bit) => _now - bit.born >= bit.life);
+
+    if (_caretRect != null && widget.cursorMode == TextAnimationCursor.glide) {
+      final rate = widget.cursorSpeed.toDouble();
+      final k = 1 - math.exp(-rate * dt);
+      _curX += (_targetX - _curX) * k;
+      _curTop += (_targetTop - _curTop) * k;
+      final bottom = math.max(_targetTop + _fontSize * 1.2, _caretRect!.bottom);
+      _curBottom += (bottom - _curBottom) * k;
+      _trailX = widget.trailEnabled
+          ? _trailX + (_curX - _trailX) * (1 - math.exp(-rate * 0.4 * dt))
+          : _curX;
+    } else if (_caretRect != null) {
+      _curX = _targetX;
+      _curTop = _targetTop;
+      _curBottom = math.max(_targetTop + _fontSize * 1.2, _caretRect!.bottom);
+      _trailX = _curX;
+    }
+
+    if (!_active && !_cursorMoving) {
+      _curX = _targetX;
+      _curTop = _targetTop;
+      _trailX = _curX;
+      _ticker.stop();
+    }
     if (mounted) setState(() {});
   }
 
@@ -364,27 +507,28 @@ class AnimatedComposerTextState extends State<AnimatedComposerText> with SingleT
         return CustomPaint(
           painter: _GlyphPainter(
             glyphs: List<_Glyph>.of(_glyphs),
+            bits: List<_Bit>.of(_bits),
             baseStyle: widget.style,
             now: _now,
             textPad: widget.textPad,
             scrollOffset: widget.scrollOffset,
             letterDuration: widget.letterDuration,
-            deleteDuration: widget.deleteDuration,
             slideDistance: widget.slideDistance,
             direction: widget.textDirection,
             scaler: MediaQuery.textScalerOf(context),
             locale: widget.locale,
             cursorColor: widget.cursorColor,
             cursorWidth: widget.cursorWidth,
-            cursorOffset: _cursor,
-            caretRect: _caretRect,
-            trail: List<Offset>.of(_trail),
+            caretTop: _curTop,
+            caretBottom: _curBottom,
+            cursorX: _curX,
+            trailX: _trailX,
+            cursorAlpha: _cursorAlpha,
             deleteMode: widget.deleteMode,
             slideUp: widget.slideUp,
             unblur: widget.unblur,
             pop: widget.pop,
             tilt: widget.tilt,
-            trailEnabled: widget.trailEnabled,
             popStrength: widget.popStrength,
             tiltStrength: widget.tiltStrength,
           ),
@@ -398,122 +542,111 @@ class AnimatedComposerTextState extends State<AnimatedComposerText> with SingleT
 class _GlyphPainter extends CustomPainter {
   _GlyphPainter({
     required this.glyphs,
+    required this.bits,
     required this.baseStyle,
     required this.now,
     required this.textPad,
     required this.scrollOffset,
     required this.letterDuration,
-    required this.deleteDuration,
     required this.slideDistance,
     required this.direction,
     required this.scaler,
     required this.locale,
     required this.cursorColor,
     required this.cursorWidth,
-    required this.cursorOffset,
-    required this.caretRect,
-    required this.trail,
+    required this.caretTop,
+    required this.caretBottom,
+    required this.cursorX,
+    required this.trailX,
+    required this.cursorAlpha,
     required this.deleteMode,
     required this.slideUp,
     required this.unblur,
     required this.pop,
     required this.tilt,
-    required this.trailEnabled,
     required this.popStrength,
     required this.tiltStrength,
   });
 
   final List<_Glyph> glyphs;
+  final List<_Bit> bits;
   final TextStyle baseStyle;
   final Duration now;
   final double textPad;
   final double scrollOffset;
   final Duration letterDuration;
-  final Duration deleteDuration;
   final double slideDistance;
   final TextDirection direction;
   final TextScaler scaler;
   final Locale? locale;
   final Color cursorColor;
   final double cursorWidth;
-  final Offset cursorOffset;
-  final Rect? caretRect;
-  final List<Offset> trail;
+  final double caretTop;
+  final double caretBottom;
+  final double cursorX;
+  final double trailX;
+  final double cursorAlpha;
   final TextAnimationDelete deleteMode;
   final bool slideUp;
   final bool unblur;
   final bool pop;
   final bool tilt;
-  final bool trailEnabled;
   final int popStrength;
   final int tiltStrength;
 
+  double get _fontSize => baseStyle.fontSize ?? 15;
+
   @override
   void paint(Canvas canvas, Size size) {
+    final origin = Offset(0, textPad - scrollOffset);
+
+    // The plugin clips letters and caret to the field, then draws the flying
+    // bits outside that clip.
     canvas.save();
     canvas.clipRect(Offset.zero & size);
-    final origin = Offset(0, textPad - scrollOffset);
 
     for (final glyph in glyphs) {
       final rect = glyph.rect;
-      final cached = glyph.painter;
-      if (rect == null || cached == null) continue;
-      final elapsedMs = (now - glyph.started).inMicroseconds / 1000;
-      final p = deleteDuration.inMicroseconds == 0
-          ? 1.0
-          : ((now - glyph.started).inMicroseconds / deleteDuration.inMicroseconds).clamp(0.0, 1.0);
+      final painter = glyph.painter;
+      if (rect == null || painter == null) continue;
+
       var opacity = 1.0;
-      var dx = 0.0;
       var dy = 0.0;
+      var blurSigma = 0.0;
       var scale = 1.0;
       var rotate = 0.0;
-      var blurSigma = 0.0;
-
       if (glyph.phase == _GlyphPhase.entering) {
-        // Only the first [AppMotion.staggerLimit] letters of a batch wait;
-        // pasting a page must not take a second to finish.
-        final start = glyph.batchIndex * AppMotion.stagger.inMilliseconds;
-        final local = ((elapsedMs - start) / letterDuration.inMilliseconds).clamp(0.0, 1.0);
-        final eased = Curves.easeOut.transform(local);
-        opacity = eased;
-        if (slideUp) dy = (1 - eased) * slideDistance;
+        final p = ((now - glyph.started).inMicroseconds / letterDuration.inMicroseconds).clamp(0.0, 1.0);
+        final eased = (1 - math.pow(1 - p, 3)).toDouble();
+        final f = (pop || tilt
+                ? 1 - math.pow(1 - math.min(1, p * 2.5), 3)
+                : eased)
+            .toDouble();
+        opacity = f;
+        if (slideUp) dy = (slideDistance * (1 - eased)).toDouble();
+        if (unblur) blurSigma = (8 * (1 - f)).toDouble();
         if (pop) {
-          scale = 1 + (AppMotion.popCurve.transform(local) - 1) * (popStrength / 100) * 0.12;
+          final k = popStrength / 100;
+          final from = math.max(0.02, 1 - 0.9 * k).toDouble();
+          final u = p - 1;
+          final backOut = 1 + (4 * k + 1) * u * u * u + 4 * k * u * u;
+          scale = (from + (1 - from) * backOut).toDouble();
         }
         if (tilt) {
-          rotate = 0.7 *
-              (tiltStrength / 100) *
-              math.pow(1 - eased, 1.2).toDouble() *
-              math.cos(local * 3.5 * math.pi) *
-              (glyph.id.isEven ? 1 : -1);
-        }
-        if (unblur) blurSigma = (1 - eased) * 8;
-      } else if (glyph.phase == _GlyphPhase.exiting) {
-        opacity = 1 - p;
-        switch (deleteMode) {
-          case TextAnimationDelete.fallAway:
-            dy = p * p * 18;
-            dx = (glyph.id % 3 - 1) * p * 6;
-            scale = 1 - 0.2 * p;
-          case TextAnimationDelete.dust:
-            dy = -p * 10;
-            dx = ((glyph.id * 7) % 5 - 2) * p * 4;
-            scale = 1 - 0.6 * p;
-            rotate = p * (glyph.id.isEven ? 0.5 : -0.5);
-          case TextAnimationDelete.none:
-            opacity = 0;
+          rotate = ((-40 * math.pi / 180) *
+                  (tiltStrength / 100) *
+                  math.pow(1 - p, 1.2) *
+                  math.cos(p * 3.5 * math.pi))
+              .toDouble();
         }
       }
       if (opacity <= 0) continue;
 
-      var painter = cached;
+      var drawing = painter;
       if (opacity < 1) {
         final color = baseStyle.color ?? const Color(0xFF000000);
-        painter = TextPainter(
-          text: TextSpan(
-            text: glyph.text,
-            style: baseStyle.copyWith(color: color.withValues(alpha: opacity)),
-          ),
+        drawing = TextPainter(
+          text: TextSpan(text: glyph.text, style: baseStyle.copyWith(color: color.withValues(alpha: opacity))),
           textDirection: direction,
           textScaler: scaler,
           locale: locale,
@@ -522,48 +655,65 @@ class _GlyphPainter extends CustomPainter {
 
       final pos = rect.topLeft + origin;
       final cx = pos.dx + rect.width / 2;
-      final cy = pos.dy + rect.height / 2;
+      final cy = pos.dy + _fontSize * 0.49;
       canvas.save();
-      canvas.translate(cx + dx, cy + dy);
+      canvas.translate(cx, cy);
       if (rotate != 0) canvas.rotate(rotate);
       if (scale != 1) canvas.scale(scale, scale);
       canvas.translate(-cx, -cy);
+      canvas.translate(0, dy);
       if (blurSigma > 0) {
         canvas.saveLayer(
           rect.inflate(12).shift(pos - rect.topLeft),
           Paint()..imageFilter = ImageFilter.blur(sigmaX: blurSigma, sigmaY: blurSigma),
         );
       }
-      painter.paint(canvas, pos);
+      drawing.paint(canvas, pos);
       if (blurSigma > 0) canvas.restore();
       canvas.restore();
-      if (!identical(painter, cached)) painter.dispose();
+      if (!identical(drawing, painter)) drawing.dispose();
     }
 
-    final caret = caretRect;
-    if (caret != null) {
-      for (var i = trailEnabled ? trail.length - 1 : 0; i >= 1; i--) {
-        final fade = 1 - i / trail.length;
-        canvas.drawLine(
-          trail[i] + origin,
-          trail[i - 1] + origin,
-          Paint()
-            ..color = cursorColor.withValues(alpha: 0.25 * fade)
-            ..strokeWidth = cursorWidth * fade
-            ..strokeCap = StrokeCap.round,
-        );
-      }
-      final pulse = 0.55 + 0.45 * math.sin(now.inMilliseconds / 190);
-      canvas.drawLine(
-        Offset(cursorOffset.dx, caret.top + origin.dy),
-        Offset(cursorOffset.dx, caret.bottom + origin.dy),
-        Paint()
-          ..color = cursorColor.withValues(alpha: pulse)
-          ..strokeWidth = cursorWidth
-          ..strokeCap = StrokeCap.round,
+    if (caretBottom > caretTop && cursorAlpha > 0) {
+      final half = math.max(1.0, cursorWidth / 2);
+      final rect = Rect.fromLTRB(
+        math.min(cursorX, trailX) - half,
+        caretTop + origin.dy,
+        math.max(cursorX, trailX) + half,
+        caretBottom + origin.dy,
+      );
+      canvas.drawRRect(
+        RRect.fromRectAndRadius(rect, Radius.circular(half)),
+        Paint()..color = cursorColor.withValues(alpha: cursorAlpha),
       );
     }
     canvas.restore();
+
+    for (final bit in bits) {
+      final t = (now - bit.born).inMilliseconds / bit.life.inMilliseconds;
+      if (t >= 1) continue;
+      final alpha = (1 - t * t).clamp(0.0, 1.0).toDouble();
+      final color = bit.color.withValues(alpha: alpha);
+      final at = Offset(bit.x, bit.y) + origin;
+      if (bit.text != null) {
+        final painter = TextPainter(
+          text: TextSpan(text: bit.text, style: baseStyle.copyWith(color: color)),
+          textDirection: direction,
+          textScaler: scaler,
+          locale: locale,
+        )..layout();
+        final pivot = Offset(at.dx + painter.width / 2, at.dy - _fontSize * 0.33);
+        canvas.save();
+        canvas.translate(pivot.dx, pivot.dy);
+        canvas.rotate(bit.angle);
+        canvas.translate(-pivot.dx, -pivot.dy);
+        painter.paint(canvas, at);
+        canvas.restore();
+        painter.dispose();
+      } else {
+        canvas.drawCircle(at, bit.size * (1 - t * 0.5), Paint()..color = color);
+      }
+    }
   }
 
   @override
@@ -571,14 +721,16 @@ class _GlyphPainter extends CustomPainter {
       oldDelegate.now != now ||
       oldDelegate.scrollOffset != scrollOffset ||
       oldDelegate.textPad != textPad ||
-      oldDelegate.cursorOffset != cursorOffset ||
-      oldDelegate.caretRect != caretRect ||
-      oldDelegate.trail.length != trail.length ||
+      oldDelegate.cursorX != cursorX ||
+      oldDelegate.trailX != trailX ||
+      oldDelegate.caretTop != caretTop ||
+      oldDelegate.caretBottom != caretBottom ||
+      oldDelegate.cursorAlpha != cursorAlpha ||
+      oldDelegate.bits.length != bits.length ||
       oldDelegate.deleteMode != deleteMode ||
       oldDelegate.slideUp != slideUp ||
       oldDelegate.unblur != unblur ||
       oldDelegate.pop != pop ||
       oldDelegate.tilt != tilt ||
-      oldDelegate.trailEnabled != trailEnabled ||
       !identical(oldDelegate.glyphs, glyphs);
 }
