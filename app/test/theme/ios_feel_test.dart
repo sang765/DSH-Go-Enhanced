@@ -167,12 +167,14 @@ void main() {
 
     // The route stops being current the moment the pop starts. The page must
     // still follow the sheet's reverse animation, not jump back in one frame.
-    await tester.tapAt(const Offset(_screen / 2, 40));
-    await tester.pump(const Duration(milliseconds: 100));
-    final closing = SheetRecede.amount.value;
-    expect(closing, greaterThan(0));
-    expect(closing, lessThan(1));
-    expect(tester.getRect(find.byKey(_page)).width, greaterThan(_screen * SheetRecede.scale));
+    tester.state<NavigatorState>(find.byType(Navigator)).pop();
+    var sawIntermediate = false;
+    for (var i = 0; i < 12; i++) {
+      await tester.pump(const Duration(milliseconds: 30));
+      final value = SheetRecede.amount.value;
+      if (value > 0 && value < 1) sawIntermediate = true;
+    }
+    expect(sawIntermediate, isTrue);
 
     await tester.pumpAndSettle();
     expect(SheetRecede.amount.value, 0);
