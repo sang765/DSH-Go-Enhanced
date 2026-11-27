@@ -1,10 +1,11 @@
-// 模型设置: one custom-provider model's name, context length, max output,
-// input type and thinking efforts. Prefilled from the entry with the route's
+// 模型设置: one custom-provider model's name, context length, max output and
+// input type. Thinking levels are not declared here; the chat picker loads
+// them from the model catalog. Prefilled from the entry with the route's
 // defaults behind empty fields; writes only the engine's own fields and keeps
 // everything else of the entry; reached from the edit form (saved with it)
 // and from the detail page (saved on the spot); the model catalog is re-read
-// after a save. Geometry: quick picks and efforts line up with their field
-// and switch. Goldens: light, dark, and English.
+// after a save. Geometry: quick picks line up with their field. Goldens:
+// light, dark, and English.
 //
 //   flutter test --update-goldens test/providers/provider_model_test.dart
 
@@ -14,7 +15,7 @@ import 'package:dsh_app/ui/common/segmented_pill.dart';
 import 'package:dsh_app/ui/providers/provider_detail_page.dart';
 import 'package:dsh_app/ui/providers/provider_form_page.dart';
 import 'package:dsh_app/ui/providers/provider_model_page.dart';
-import 'package:dsh_app/ui/providers/provider_widgets.dart' show FormFieldBlock, FormFieldLabel, SelectionTick;
+import 'package:dsh_app/ui/providers/provider_widgets.dart' show FormFieldBlock, FormFieldLabel;
 import 'package:dsh_app/ui/settings/settings_widgets.dart' show SettingsMetrics;
 import 'package:dsh_app/ui/theme/glass.dart' show GlassSurface;
 import 'package:dsh_client/dsh_client.dart' show DshRemoteException, ModelCatalog, ProviderSettings;
@@ -116,23 +117,11 @@ Finder _field(String label) => find.descendant(of: _block(label), matching: find
 Finder _pick(String label, String preset) =>
     find.descendant(of: _block(label), matching: find.widgetWithText(ChoiceCapsule, preset));
 
-Finder _level(String label) => find.widgetWithText(LevelRow, label);
-
 bool _chosen(WidgetTester tester, Finder chip) => tester.widget<ChoiceCapsule>(chip).selected;
-
-/// The levels ticked, in the page's order.
-List<String> _ticked(WidgetTester tester) => [
-  for (final row in tester.widgetList<LevelRow>(find.byType(LevelRow, skipOffstage: false)))
-    if (row.checked) row.label,
-];
 
 String _text(WidgetTester tester, Finder field) => tester.widget<TextField>(field).controller!.text;
 
 String? _hint(WidgetTester tester, Finder field) => tester.widget<TextField>(field).decoration!.hintText;
-
-bool _switchOn(WidgetTester tester) => tester.widget<Switch>(find.byType(Switch)).value;
-
-Future<void> _toggleThinking(WidgetTester tester) => _tap(tester, find.byType(Switch));
 
 bool _imagesChosen(WidgetTester tester) =>
     tester.widget<SegmentedPill<bool>>(find.byType(SegmentedPill<bool>)).selected;
@@ -173,7 +162,7 @@ void main() {
   });
 
   group('page', () {
-    testWidgets('prefilled from the entry: name, counts, input type, efforts', (tester) async {
+    testWidgets('prefilled from the entry: name, counts, input type', (tester) async {
       await _open(tester, _qwen);
       expect(find.text('Qwen3 Coder'), findsWidgets);
       expect(find.text('qwen3-coder'), findsWidgets, reason: 'the id under the title, the name field\'s hint');
@@ -184,9 +173,7 @@ void main() {
       expect(_chosen(tester, _pick('上下文长度', '128K')), isFalse);
       expect(_chosen(tester, _pick('最大输出', '64K')), isTrue);
       expect(_imagesChosen(tester), isFalse);
-      expect(_switchOn(tester), isTrue);
-      expect(_ticked(tester), ['高'], reason: '不思考 is not a level to tick');
-      expect(find.text('不思考'), findsNothing);
+      expect(find.byType(Switch), findsNothing);
     });
 
     testWidgets('an entry that sets nothing shows the route defaults', (tester) async {
@@ -202,8 +189,7 @@ void main() {
       expect(_hint(tester, _field('最大输出')), '默认 8K');
       expect(_chosen(tester, _pick('上下文长度', '128K')), isFalse, reason: 'a default is not a choice');
       expect(_imagesChosen(tester), isTrue, reason: 'the route takes images');
-      expect(_switchOn(tester), isFalse);
-      expect(_level('高').hitTestable(), findsNothing, reason: 'levels fold away while thinking is off');
+      expect(find.byType(Switch), findsNothing, reason: 'thinking is not declared here');
     });
 
     testWidgets('完成 with nothing changed hands back the same entry', (tester) async {
@@ -232,10 +218,9 @@ void main() {
       await tester.pump();
       expect(_chosen(tester, _pick('最大输出', '64K')), isFalse);
       await _tap(tester, find.text('文本和图片'));
-      await _tap(tester, _level('中'));
       await _tap(tester, find.text('完成'));
       expect(opener.result!.toJson(), {
-        'reasoningEfforts': {'off': null, 'medium': 'medium', 'high': 'high'},
+        'reasoningEfforts': {'off': null, 'high': 'high'},
         'id': 'qwen3-coder',
         'name': 'Qwen Coder',
         'contextWindow': 131072,
@@ -252,56 +237,6 @@ void main() {
       await _tap(tester, find.text('完成'));
       expect(opener.result!.contextWindow, isNull);
       expect(opener.result!.maxTokens, 65536);
-    });
-
-    testWidgets('thinking on ticks 低·中·高 and offers 不思考 too; it needs one level', (tester) async {
-      final opener = await _open(tester, _bare);
-      await _toggleThinking(tester);
-      expect(_switchOn(tester), isTrue);
-      expect(_ticked(tester), ['低', '中', '高']);
-      for (final e in ['低', '中', '高']) {
-        await _tap(tester, _level(e));
-      }
-      expect(_ticked(tester), isEmpty);
-      await _tap(tester, find.text('完成'));
-      expect(find.text('至少选一个档位'), findsOneWidget);
-      expect(opener.returned, isFalse);
-
-      await _tap(tester, _level('超高'));
-      expect(find.text('至少选一个档位'), findsNothing, reason: 'a choice clears the error');
-      await _tap(tester, find.text('完成'));
-      expect(opener.result!.toJson(), {
-        'compat': {'chatTemplateKwargs': <String, Object?>{}, 'chatTemplateArgs': <String, Object?>{}},
-        'reasoningEfforts': {'off': null, 'xhigh': 'xhigh'},
-        'id': 'kimi-k2-0905',
-        'input': <String>[],
-      });
-    });
-
-    testWidgets('a model declared without 不思考 (always thinks) keeps it that way', (tester) async {
-      const always = ProviderModelSpec(
-        id: 'deepseek-reasoner',
-        extra: {
-          'reasoningEfforts': {'high': 'high', 'max': 'max'},
-        },
-      );
-      final opener = await _open(tester, always);
-      expect(_ticked(tester), ['高', '最高']);
-      await _tap(tester, _level('中'));
-      await _tap(tester, find.text('完成'));
-      expect(opener.result!.reasoningEfforts, {'medium': 'medium', 'high': 'high', 'max': 'max'});
-    });
-
-    testWidgets('thinking off drops the levels; on again brings the last ones back', (tester) async {
-      final opener = await _open(tester, _qwen);
-      await _toggleThinking(tester);
-      expect(_switchOn(tester), isFalse);
-      await _toggleThinking(tester);
-      expect(_ticked(tester), ['高']);
-      await _toggleThinking(tester);
-      await _tap(tester, find.text('完成'));
-      expect(opener.result!.toJson().containsKey('reasoningEfforts'), isFalse);
-      expect(opener.result!.thinks, isFalse);
     });
 
     testWidgets('a count that is not one stays on the page, marked', (tester) async {
@@ -334,7 +269,7 @@ void main() {
       Rect card(Finder inside) => tester.getRect(find.ancestor(of: inside, matching: find.byType(GlassSurface)).first);
 
       // Every label of the page: same style, same distance from its card.
-      const labels = ['名称', '上下文长度', '最大输出', '输入类型', '思考', '可选档位'];
+      const labels = ['名称', '上下文长度', '最大输出', '输入类型'];
       final style = tester.widget<Text>(find.text('名称')).style;
       for (final label in labels) {
         final text = find.text(label);
@@ -346,13 +281,12 @@ void main() {
         );
       }
 
-      // Fields, capsules, quick picks and the level rows: 16 from both sides.
+      // Fields, capsules and quick picks: 16 from both sides.
       final controls = [
         _field('名称'),
         _field('上下文长度'),
         _field('最大输出'),
         find.byType(SegmentedPill<bool>),
-        for (final row in ['低', '最高']) _level(row),
       ];
       for (final control in controls) {
         final rect = tester.getRect(control);
@@ -370,17 +304,6 @@ void main() {
       };
       expect(widths, hasLength(1));
 
-      // The switch's track ends on the field edge; ticks sit on the labels' edge.
-      final track = tester.getRect(find.byType(Switch)).right - FieldSwitch.trackInset;
-      expect(track, moreOrLessEquals(tester.getRect(find.byType(SegmentedPill<bool>)).right));
-      final labelLeft = tester.getRect(find.text('可选档位')).left;
-      for (final tick in tester.widgetList<SelectionTick>(find.byType(SelectionTick))) {
-        expect(tester.getRect(find.byWidget(tick)).left, labelLeft);
-      }
-      final heights = {
-        for (final row in find.byType(LevelRow).evaluate()) tester.getSize(find.byWidget(row.widget)).height,
-      };
-      expect(heights, {LevelRow.height});
     });
   });
 
@@ -400,10 +323,9 @@ void main() {
       expect(find.byType(ProviderModelPage), findsOneWidget);
       expect(find.text('完成'), findsOneWidget);
       await _tap(tester, find.text('文本和图片'));
-      await _toggleThinking(tester);
       await _tap(tester, find.text('完成'));
       expect(find.byType(ProviderModelPage), findsNothing);
-      expect(find.text('上下文 200K · 识图 · 思考'), findsOneWidget);
+      expect(find.text('上下文 200K · 识图'), findsOneWidget);
       expect(backend.callNames.where((c) => c != 'read'), isEmpty, reason: 'nothing written before 保存');
 
       await _tap(tester, find.text('保存'));
@@ -411,7 +333,6 @@ void main() {
       expect(update['models'], [
         gateway.models[0].toJson(),
         {
-          'reasoningEfforts': {'off': null, 'low': 'low', 'medium': 'medium', 'high': 'high'},
           'id': 'glm-4.6',
           'contextWindow': 200000,
           'input': ['text', 'image'],
@@ -436,17 +357,14 @@ void main() {
       expect(find.text('qwen3-coder · 上下文 256K · 思考'), findsOneWidget);
       await _tap(tester, find.text('kimi-k2-0905'));
       expect(find.text('保存'), findsOneWidget);
-      await _toggleThinking(tester);
+      await tester.enterText(_field('名称'), 'Renamed Kimi');
       await _tap(tester, find.text('保存'));
       expect(find.byType(ProviderModelPage), findsNothing);
       final update = backend.calls.lastWhere((c) => c.$1 == 'update').$2;
       expect(update.keys.toSet(), {'id', 'models', 'expectedRevision'});
       expect(update['expectedRevision'], 3);
-      expect((update['models']! as List).last, {
-        'reasoningEfforts': {'off': null, 'low': 'low', 'medium': 'medium', 'high': 'high'},
-        'id': 'kimi-k2-0905',
-      });
-      expect(find.text('思考'), findsOneWidget, reason: 'the row now says it thinks');
+      expect((update['models']! as List).last, {'id': 'kimi-k2-0905', 'name': 'Renamed Kimi'});
+      expect(find.text('Renamed Kimi'), findsOneWidget);
     });
 
     testWidgets('a save the engine refuses stays on the page and says why', (tester) async {

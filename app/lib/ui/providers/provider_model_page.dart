@@ -1,45 +1,30 @@
 // 模型设置 (a form page): one model of a custom provider — its name, how much it
-// holds (context length, max output), what it takes (text, or text and images)
-// and whether it thinks, at which efforts. These are the `llm-pi-ai` model
-// entry's own fields; an empty one falls back to the route's default. One
-// pinned button: 「完成」 hands the model back to the edit form, 「保存」 (from the
-// detail page) writes it.
+// holds (context length, max output) and what it takes (text, or text and
+// images). Thinking levels are not declared here: the chat picker loads them
+// from the model catalog when the model is chosen. These are the `llm-pi-ai`
+// model entry's own fields; an empty one falls back to the route's default.
+// One pinned button: 「完成」 hands the model back to the edit form, 「保存」 (from
+// the detail page) writes it.
 
-import 'dart:async';
 import 'dart:convert';
 import 'dart:math' as math;
 
-import 'package:flutter/foundation.dart' show setEquals;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../../l10n/l10n.dart';
 import '../../state/providers_state.dart';
-import '../chat/model_sheet.dart' show effortLabel;
 import '../common/discard_guard.dart';
-import '../common/expand_reveal.dart';
 import '../common/smooth_size.dart';
 import '../settings/settings_widgets.dart';
 import '../shell/page_frame.dart';
 import '../theme/theme.dart';
-import 'provider_widgets.dart';
 
 /// Quick picks under 「上下文长度」: the sizes models are sold in.
 const contextPresets = [32768, 65536, 131072, 200000, 262144, 1000000];
 
 /// Quick picks under 「最大输出」.
 const maxOutputPresets = [8192, 16384, 32768, 65536, 131072];
-
-/// The levels a model offers when thinking is first switched on: the common
-/// OpenAI-style trio (what the web Models page starts with too, beside off).
-const initialThinkingLevels = {'low', 'medium', 'high'};
-
-/// The levels this page lists, a multiple choice. `off` is not one of them:
-/// a model that thinks here also offers 不思考 in the chat's picker (the
-/// adapter lists only what the entry declares, so the page declares it).
-/// `minimal` (one older OpenAI model's) is not listed; an entry that
-/// declares it keeps it.
-const offeredThinkingLevels = ['low', 'medium', 'high', 'xhigh', 'max'];
 
 /// Pops with the edited [ProviderModelSpec]; null when left without saving.
 class ProviderModelPage extends StatefulWidget {
@@ -58,7 +43,7 @@ class ProviderModelPage extends StatefulWidget {
   State<ProviderModelPage> createState() => _ProviderModelPageState();
 }
 
-enum _F { context, maxOutput, effort }
+enum _F { context, maxOutput }
 
 class _ProviderModelPageState extends State<ProviderModelPage> {
   ProviderModelSpec get _model => widget.model;
@@ -74,21 +59,6 @@ class _ProviderModelPageState extends State<ProviderModelPage> {
 
   late final bool _initialImages = _model.acceptsImages(routeDefault: widget.defaults.input);
   late bool _images = _initialImages;
-
-  /// What the entry declared when the page opened, `off` included.
-  late final Set<String> _initialLevels = _model.thinks ? _model.thinkingLevels.toSet() : const {};
-  late bool _thinking = _model.thinks;
-
-  /// The levels beyond `off` the model offers. Kept while thinking is off, so
-  /// switching it back on restores them.
-  late Set<String> _levels = {..._initialLevels}..remove('off');
-
-  /// Whether the picker also offers 不思考: yes for a model set up here; one
-  /// declared elsewhere without `off` (a model that always thinks) keeps that.
-  late final bool _offersOff = !_model.thinks || _initialLevels.contains('off');
-
-  /// The `reasoningEfforts` keys to write; empty while thinking is off.
-  Set<String> get _declared => _thinking ? {if (_offersOff) 'off', ..._levels} : const {};
 
   Map<_F, String> _errors = const {};
   String? _formError;
@@ -119,7 +89,6 @@ class _ProviderModelPageState extends State<ProviderModelPage> {
       input: _images == _initialImages ? _model.input : (_images ? const ['text', 'image'] : const ['text']),
       extra: _model.extra,
     );
-    if (!setEquals(_declared, _initialLevels)) spec = spec.withReasoningEfforts(_declared);
     return spec;
   }
 
@@ -160,26 +129,12 @@ class _ProviderModelPageState extends State<ProviderModelPage> {
     _clear(_F.maxOutput);
   }
 
-  void _setThinking(bool on) {
-    setState(() {
-      _thinking = on;
-      if (on && _levels.isEmpty) _levels = {...initialThinkingLevels};
-    });
-    _clear(_F.effort);
-  }
-
-  void _toggleLevel(String level) {
-    setState(() => _levels = _levels.contains(level) ? ({..._levels}..remove(level)) : {..._levels, level});
-    _clear(_F.effort);
-  }
-
   Future<void> _submit() async {
     FocusManager.instance.primaryFocus?.unfocus();
     final l10n = context.l10n;
     final errors = <_F, String>{
       _F.context: ?tokenCountError(_contextText.text),
       _F.maxOutput: ?tokenCountError(_maxOutputText.text),
-      if (_thinking && _levels.isEmpty) _F.effort: l10n.engineModelNeedLevel,
     };
     setState(() {
       _errors = errors;
@@ -280,28 +235,6 @@ class _ProviderModelPageState extends State<ProviderModelPage> {
                         ],
                         selected: _images,
                         onChanged: _saving ? null : (v) => setState(() => _images = v),
-                      ),
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: 16),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          MergeSemantics(
-                            child: FormFieldLabel(
-                              l10n.engineModelThinking,
-                              trailing: FieldSwitch(value: _thinking, onChanged: _saving ? null : _setThinking),
-                            ),
-                          ),
-                          ExpandReveal(
-                            open: _thinking,
-                            child: _LevelList(
-                              selected: _levels,
-                              error: _errors[_F.effort],
-                              onToggle: _saving ? null : _toggleLevel,
-                            ),
-                          ),
-                        ],
                       ),
                     ),
                   ],
@@ -417,116 +350,6 @@ class _CapacityField extends StatelessWidget {
       ),
     );
   }
-}
-
-/// 「可选档位」 under the thinking switch: the levels the chat's picker will
-/// offer for this model, ticked (a multiple choice, unlike the quick picks
-/// above it). Names as in the picker.
-class _LevelList extends StatelessWidget {
-  const _LevelList({required this.selected, required this.error, required this.onToggle});
-
-  final Set<String> selected;
-  final String? error;
-  final ValueChanged<String>? onToggle;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        const SizedBox(height: 12),
-        FormFieldLabel(context.l10n.engineModelLevels),
-        const SizedBox(height: FormFieldLabel.gap),
-        for (final level in offeredThinkingLevels)
-          LevelRow(
-            label: effortLabel(level),
-            checked: selected.contains(level),
-            onTap: onToggle == null ? null : () => onToggle!(level),
-          ),
-        SmoothSize(
-          duration: AppMotion.of(context, AppMotion.standard),
-          alignment: Alignment.topLeft,
-          child: error == null
-              ? const SizedBox(width: double.infinity)
-              : Padding(
-                  padding: const EdgeInsets.fromLTRB(FormFieldLabel.indent, 6, FormFieldLabel.indent, 0),
-                  child: Semantics(
-                    liveRegion: true,
-                    child: Text(
-                      error!,
-                      style: theme.textTheme.bodySmall?.copyWith(color: DshColors.of(context).danger),
-                    ),
-                  ),
-                ),
-        ),
-      ],
-    );
-  }
-}
-
-/// One level of [_LevelList]: a tick on the labels' edge, then the name; the
-/// whole row toggles it.
-class LevelRow extends StatelessWidget {
-  const LevelRow({super.key, required this.label, required this.checked, required this.onTap});
-
-  final String label;
-  final bool checked;
-  final VoidCallback? onTap;
-
-  static const height = 44.0;
-
-  @override
-  Widget build(BuildContext context) => Semantics(
-    checked: checked,
-    enabled: onTap != null,
-    label: label,
-    excludeSemantics: true,
-    onTap: onTap,
-    child: InkWell(
-      onTap: onTap,
-      borderRadius: AppShape.radiusMd,
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(minHeight: height),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: FormFieldLabel.indent, vertical: 8),
-          child: Row(
-            children: [
-              SelectionTick(checked: checked),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Text(
-                  label,
-                  style: settingsTitleStyle(context)?.copyWith(color: Theme.of(context).colorScheme.onSurface),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    ),
-  );
-}
-
-/// A switch in a label row: its track (4 inside the switch's box) ends flush
-/// with the field's edge, like a settings row's.
-class FieldSwitch extends StatelessWidget {
-  const FieldSwitch({super.key, required this.value, required this.onChanged});
-
-  final bool value;
-  final ValueChanged<bool>? onChanged;
-
-  /// Space between the switch's box and its track, on each side.
-  static const trackInset = SettingsMetrics.inset - SettingsMetrics.trailingPad;
-
-  @override
-  Widget build(BuildContext context) => Transform.translate(
-    offset: const Offset(trackInset, 0),
-    child: SwitchTheme(
-      data: SwitchTheme.of(context).copyWith(materialTapTargetSize: MaterialTapTargetSize.shrinkWrap),
-      child: Switch.adaptive(value: value, onChanged: onChanged),
-    ),
-  );
 }
 
 /// Equal-width [ChoiceCapsule]s, [columns] to a row, 8 apart both ways. The

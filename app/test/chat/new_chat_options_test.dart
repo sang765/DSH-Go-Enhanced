@@ -267,7 +267,9 @@ void main() {
     await tester.tap(find.text('V41 Flash'));
     await pumpFrames(tester, 2);
     expect(_container(tester).read(pendingModelProvider)?.model, 'deepseek-flash');
-    await tester.tapAt(const Offset(20, 120)); // dismiss the sheet
+    await tester.tapAt(const Offset(20, 120)); // dismiss the levels sheet
+    await pumpFrames(tester, 4);
+    await tester.tapAt(const Offset(20, 120)); // dismiss the model sheet
     await pumpFrames(tester, 4);
     expect(find.descendant(of: find.byType(ModelChip), matching: find.textContaining('V41 Flash')), findsOneWidget);
 

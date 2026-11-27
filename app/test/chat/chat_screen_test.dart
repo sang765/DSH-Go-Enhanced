@@ -542,7 +542,9 @@ void main() {
       expect(pending.model, 'deepseek-flash');
       // Effort carried over because the flash model supports it.
       expect(pending.reasoningEffort, 'high');
-      await tester.tapAt(const Offset(20, 120)); // dismiss the sheet
+      await tester.tapAt(const Offset(20, 120)); // dismiss the levels sheet
+      await pumpFrames(tester, 4);
+      await tester.tapAt(const Offset(20, 120)); // dismiss the model sheet
       await pumpFrames(tester, 4);
 
       await tester.enterText(find.byType(TextField), '你好');

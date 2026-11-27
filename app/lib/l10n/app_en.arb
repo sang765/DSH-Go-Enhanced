@@ -8442,6 +8442,7 @@
   "viewScheduleSingleLabel": "Automation: {title}",
   "viewScheduleCountLabel": "{count, plural, =1{1 automation} other{{count} automations}}",
   "viewModelSelect": "Choose model",
+  "viewModelThinkingLevels": "Thinking level",
   "viewModelThinkingOff": "Off",
   "viewModelThinkingMinimal": "Minimal",
   "viewModelThinkingLow": "Low",

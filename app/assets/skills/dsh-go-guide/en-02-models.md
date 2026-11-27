@@ -1,6 +1,6 @@
 # Models and providers
 
-Use a DeepSeek account or API key, or connect any OpenAI- or Anthropic-compatible service. When the engine supports it, you can also sign in with a ChatGPT or Claude subscription. For models in custom providers, set the context, image input and thinking levels yourself.
+Use a DeepSeek account or API key, or connect any OpenAI- or Anthropic-compatible service. When the engine supports it, you can also sign in with a ChatGPT or Claude subscription. For models in custom providers, set the context and image input yourself; thinking levels come from the model catalog.
 
 Providers are stored in the current host's engine. On a remote host, you manage that host's providers.
 
@@ -9,7 +9,7 @@ Providers are stored in the current host's engine. On a remote host, you manage 
 Tap the model capsule at the top right of a chat to open **Choose model**:
 
 - With several providers, pick a provider at the top, then a model. Switching providers alone doesn't change the current model.
-- Tapping a model takes effect at once. If the model has more than one level, **Thinking effort** appears below.
+- Tapping a model takes effect at once. If the model has thinking levels, a **Thinking level** sheet opens with those levels; picking one applies it. Models with no level data have no effort choice.
 
 Typing `/model` in the composer opens it too.
 
@@ -58,7 +58,7 @@ On a custom provider's page, tap a model to adjust:
 - **Context length**: 256K by default. Pick from 32K to 1M, or type a value such as 128K.
 - **Max output**: 32K by default.
 - **Input**: **Text**, or **Text + image** for models that can view images.
-- **Thinking**: turn it on and choose **Available levels**. **Thinking effort** in chats then offers **Off** plus those levels. With Thinking off, the model has no effort choice.
+- **Thinking level** is not set here. When you pick the model in chat, the app loads the levels the catalog reports for that model and shows them in a sheet. A model with no level data has no effort choice.
 
 On the provider's page, tap **Save** to apply right away. While adding or editing a provider, tap **Done**; the changes are saved with the provider.
 

@@ -268,6 +268,18 @@ void main() {
       }
     });
 
+    testWidgets('picking a model opens its own thinking levels in a sheet', (tester) async {
+      final harness = await _openSheet(tester, _harness(testCatalog));
+      await tester.tap(find.text('V41 Flash'));
+      await pumpFrames(tester, 8);
+      expect(find.text('思考档位'), findsOneWidget);
+      expect(find.text('最高'), findsNothing, reason: 'the sheet lists only this model\'s levels');
+      await tester.tap(find.text('低').last);
+      await pumpFrames(tester, 8);
+      expect(find.text('思考档位'), findsNothing);
+      expect(_picked(tester, harness)!.reasoningEffort, 'low');
+    });
+
     testWidgets('the filter opens on the current channel and only filters', (tester) async {
       final harness = await _openSheet(
         tester,
@@ -329,6 +341,8 @@ void main() {
       await pumpFrames(tester, 6);
       expect(_picked(tester, harness)!.reasoningEffort, 'medium', reason: 'not 不思考');
       expect(tester.widget<SegmentedPill<String>>(find.byType(SegmentedPill<String>).last).selected, 'medium');
+      await tester.tap(find.text('中').last);
+      await pumpFrames(tester, 6);
 
       await tester.tap(find.text('GLM 4.6'));
       await pumpFrames(tester, 6);

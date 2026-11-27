@@ -576,6 +576,8 @@ void main() {
       await tester.pumpAndSettle();
       await tester.tap(find.byType(SheetDragHandle));
       await tester.pumpAndSettle();
+      await tester.tap(find.byType(SheetDragHandle));
+      await tester.pumpAndSettle();
 
       await tester.tap(find.text('创建'));
       await tester.pump();
