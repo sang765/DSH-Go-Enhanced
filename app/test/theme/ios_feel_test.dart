@@ -157,6 +157,30 @@ void main() {
     expect(tester.state(find.byKey(_page)), same(page));
   }, variant: TargetPlatformVariant.only(TargetPlatform.iOS));
 
+  testWidgets('closing the sheet animates the page back instead of snapping', (tester) async {
+    useScreen(tester);
+    await tester.pumpWidget(_app(fluid: true));
+    await tester.pump();
+    await tester.tap(find.byKey(_open));
+    await tester.pumpAndSettle();
+    expect(SheetRecede.amount.value, 1);
+
+    // The route stops being current the moment the pop starts. The page must
+    // still follow the sheet's reverse animation, not jump back in one frame.
+    tester.state<NavigatorState>(find.byType(Navigator)).pop();
+    var sawIntermediate = false;
+    for (var i = 0; i < 12; i++) {
+      await tester.pump(const Duration(milliseconds: 30));
+      final value = SheetRecede.amount.value;
+      if (value > 0 && value < 1) sawIntermediate = true;
+    }
+    expect(sawIntermediate, isTrue);
+
+    await tester.pumpAndSettle();
+    expect(SheetRecede.amount.value, 0);
+    expect(tester.getRect(find.byKey(_page)).width, _screen);
+  }, variant: TargetPlatformVariant.only(TargetPlatform.iOS));
+
   testWidgets('pushing a screen from a sheet brings the page back, and popping restores the recede',
       (tester) async {
     useScreen(tester);
