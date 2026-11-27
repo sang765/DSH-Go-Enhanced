@@ -1,5 +1,4 @@
 import 'package:dsh_app/tavern/tavern_settings.dart';
-import 'package:dsh_app/ui/common/app_sheet.dart';
 import 'package:dsh_app/ui/tavern/tavern_settings_page.dart';
 import 'package:dsh_app/ui/theme/theme.dart';
 import 'package:flutter/material.dart';
@@ -28,8 +27,6 @@ void main() {
 
     expect(find.text('未填'), findsOneWidget);
     await tester.tap(find.text('V4 Pro'));
-    await tester.pumpAndSettle();
-    await tester.tap(find.byType(SheetDragHandle));
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(const ValueKey('tavern-thinking')));
     await tester.pumpAndSettle();

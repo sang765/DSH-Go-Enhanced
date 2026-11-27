@@ -132,7 +132,6 @@ class _ProviderModelPageState extends State<ProviderModelPage> {
 
   Future<void> _submit() async {
     FocusManager.instance.primaryFocus?.unfocus();
-    final l10n = context.l10n;
     final errors = <_F, String>{
       _F.context: ?tokenCountError(_contextText.text),
       _F.maxOutput: ?tokenCountError(_maxOutputText.text),

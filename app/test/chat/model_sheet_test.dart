@@ -323,7 +323,7 @@ void main() {
       // Back to a model with efforts: its default comes in.
       await tester.tap(find.text('GLM 4.6'));
       await pumpFrames(tester, 6);
-      expect(find.text('思考深度'), findsOneWidget);
+      expect(find.text('思考深度'), findsNWidgets(2), reason: 'inline label plus the sheet title');
       expect(_picked(tester, harness)!.reasoningEffort, 'high');
     });
 
@@ -341,7 +341,7 @@ void main() {
       await pumpFrames(tester, 6);
       expect(_picked(tester, harness)!.reasoningEffort, 'medium', reason: 'not 不思考');
       expect(tester.widget<SegmentedPill<String>>(find.byType(SegmentedPill<String>).last).selected, 'medium');
-      await tester.tap(find.text('中').last);
+      await tester.tapAt(const Offset(20, 120)); // dismiss the levels sheet, keep the model sheet
       await pumpFrames(tester, 6);
 
       await tester.tap(find.text('GLM 4.6'));
