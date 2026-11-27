@@ -169,8 +169,10 @@ void main() {
   }
 
   test('OH bundle newer than feed removes stale cache without touching APK directory', () async {
-    final base = AppInfo.version.split('+').first;
-    device = {'versionName': base, 'versionCode': 100};
+    // A prerelease build is older than the same release, so pose the device as
+    // the release (not the -sub.N prerelease) to keep the feed behind it.
+    final release = AppInfo.version.split('+').first.split('-').first;
+    device = {'versionName': release, 'versionCode': 100};
     SharedPreferences.setMockInitialValues({'update_latest': jsonEncode(manifest())});
     final marker = File('${dir.path}/unrelated.apk');
     await marker.writeAsString('owned by neither this OH prompt nor its feed');
@@ -180,7 +182,7 @@ void main() {
     await control.ready;
     expect(c.read(appUpdateProvider).hasUpdate, isFalse);
     expect(await control.check(), UpdateCheckPhase.upToDate);
-    expect(c.read(appUpdateProvider).current.toString(), '$base+100');
+    expect(c.read(appUpdateProvider).current.toString(), '$release+100');
     expect(await marker.exists(), isTrue);
     expect(apkCalls, isEmpty);
   });
