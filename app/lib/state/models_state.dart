@@ -135,6 +135,23 @@ bool isValidModelSelection(ModelCatalog? catalog, ModelSelection? selection) {
   return effort == null || model.efforts.any((entry) => entry.id == effort);
 }
 
+/// The selection the engine can actually run. A saved effort can outlive the
+/// model's catalog entry (a route edit, an imported profile, another host);
+/// the patched engine falls back to that model's own default in that case, so
+/// callers that only stage a selection resolve it the same way instead of
+/// refusing the request. Null when the catalog cannot confirm the route.
+ModelSelection? resolvedModelSelection(ModelCatalog? catalog, ModelSelection selection) {
+  final model = findModel(catalog, selection);
+  if (model == null) return null;
+  final effort = selection.reasoningEffort;
+  if (effort == null || model.efforts.any((entry) => entry.id == effort)) return selection;
+  return ModelSelection(
+    provider: selection.provider,
+    model: selection.model,
+    reasoningEffort: startingEffort(model),
+  );
+}
+
 /// The effort [model] starts at when it is picked: the engine's own default
 /// when the model names one (DeepSeek: 高), else 中, else its lowest level
 /// that thinks, else the first. A custom provider's models name no default

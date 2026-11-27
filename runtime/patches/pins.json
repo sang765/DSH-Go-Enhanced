@@ -516,6 +516,22 @@
         }
       }
     },
+    "model-reasoning-fallback.diff": {
+      "0.2.2-rc.1": {
+        "node_modules/@deepseek-ai/dsh-llm-deepseek/lib/index.js": {
+          "after": "d26e4c99f08fda89a0a58e3a317d8f2b2ae90d020d745486c0ba0f7163ec17fc",
+          "before": "4bb17cac3768f19be0f9ea303cfdfb0ce78424003a12ab5a3179ee41b4aa0feb"
+        },
+        "node_modules/@deepseek-ai/dsh-llm-pi-ai/lib/index.js": {
+          "after": "994c033ac658031a08302b4f597646eeeadaa268f2ec13422f473849742281ea",
+          "before": "02b653506a732b54517c2de4211d8f4c26ea52481b48015bccb85712dc25dd1a"
+        },
+        "node_modules/@deepseek-ai/dsh-llm/lib/index.js": {
+          "after": "5abb059456638443ce81f3d7bfca73911cac296529c0b7c14862d0a512f1bd6d",
+          "before": "a4186aebefa4f3f918a428891c13890ffb7e7bfffa6cc2fa1f52a7e233ac1336"
+        }
+      }
+    },
     "office-converter-lazy.diff": {
       "0.2.2-rc.1": {
         "node_modules/@deepseek-ai/dsh-office-to-pdf/lib/index.js": {
@@ -551,8 +567,8 @@
     "ohos-attachment-diagnostic.diff": {
       "0.2.2-rc.1": {
         "node_modules/@deepseek-ai/dsh-llm-pi-ai/lib/index.js": {
-          "after": "e2efb75438bf2129ce48dea2ec6b2c554291aa8f9578002207113805370abb58",
-          "before": "02b653506a732b54517c2de4211d8f4c26ea52481b48015bccb85712dc25dd1a"
+          "after": "58c52dc5bf2f9387cb40fee719717e4262db19be40df5556848aeaa91f0a42aa",
+          "before": "994c033ac658031a08302b4f597646eeeadaa268f2ec13422f473849742281ea"
         }
       }
     },
@@ -699,8 +715,8 @@
     "ohos-piai-text-preabort.diff": {
       "0.2.2-rc.1": {
         "node_modules/@deepseek-ai/dsh-llm-pi-ai/lib/index.js": {
-          "after": "62dc42bdb2c5fd12f0223de24cdd8645ecbfbe0bbb8cc2de8b1cd1d6f475f478",
-          "before": "e2efb75438bf2129ce48dea2ec6b2c554291aa8f9578002207113805370abb58"
+          "after": "c8267efb545aca5a7f2845a108597c548c83aa2a5abae80ea041b2fd38bfe699",
+          "before": "58c52dc5bf2f9387cb40fee719717e4262db19be40df5556848aeaa91f0a42aa"
         }
       }
     },
@@ -3218,6 +3234,7 @@
       "ohos-client-hmr-idle.diff",
       "ohos-skill-root-events.diff",
       "ohos-piai-empty-models.diff",
+      "model-reasoning-fallback.diff",
       "projection-current-state.diff",
       "brotli-packed-dictionary.diff"
     ],
@@ -3450,6 +3467,7 @@
       "ohos-client-hmr-idle.diff",
       "ohos-skill-root-events.diff",
       "ohos-piai-empty-models.diff",
+      "model-reasoning-fallback.diff",
       "projection-current-state.diff",
       "brotli-packed-dictionary.diff",
       "ohos-attachment-publication.diff",

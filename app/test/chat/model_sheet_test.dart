@@ -210,6 +210,42 @@ void main() {
     );
   });
 
+  test('a stale saved effort resolves to the model default, not a refusal', () {
+    ModelInfo model(String id, List<ReasoningEffort> efforts, {String? defaultEffort}) =>
+        ModelInfo(provider: 'custom-mygw', id: id, name: id, efforts: efforts, defaultEffort: defaultEffort);
+    final catalog = ModelCatalog(
+      defaultSelection: const ModelSelection(provider: 'custom-mygw', model: 'with-default'),
+      routableProviders: const ['custom-mygw'],
+      groups: [
+        ProviderGroup('custom-mygw', 'My Gateway', [
+          model('with-default', const [_off, _low, _medium, _high], defaultEffort: 'high'),
+          model('no-default', const [_off, _high, _max]),
+          model('no-thinking', const [_off]),
+        ]),
+      ],
+      failures: const [],
+    );
+    const stale = ModelSelection(provider: 'custom-mygw', model: 'with-default', reasoningEffort: 'max');
+    expect(resolvedModelSelection(catalog, stale)?.reasoningEffort, 'high');
+    expect(
+      resolvedModelSelection(catalog, const ModelSelection(provider: 'custom-mygw', model: 'no-default', reasoningEffort: 'medium'))?.reasoningEffort,
+      'high',
+      reason: 'no configured default: the lowest level that thinks',
+    );
+    expect(
+      resolvedModelSelection(catalog, const ModelSelection(provider: 'custom-mygw', model: 'no-thinking', reasoningEffort: 'high'))?.reasoningEffort,
+      'off',
+    );
+    final kept = ModelSelection(provider: 'custom-mygw', model: 'with-default', reasoningEffort: 'low');
+    expect(resolvedModelSelection(catalog, kept), kept, reason: 'a supported effort is left alone');
+    expect(
+      resolvedModelSelection(catalog, const ModelSelection(provider: 'custom-mygw', model: 'with-default')),
+      isNotNull,
+      reason: 'no effort stays on the provider default',
+    );
+    expect(resolvedModelSelection(catalog, const ModelSelection(provider: 'custom-mygw', model: 'gone', reasoningEffort: 'high')), isNull);
+  });
+
   test('short names drop the DeepSeek prefix', () {
     expect(shortModelName('DeepSeek-V4-Pro'), 'V4 Pro');
     expect(shortModelName('deepseek_v41_flash'), 'V41 Flash');

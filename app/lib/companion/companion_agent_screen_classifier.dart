@@ -15,9 +15,10 @@ extension CompanionAgentScreenClassifier on CompanionAgent {
     final connection = ref.read(readListLiveConnectionProvider);
     final catalog = ref.read(currentModelCatalogProvider);
     final scope = ref.read(modelSelectionScopeProvider);
-    if (settings['vision_host'] != companionHostKey(host) ||
-        connection == null ||
-        !isValidModelSelection(catalog, selection)) {
+    // A saved effort that no longer fits the model is resolved to that model's
+    // default, as the patched engine does; only an unknown route stops capture.
+    final resolved = resolvedModelSelection(catalog, selection);
+    if (settings['vision_host'] != companionHostKey(host) || connection == null || resolved == null) {
       return null;
     }
     bool current() =>
@@ -27,7 +28,7 @@ extension CompanionAgentScreenClassifier on CompanionAgent {
         identical(connection, ref.read(readListLiveConnectionProvider)) &&
         identical(catalog, ref.read(currentModelCatalogProvider)) &&
         settings['vision_host'] == companionHostKey(ref.read(activeHostProvider));
-    return CompanionScreenVisionRoute._(connection.client, selection, current);
+    return CompanionScreenVisionRoute._(connection.client, resolved, current);
   }
 
   Future<CompanionScreenVisionRoute?> prepareScreenVision(Map<String, Object?> settings) async {
