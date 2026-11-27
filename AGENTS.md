@@ -143,7 +143,6 @@ More defense is not better. The test is one question: **will the thing this bran
 
 ## Skills and workflows
 
-- Internal PRs: follow `.agents/skills/pr` (process, templates, verification records).
 - Code review: follow `.agents/skills/review` (evidence first; only substantive problems introduced by this change).
 - Bug reports: `.agents/skills/bug`; security audit: `.agents/skills/vuln-check`; broad audit: `.agents/skills/audit`.
 
