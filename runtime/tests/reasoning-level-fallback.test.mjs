@@ -55,6 +55,8 @@ test('central call resolution falls back to a level the model offers', options, 
   const noDefault = { reasoning: { efforts: [{ id: 'off' }, { id: 'medium' }] } };
   assert.equal(resolve({ provider: 'p', model: 'm', reasoningEffort: 'max' }, noDefault).config.reasoningEffort, 'medium');
   assert.equal('reasoningEffort' in resolve({ provider: 'p', model: 'm' }, noDefault).config, false);
+  const noMedium = { reasoning: { efforts: [{ id: 'off' }, { id: 'high' }, { id: 'max' }] } };
+  assert.equal(resolve({ provider: 'p', model: 'm', reasoningEffort: 'low' }, noMedium).config.reasoningEffort, 'high');
 
   const noThinking = { reasoning: void 0 };
   assert.equal('reasoningEffort' in resolve({ provider: 'p', model: 'm', reasoningEffort: 'high' }, noThinking).config, false);
@@ -69,10 +71,11 @@ test('pi-ai derives levels from the model and uses the route default when stale'
   assert.equal(resolveReasoningLevel(model, void 0, 'high'), 'high');
   assert.equal(resolveReasoningLevel(model, 'medium', 'xhigh'), 'medium');
   assert.equal(resolveReasoningLevel({ supported: ['off', 'low'] }, 'max', 'xhigh'), 'low');
+  assert.equal(resolveReasoningLevel({ supported: ['off', 'high', 'max'] }, 'low', 'medium'), 'high');
   assert.equal(resolveReasoningLevel({ supported: ['off'] }, 'max', 'high'), void 0);
   assert.equal(resolveReasoningLevel({ supported: ['off', 'low'] }, void 0, void 0), void 0);
   assert.equal(describableReasoningLevel(model, 'high'), 'high');
-  assert.equal(describableReasoningLevel(model, 'max'), 'low');
+  assert.equal(describableReasoningLevel(model, 'max'), 'medium');
 });
 
 test('DeepSeek falls back to the route default and keeps thinking disabled off', options, () => {
