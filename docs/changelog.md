@@ -3,6 +3,23 @@
 每个版本先中文、后英文。发版时把对应版本的正文（不含版本标题）作为 Release 正文，见 `docs/release.md`。
 
 
+## 1.4.0-sub.1 · 2026-11-27
+
+### 中文
+
+- **修复:输入文字动画按参考插件重做。** 文字差异改用公共前后缀,只对真正新来的字做动画;删除不再只是淡出,而是按插件的粒子效果掉落或化屑;淡入缓动、模糊、弹出、倾斜与错开时间都对齐 `TypingFx`,光标改成圆角滑块并按弹簧速度跟随。
+- **修复:关闭底部弹层时背景后退不再瞬间跳回。** 弹层退出时路由已不算“当前”,改动后仍继续跟随它的反向动画,页面会随弹层一起恢复原尺寸。
+- **同步:合入上游的新改动。** 包括回复脚注里的解码速度、远程后台连接与状态、tawcroot 兼容等。更新检查仍按本 fork 的设定走自己的 GitHub Releases,没有改用上游的下载源。
+- **验证情况。** 全量 CI 绿灯;真机上的动画观感与流畅度仍需装上新版本确认。
+
+### English
+
+- **Fixed: the typing animation was rebuilt to match the reference plugin.** Edits are diffed by common prefix/suffix, so only newly arrived letters animate. Deleting now spawns falling glyphs or dust particles instead of a plain fade; easing, blur, pop, tilt and stagger follow `TypingFx`, and the caret is a rounded spring-driven slider.
+- **Fixed: the sheet recede no longer snaps back when a bottom sheet closes.** A popping route stops being "current" immediately, but the page now keeps following its reverse animation and returns to full size with the sheet.
+- **Synced: newer upstream changes are merged.** These include decoding speed in reply footnotes, remote background connectivity and status, and tawcroot compatibility. Update checks still use this fork's own GitHub Releases, not the upstream download sources.
+- **Testing.** Full CI is green; the animation feel and smoothness still need a check on a real device.
+
+
 ## 1.3.0-sub.8 · 2026-11-25
 
 ### 中文
