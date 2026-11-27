@@ -253,7 +253,9 @@ class AnimatedComposerTextState extends State<AnimatedComposerText> with SingleT
       }
       _selectionOffset = value.selection.baseOffset;
     });
-    if (_active || _cursorMoving) _ticker.start();
+    // Two controller notifications in one frame (text + selection, or a paste
+    // that also moves the caret) must not restart an already-running ticker.
+    if ((_active || _cursorMoving) && !_ticker.isActive) _ticker.start();
   }
 
   /// Plugin's onEdit: common prefix + common suffix, snapped to grapheme edges
