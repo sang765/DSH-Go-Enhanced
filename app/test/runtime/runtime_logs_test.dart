@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:convert';
 
 import 'package:dsh_app/runtime/runtime_bridge.dart';
 import 'package:dsh_app/runtime/runtime_state.dart';
@@ -87,7 +86,6 @@ void main() {
     }
     expect(delivered, expected);
     expect(c.read(localRuntimeLogsProvider), expected.sublist(4000));
-    debugPrintSynchronously('B6_DELIVERY_JSON ${jsonEncode(delivered)}');
   });
 
   test('snapshot cutpoint retains distinct equal text, drops overlap, and ignores late duplicate batches', () async {
