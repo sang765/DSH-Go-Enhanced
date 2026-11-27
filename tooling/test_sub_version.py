@@ -27,7 +27,7 @@ class SubVersionTest(unittest.TestCase):
 
     def test_read_pubspec_and_check(self):
         base, sub = sub_version.read_pubspec()
-        self.assertEqual(base, "1.3.0")
+        self.assertEqual(base, "1.4.0")
         self.assertGreaterEqual(sub, 1)
         sub_version.check()
 
