@@ -161,6 +161,18 @@ class AnimatedComposerTextState extends State<AnimatedComposerText> with SingleT
   @visibleForTesting
   int get activeBits => _bits.length;
 
+  /// Glyphs that have a layout box. A text painter capped at [widget.maxLines]
+  /// drops the rest of a long draft, which makes those letters vanish from the
+  /// overlay even though the transparent field below still holds them.
+  @visibleForTesting
+  int get laidOutGlyphs => _glyphs.where((g) => g.rect != null).length;
+
+  @visibleForTesting
+  double get caretTargetTop => _targetTop;
+
+  @visibleForTesting
+  double get caretTargetX => _targetX;
+
   bool get _active => activeGlyphs > 0 || _bits.isNotEmpty;
 
   bool get _cursorMoving {
@@ -380,10 +392,13 @@ class AnimatedComposerTextState extends State<AnimatedComposerText> with SingleT
     if (_width <= 0) return;
     final scaler = MediaQuery.textScalerOf(context);
     _whole?.dispose();
+    // Measure the whole draft, not just the lines that fit in the field: a
+    // capped painter has no boxes for text past maxLines, so the field scrolls
+    // to letters the overlay cannot draw. The clip + scrollOffset below decide
+    // which lines are visible, exactly like the native TextField does.
     _whole = TextPainter(
       text: TextSpan(text: _text, style: widget.style),
       textDirection: widget.textDirection,
-      maxLines: widget.maxLines,
       textScaler: scaler,
       locale: widget.locale,
     )..layout(maxWidth: _width);
@@ -416,13 +431,39 @@ class AnimatedComposerTextState extends State<AnimatedComposerText> with SingleT
     final painter = _whole;
     if (painter == null) return null;
     final safe = math.max(0, math.min(offset, _text.length));
+    final rtl = widget.textDirection == TextDirection.rtl;
+
+    // A caret right after a line break belongs to the line BELOW. The break's
+    // own box is a zero-width box at the end of the line it terminates, so
+    // using it leaves the drawn caret stranded on the previous line.
+    final last = safe > 0 ? _text.codeUnitAt(safe - 1) : 0;
+    if (last == 0x0A || last == 0x0D) {
+      if (safe < _text.length) {
+        final after = painter.getBoxesForSelection(
+          TextSelection(baseOffset: safe, extentOffset: safe + 1),
+        );
+        if (after.isNotEmpty) {
+          final box = after.first.toRect();
+          return Rect.fromLTWH(rtl ? box.right : box.left, box.top, 0, box.height);
+        }
+      }
+      // Trailing break: the caret sits at the start of the empty line below.
+      final before = painter.getBoxesForSelection(
+        TextSelection(baseOffset: safe - 1, extentOffset: safe),
+      );
+      if (before.isNotEmpty) {
+        final box = before.last.toRect();
+        return Rect.fromLTWH(rtl ? box.right : 0, box.bottom, 0, box.height);
+      }
+    }
+
     final boxes = painter.getBoxesForSelection(TextSelection.collapsed(offset: safe));
     if (boxes.isNotEmpty) return boxes.first.toRect();
     if (safe > 0) {
       final before = painter.getBoxesForSelection(TextSelection(baseOffset: safe - 1, extentOffset: safe));
       if (before.isNotEmpty) {
         final box = before.last.toRect();
-        final x = widget.textDirection == TextDirection.rtl ? box.left : box.right;
+        final x = rtl ? box.left : box.right;
         return Rect.fromLTWH(x, box.top, 0, box.height);
       }
     }
