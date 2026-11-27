@@ -3,6 +3,23 @@
 每个版本先中文、后英文。发版时把对应版本的正文（不含版本标题）作为 Release 正文，见 `docs/release.md`。
 
 
+## 1.4.0-sub.2 · 2026-11-27
+
+### 中文
+
+- **修复:输入文字动画在长文本里不再丢字。** 叠加层测量文字时不再受输入框最大行数截断,超出可见范围的内容在滚动后照常显示;光标也不会再跳回左上角。
+- **修复:按回车换行后光标跟着到新行。** 换行符自己的排版框落在上一行末尾,现在光标改用新行第一个字符的位置;末尾空行从行首起算,RTL 也落在正确的一侧。
+- **修复:同一帧内文本和选区都变化时不再重复启动动画时钟。** 粘贴或移动光标不会再触发 “A ticker was started twice”。
+- **验证情况。** 全量 CI 绿灯,代码审查没有遗留问题;真机上的长文本、换行与越南语输入法观感仍需装上新版本确认。
+
+### English
+
+- **Fixed: the typing animation no longer drops letters in long drafts.** The overlay measures the whole draft instead of stopping at the composer's maximum lines, so text past the visible rows shows up when the field scrolls and the caret no longer jumps to the top-left.
+- **Fixed: the caret follows a new line after Enter.** The line break's own box sits at the end of the old line; the caret now anchors to the first glyph of the new one, or to the line start for a trailing break, with the correct side in RTL.
+- **Fixed: text and selection changes in the same frame no longer restart the animation ticker.** Pasting or moving the caret can no longer trigger "A ticker was started twice".
+- **Testing.** Full CI is green and the code review found no remaining issues; the long-draft, newline and Vietnamese IME behavior still needs a check on a real device.
+
+
 ## 1.4.0-sub.1 · 2026-11-27
 
 ### 中文
