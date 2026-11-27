@@ -581,7 +581,7 @@ class _ModelSheetState extends ConsumerState<_ModelSheet> {
             children: [
               SheetTitleBar(catalog == null ? l10n.viewModelSelect : readListHeading(l10n.viewModelSelect, view.status)),
               body,
-              if (picking && widget.confirmSelection && !isValidModelSelection(catalog, _selection))
+              if (picking && widget.confirmSelection && _selection != null && resolvedModelSelection(catalog, _selection!) == null)
                 Padding(
                   padding: const EdgeInsets.fromLTRB(SheetTitleBar.inset, 16, SheetTitleBar.inset, 0),
                   child: Text(l10n.engineNewChatDefaultsSelectionUnavailable),
@@ -590,16 +590,19 @@ class _ModelSheetState extends ConsumerState<_ModelSheet> {
                 Padding(
                   padding: const EdgeInsets.fromLTRB(SheetTitleBar.inset, 20, SheetTitleBar.inset, 0),
                   child: FilledButton(
-                    onPressed: !active || view.readOnly || !isValidModelSelection(catalog, _selection)
+                    onPressed: !active ||
+                            view.readOnly ||
+                            _selection == null ||
+                            resolvedModelSelection(catalog, _selection!) == null
                         ? null
                         : () {
                             final currentView = ref.read(modelListViewProvider);
-                            if (!_active ||
-                                currentView.readOnly ||
-                                !isValidModelSelection(currentView.value, _selection)) {
-                              return;
-                            }
-                            widget.onSelected(_selection!);
+                            if (!_active || currentView.readOnly) return;
+                            // A level removed while the sheet was open resolves
+                            // to the model's default, as the engine does.
+                            final resolved = resolvedModelSelection(currentView.value, _selection!);
+                            if (resolved == null) return;
+                            widget.onSelected(resolved);
                             Navigator.of(context).pop();
                           },
                     child: Text(l10n.commonSave),
