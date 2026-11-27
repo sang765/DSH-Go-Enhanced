@@ -29,6 +29,7 @@ env:
   NODE_VERSION: 24.22.1
   GRADLE_VERSION: 9.3.1
   TZ: Asia/Shanghai
+  DSH_MAVEN_MIRRORS: 0 # The Aliyun mirrors are slow and unreliable from a US runner.
 
 jobs:
   apk:
