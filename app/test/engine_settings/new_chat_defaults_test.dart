@@ -337,7 +337,7 @@ void main() {
 
   testWidgets('base effort cannot be silently inherited by a non-thinking model', (tester) async {
     final host = await pumpDefaults(tester, effort: 'high');
-    await tester.tap(find.text('DeepSeek-V4.1-Flash · ${appL10n.viewModelThinkingHigh}'));
+    await tester.tap(find.text('DeepSeek-V4.1-Flash'));
     await settle(tester);
     await tester.tap(find.text('My Gateway'));
     await settle(tester);
@@ -387,7 +387,7 @@ void main() {
   });
 
   for (final removeWhileOpen in [false, true]) {
-    testWidgets('confirmation rejects ${removeWhileOpen ? 'freshly removed' : 'initially invalid'} effort', (
+    testWidgets('stale effort resolves to the model default ${removeWhileOpen ? 'after a catalog change' : 'at first read'}', (
       tester,
     ) async {
       final host = FakeSettingsHost(describe: defaultsDescribe(baseEffort: 'high'))
@@ -403,9 +403,11 @@ void main() {
       if (!removeWhileOpen) {
         await tester.tap(find.text(appL10n.engineNewChatUseFixed));
         await flush(tester);
-        expect(host.mutates(), isEmpty, reason: 'mode changes cannot rewrite an unavailable effort');
+        expect(host.mutates(), hasLength(1), reason: 'a mode change repairs the stale effort');
+        expect(host.namespaces[defaultModelSettingsNs]!.value['reasoningEffort'], 'low');
       }
-      await tester.tap(find.text('DeepSeek-V4.1-Flash · ${appL10n.viewModelThinkingHigh}'));
+      final initialEffort = removeWhileOpen ? appL10n.viewModelThinkingHigh : appL10n.viewModelThinkingLow;
+      await tester.tap(find.text('DeepSeek-V4.1-Flash · $initialEffort'));
       await settle(tester);
       if (removeWhileOpen) {
         expect(tester.widget<FilledButton>(find.widgetWithText(FilledButton, appL10n.commonSave)).onPressed, isNotNull);
@@ -421,17 +423,17 @@ void main() {
           'low',
         ]);
       }
-      expect(tester.widget<FilledButton>(find.widgetWithText(FilledButton, appL10n.commonSave)).onPressed, isNull);
-      expect(find.text(appL10n.engineNewChatDefaultsSelectionUnavailable), findsWidgets);
+      expect(tester.widget<FilledButton>(find.widgetWithText(FilledButton, appL10n.commonSave)).onPressed, isNotNull);
+      expect(find.text(appL10n.engineNewChatDefaultsSelectionUnavailable), findsNothing);
       await tester.tap(find.text(appL10n.viewModelThinkingLow));
       await settle(tester);
       expect(tester.widget<FilledButton>(find.widgetWithText(FilledButton, appL10n.commonSave)).onPressed, isNotNull);
-      expect(host.mutates(), isEmpty);
+      expect(host.mutates(), hasLength(removeWhileOpen ? 0 : 1));
       await tester.tap(find.text(appL10n.commonSave));
       await flush(tester);
-      expect(host.mutates(), hasLength(1));
+      expect(host.mutates(), hasLength(removeWhileOpen ? 1 : 2));
       expect(host.namespaces[defaultModelSettingsNs]!.value['reasoningEffort'], 'low');
-      expect(host.namespaces[defaultModelSettingsNs]!.value['rememberLastSelection'], isTrue);
+      expect(host.namespaces[defaultModelSettingsNs]!.value['rememberLastSelection'], removeWhileOpen);
     });
   }
 

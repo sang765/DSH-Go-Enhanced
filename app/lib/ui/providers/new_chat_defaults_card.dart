@@ -38,11 +38,12 @@ class _NewChatDefaultsCardState extends ConsumerState<NewChatDefaultsCard> {
       return;
     }
     if (!canEditDefaultModel(current.value!) || remember != null && !canEditDefaultModelMode(current.value!)) return;
-    if (!isValidModelSelection(ref.read(currentModelCatalogProvider), selection)) {
+    final resolved = resolvedModelSelection(ref.read(currentModelCatalogProvider), selection);
+    if (resolved == null) {
       setState(() => _error = context.l10n.engineNewChatDefaultsSelectionUnavailable);
       return;
     }
-    if (selection.reasoningEffort == null && current.value!.inheritedOf(defaultModelEffortField) != null) {
+    if (resolved.reasoningEffort == null && current.value!.inheritedOf(defaultModelEffortField) != null) {
       setState(() => _error = context.l10n.engineNewChatDefaultsInheritedEffort);
       return;
     }
@@ -54,7 +55,7 @@ class _NewChatDefaultsCardState extends ConsumerState<NewChatDefaultsCard> {
       final fields = [...defaultModelSelectionFields, if (remember != null) defaultModelRememberField];
       final ok = await editor.write(
         defaultModelSettingsNs,
-        defaultModelOps(selection, rememberLastSelection: remember),
+        defaultModelOps(resolved, rememberLastSelection: remember),
         fields: fields,
       );
       if (!mounted) return;
@@ -78,7 +79,7 @@ class _NewChatDefaultsCardState extends ConsumerState<NewChatDefaultsCard> {
       final confirmed = ref.read(engineSettingsProvider).value;
       final matches =
           confirmed != null &&
-          jsonEquals(defaultModelSelection(confirmed)?.toJson(), selection.toJson()) &&
+          jsonEquals(defaultModelSelection(confirmed)?.toJson(), resolved.toJson()) &&
           (remember == null || confirmed.valueOf(defaultModelRememberField) == remember);
       if (!matches) setState(() => _error = context.l10n.engineNewChatDefaultsUnconfirmed);
       ref.invalidate(modelCatalogProvider);
@@ -121,17 +122,21 @@ class _NewChatDefaultsCardState extends ConsumerState<NewChatDefaultsCard> {
         connection != null &&
         ref.read(engineSettingsProvider.notifier).edit(settings).active;
     final selection = active ? defaultModelSelection(settings) : null;
+    // A stale effort is shown and saved as the model's default, not as a
+    // broken selection: the engine resolves it the same way on every request.
+    final resolved = selection == null ? null : resolvedModelSelection(catalog, selection);
+    final resolvedEffort = resolved?.reasoningEffort;
     final modeSupported = active && supportsDefaultModelMode(settings);
     final remember = !modeSupported || settings.valueOf(defaultModelRememberField) != false;
     final writable = active && canEditDefaultModel(settings) && (!modeSupported || canEditDefaultModelMode(settings));
     final editable = writable && !_saving;
-    final modeEditable = editable && isValidModelSelection(catalog, selection);
+    final modeEditable = editable && resolved != null;
     final available = findModel(catalog, selection);
     final description = selection == null
         ? l10n.viewModelSelect
         : [
             available?.name ?? '${selection.provider} / ${selection.model}',
-            if (selection.reasoningEffort case final effort?) effortLabel(effort),
+            if (resolvedEffort case final effort?) effortLabel(effort),
           ].join(' · ');
     final reason = connection == null
         ? l10n.engineProvidersStartEngine
@@ -149,7 +154,7 @@ class _NewChatDefaultsCardState extends ConsumerState<NewChatDefaultsCard> {
         ? l10n.viewModelLoadFailed
         : catalog == null
         ? l10n.stateLoading
-        : selection != null && !isValidModelSelection(catalog, selection)
+        : selection != null && resolved == null
         ? l10n.engineNewChatDefaultsSelectionUnavailable
         : null;
     return Padding(
