@@ -801,7 +801,6 @@
     }
   },
   "viewModelSelect": "选择模型",
-  "viewModelThinkingLevels": "思考档位",
   "viewModelThinkingOff": "不思考",
   "viewModelThinkingMinimal": "极少",
   "viewModelThinkingLow": "低",

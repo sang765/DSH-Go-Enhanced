@@ -272,11 +272,11 @@ void main() {
       final harness = await _openSheet(tester, _harness(testCatalog));
       await tester.tap(find.text('V41 Flash'));
       await pumpFrames(tester, 8);
-      expect(find.text('思考档位'), findsOneWidget);
+      expect(find.text('思考深度'), findsNWidgets(2), reason: 'inline label plus the sheet title');
       expect(find.text('最高'), findsNothing, reason: 'the sheet lists only this model\'s levels');
       await tester.tap(find.text('低').last);
       await pumpFrames(tester, 8);
-      expect(find.text('思考档位'), findsNothing);
+      expect(find.text('思考深度'), findsNothing);
       expect(_picked(tester, harness)!.reasoningEffort, 'low');
     });
 

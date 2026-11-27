@@ -431,7 +431,7 @@ class _ThinkingSheet extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           mainAxisSize: MainAxisSize.min,
           children: [
-            SheetTitleBar(appL10n.viewModelThinkingLevels),
+            SheetTitleBar(appL10n.viewModelEffort),
             for (final effort in model.efforts)
               InkWell(
                 onTap: () => Navigator.of(context).pop(effort.id),

@@ -19,6 +19,7 @@ import '../common/smooth_size.dart';
 import '../settings/settings_widgets.dart';
 import '../shell/page_frame.dart';
 import '../theme/theme.dart';
+import 'provider_widgets.dart';
 
 /// Quick picks under 「上下文长度」: the sizes models are sold in.
 const contextPresets = [32768, 65536, 131072, 200000, 262144, 1000000];
