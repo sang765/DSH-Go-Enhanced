@@ -143,6 +143,40 @@ void main() {
     expect(state.caretTargetX, 0);
   });
 
+  testWidgets('a trailing newline in RTL anchors to the leading edge', (tester) async {
+    final input = TextEditingController();
+    addTearDown(input.dispose);
+    await tester.pumpWidget(MaterialApp(
+      home: Scaffold(
+        body: SizedBox(
+          width: 300,
+          height: 80,
+          child: AnimatedComposerText(
+            controller: input,
+            style: const TextStyle(fontSize: 15, height: 1.45, color: Color(0xFF000000)),
+            textPad: 4,
+            maxLines: 6,
+            textDirection: TextDirection.rtl,
+            cursorColor: const Color(0xFF0000FF),
+          ),
+        ),
+      ),
+    ));
+    final state = tester.state<AnimatedComposerTextState>(find.byType(AnimatedComposerText));
+
+    input.text = 'אב';
+    input.selection = const TextSelection.collapsed(offset: 2);
+    await tester.pump();
+    final firstLineTop = state.caretTargetTop;
+
+    input.text = 'אב\n';
+    input.selection = const TextSelection.collapsed(offset: 3);
+    await tester.pump();
+
+    expect(state.caretTargetTop, greaterThan(firstLineTop));
+    expect(state.caretTargetX, greaterThan(0));
+  });
+
   testWidgets('moving the selection glides the caret without animating glyphs', (tester) async {
     final input = TextEditingController(text: 'abc');
     addTearDown(input.dispose);

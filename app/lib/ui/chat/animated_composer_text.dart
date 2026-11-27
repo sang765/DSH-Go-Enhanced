@@ -455,7 +455,16 @@ class AnimatedComposerTextState extends State<AnimatedComposerText> with SingleT
       );
       if (before.isNotEmpty) {
         final box = before.last.toRect();
-        return Rect.fromLTWH(rtl ? box.right : 0, box.bottom, 0, box.height);
+        var startX = 0.0;
+        if (rtl) {
+          // The break's box is at the END of the old line (the left side in
+          // RTL). Anchor to the first glyph's leading edge instead.
+          final first = painter.getBoxesForSelection(
+            TextSelection(baseOffset: 0, extentOffset: 1),
+          );
+          if (first.isNotEmpty) startX = first.first.right;
+        }
+        return Rect.fromLTWH(startX, box.bottom, 0, box.height);
       }
     }
 
