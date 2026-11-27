@@ -413,6 +413,46 @@ class _RenderChipLabel extends RenderBox
   }
 }
 
+/// The thinking levels of one model, opened right after the model is picked.
+/// The list is the model's own catalog entry, so a model with no levels has no
+/// sheet at all.
+class _ThinkingSheet extends StatelessWidget {
+  const _ThinkingSheet({required this.model, required this.current});
+
+  final ModelInfo model;
+  final String? current;
+
+  @override
+  Widget build(BuildContext context) {
+    return SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.only(bottom: 16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            SheetTitleBar(appL10n.viewModelEffort),
+            for (final effort in model.efforts)
+              InkWell(
+                onTap: () => Navigator.of(context).pop(effort.id),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: SheetTitleBar.inset, vertical: 12),
+                  child: Row(
+                    children: [
+                      Expanded(child: Text(effortLabel(effort.id, effort.name))),
+                      if (current == effort.id)
+                        Icon(AppIcons.selected, color: Theme.of(context).colorScheme.primary),
+                    ],
+                  ),
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 /// 模型弹层:点模型卡立即生效(深度沿用或取默认);选思考深度立即生效,
 /// 滑块落位后弹层自己收起。
 Future<void> showModelSheet(
@@ -500,7 +540,29 @@ class _ModelSheetState extends ConsumerState<_ModelSheet> {
       _channel = model.provider;
       _query.clear();
     });
-    if (!widget.confirmSelection) widget.onSelected(next);
+    if (!widget.confirmSelection) {
+      widget.onSelected(next);
+      unawaited(_showLevelSheet(model, next));
+    }
+  }
+
+  /// OpenCode-style variants: picking a model brings up its own thinking levels
+  /// from the catalog, instead of a fixed list shared by every model.
+  Future<void> _showLevelSheet(ModelInfo model, ModelSelection picked) async {
+    if (model.efforts.length < 2) return;
+    final effort = await showAppSheet<String>(
+      context,
+      builder: (_) => _ThinkingSheet(model: model, current: picked.reasoningEffort),
+    );
+    if (effort == null || !mounted) return;
+    final current = _selection;
+    if (current == null || current.provider != picked.provider || current.model != picked.model) return;
+    final next = ModelSelection(provider: current.provider, model: current.model, reasoningEffort: effort);
+    setState(() => _selection = next);
+    if (!widget.confirmSelection) {
+      widget.onSelected(next);
+      Navigator.of(context).pop();
+    }
   }
 
   void _pickEffort(String effort) {

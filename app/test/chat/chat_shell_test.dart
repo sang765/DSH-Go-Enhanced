@@ -153,7 +153,7 @@ void main() {
       await tester.tap(find.text('V41 Flash'));
       await pumpFrames(tester, 2);
       expect(tester.takeException(), isNull);
-      await tester.tap(find.text('不思考'));
+      await tester.tap(find.text('不思考').last);
       await pumpFrames(tester, 6);
       expect(tester.takeException(), isNull);
       expect(find.text('思考深度'), findsNothing, reason: 'closed at once');

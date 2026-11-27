@@ -574,7 +574,9 @@ void main() {
       await tester.pumpAndSettle();
       await tester.tap(find.text('V41 Flash'));
       await tester.pumpAndSettle();
-      await tester.tap(find.byType(SheetDragHandle));
+      await tester.tap(find.byType(SheetDragHandle).last);
+      await tester.pumpAndSettle();
+      await tester.tap(find.byType(SheetDragHandle).last);
       await tester.pumpAndSettle();
 
       await tester.tap(find.text('创建'));

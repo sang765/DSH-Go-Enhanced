@@ -268,6 +268,18 @@ void main() {
       }
     });
 
+    testWidgets('picking a model opens its own thinking levels in a sheet', (tester) async {
+      final harness = await _openSheet(tester, _harness(testCatalog));
+      await tester.tap(find.text('V41 Flash'));
+      await pumpFrames(tester, 8);
+      expect(find.text('思考深度'), findsNWidgets(2), reason: 'inline label plus the sheet title');
+      expect(find.text('最高'), findsNothing, reason: 'the sheet lists only this model\'s levels');
+      await tester.tap(find.text('低').last);
+      await pumpFrames(tester, 8);
+      expect(find.text('思考深度'), findsNothing);
+      expect(_picked(tester, harness)!.reasoningEffort, 'low');
+    });
+
     testWidgets('the filter opens on the current channel and only filters', (tester) async {
       final harness = await _openSheet(
         tester,
@@ -311,7 +323,7 @@ void main() {
       // Back to a model with efforts: its default comes in.
       await tester.tap(find.text('GLM 4.6'));
       await pumpFrames(tester, 6);
-      expect(find.text('思考深度'), findsOneWidget);
+      expect(find.text('思考深度'), findsNWidgets(2), reason: 'inline label plus the sheet title');
       expect(_picked(tester, harness)!.reasoningEffort, 'high');
     });
 
@@ -329,6 +341,8 @@ void main() {
       await pumpFrames(tester, 6);
       expect(_picked(tester, harness)!.reasoningEffort, 'medium', reason: 'not 不思考');
       expect(tester.widget<SegmentedPill<String>>(find.byType(SegmentedPill<String>).last).selected, 'medium');
+      await tester.tapAt(const Offset(20, 120)); // dismiss the levels sheet, keep the model sheet
+      await pumpFrames(tester, 6);
 
       await tester.tap(find.text('GLM 4.6'));
       await pumpFrames(tester, 6);
