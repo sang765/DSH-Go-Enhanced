@@ -3,6 +3,21 @@
 每个版本先中文、后英文。发版时把对应版本的正文（不含版本标题）作为 Release 正文，见 `docs/release.md`。
 
 
+## 1.4.0-sub.5 · 2026-11-27
+
+### 中文
+
+- **调整:思考档位改为按模型加载。** 在对话里选中模型时会弹出**思考深度**面板，列出该模型自己的档位；没有档位数据的模型不再显示思考选择。
+- **调整:自定义渠道的模型设置不再勾选固定档位。** 原来那组固定的档位选项已从设置页移除，已保存的档位配置保持不变。
+- **验证情况。** 全量 CI 绿灯，包含 Flutter 分析与三个测试分片、Runtime and bridge、Android JVM、伙伴离线回放和 iOS 引擎回归；面板观感仍需装包后在真机确认。
+
+### English
+
+- **Changed: thinking levels are now loaded per model.** Picking a model in chat opens a **Thinking effort** sheet listing that model's own levels; a model with no level data offers no thinking choice.
+- **Changed: custom-provider model settings no longer offer a fixed level list.** The hardcoded checkboxes were removed from the settings page; a stored level declaration is left untouched.
+- **Testing.** Full CI is green, including Flutter analyze and all three test shards, Runtime and bridge, Android JVM, Companion memory offline replay and the iOS engine regression; the sheet still needs an on-device look with the installed build.
+
+
 ## 1.4.0-sub.4 · 2026-11-27
 
 ### 中文
