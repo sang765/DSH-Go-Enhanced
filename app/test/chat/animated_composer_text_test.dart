@@ -83,10 +83,8 @@ void main() {
   });
 
   testWidgets('the gliding cursor fades smoothly instead of blinking', (tester) async {
-    final input = TextEditingController(
-      text: 'abc',
-      selection: const TextSelection.collapsed(offset: 3),
-    );
+    final input = TextEditingController(text: 'abc');
+    input.selection = const TextSelection.collapsed(offset: 3);
     addTearDown(input.dispose);
     await tester.pumpWidget(_host(input));
     final state = tester.state<AnimatedComposerTextState>(find.byType(AnimatedComposerText));
