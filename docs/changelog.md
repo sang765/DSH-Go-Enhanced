@@ -3,6 +3,23 @@
 每个版本先中文、后英文。发版时把对应版本的正文（不含版本标题）作为 Release 正文，见 `docs/release.md`。
 
 
+## 1.4.0-sub.4 · 2026-11-27
+
+### 中文
+
+- **修复:思考档位不再因模型不支持而报错。** 引擎现在按模型自己声明的能力决定可用档位;已保存的档位在当前模型上不存在时,自动回到该模型的默认档位(渠道默认,否则最低可用的思考档),请求照常发出,不再报 `UNSUPPORTED_REASONING_EFFORT`。
+- **修复:新对话默认与伙伴识图不再被旧档位卡住。** 切换模型或模型能力变化后,这些路径会把档位解析到有效值再保存或发请求;模型选择弹层里因目录变化而失效的保存按钮也能正常确认。
+- **说明:七个档位名只是引擎的配置词汇。** 对话里可选的档位仍来自模型目录与 models.dev,按每个模型分别给出。
+- **验证情况。** 全量 CI 绿灯,包含 Runtime and bridge、Flutter 0/1/2、Android JVM、伙伴离线回放和 iOS 引擎回归;真机上的档位切换仍需装包实测。
+
+### English
+
+- **Fixed: an unsupported thinking level no longer fails the request.** The engine now derives the usable levels from the model's own metadata. A saved level the routed model does not offer falls back to that model's default (the route default, otherwise the lowest thinking level) instead of raising `UNSUPPORTED_REASONING_EFFORT`.
+- **Fixed: stale levels no longer block new-chat defaults or companion screen vision.** Those paths resolve the level to a valid one before saving or dispatching, and the model sheet's Save button stays usable when the catalog changes while it is open.
+- **Note: the seven level names remain only the engine's configuration vocabulary.** The levels offered in chat still come from the model catalog and models.dev, per model.
+- **Testing.** Full CI is green, including Runtime and bridge, Flutter 0/1/2, Android JVM, Companion memory offline replay and the iOS engine regression; switching levels still needs an on-device check with the installed build.
+
+
 ## 1.4.0-sub.3 · 2026-11-27
 
 ### 中文
