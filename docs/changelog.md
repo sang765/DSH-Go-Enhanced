@@ -3,6 +3,23 @@
 每个版本先中文、后英文。发版时把对应版本的正文（不含版本标题）作为 Release 正文，见 `docs/release.md`。
 
 
+## 1.4.0-sub.3 · 2026-11-27
+
+### 中文
+
+- **修复:输入文字动画按真实帧间隔推进。** 动画时钟此前把 `Ticker` 的累计时间当作每帧增量累加,单字动画比设置值快很多;现在改用相邻两帧的差值,速度、错开时间与粒子物理都和参考插件一致。
+- **修复:光标动画不再闪烁。** 跑快的时钟让光标的淡入淡出按错误节奏来回跳;改用真实帧间隔后,滑动光标在停稳前保持稳定的亮度。
+- **修复:连续输入时动画可以叠加。** 上一个字还没落定就输入下一个字时,不会再重置前一个字的动画;每个字都按自己的开始时间完成。
+- **验证情况。** 全量 CI 绿灯,代码审查没有遗留问题;动画速度与真机观感仍需装上新版与参考插件对比确认。
+
+### English
+
+- **Fixed: the typing animation now advances by real frame deltas.** The clock previously added `Ticker`'s cumulative elapsed time as if it were a per-frame delta, so letters finished much faster than configured. It now uses the difference between successive ticks, matching the reference plugin's speed, stagger and particle physics.
+- **Fixed: the caret no longer flickers.** The inflated clock made the caret's fade oscillate; with real deltas the gliding caret keeps a steady alpha until it settles.
+- **Fixed: animations overlap across keystrokes.** Typing a new letter before the previous one settles no longer restarts the old animation; each letter runs from its own start time.
+- **Testing.** Full CI is green with no outstanding review findings; speed and smoothness still need an on-device comparison with the reference plugin.
+
+
 ## 1.4.0-sub.2 · 2026-11-27
 
 ### 中文
