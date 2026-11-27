@@ -42,6 +42,64 @@ void main() {
     expect(state.activeBits, 0);
   });
 
+  testWidgets('glyph time advances by frame deltas, not cumulative ticker elapsed', (tester) async {
+    final input = TextEditingController();
+    addTearDown(input.dispose);
+    await tester.pumpWidget(_host(input));
+    final state = tester.state<AnimatedComposerTextState>(find.byType(AnimatedComposerText));
+
+    input.text = 'ab';
+    await tester.pump();
+    expect(state.animationClock, Duration.zero);
+
+    // Ticker reports 100/200/300 ms; the clock must advance 100 ms per frame.
+    await tester.pump(const Duration(milliseconds: 100));
+    await tester.pump(const Duration(milliseconds: 100));
+    await tester.pump(const Duration(milliseconds: 100));
+    expect(state.animationClock, const Duration(milliseconds: 300));
+    expect(state.activeGlyphs, 2);
+  });
+
+  testWidgets('a new letter does not restart letters already settling', (tester) async {
+    final input = TextEditingController();
+    addTearDown(input.dispose);
+    await tester.pumpWidget(_host(input));
+    final state = tester.state<AnimatedComposerTextState>(find.byType(AnimatedComposerText));
+
+    input.text = 'a';
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 100));
+    input.text = 'ab';
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 100));
+    await tester.pump(const Duration(milliseconds: 100));
+
+    // At 300 ms the first letter is still inside its 320 ms animation and the
+    // second has only been running 200 ms: neither may be reset or cut short.
+    expect(state.activeGlyphs, 2);
+    // The second letter settles 320 ms after its own arrival, at 420 ms.
+    await tester.pump(const Duration(milliseconds: 120));
+    expect(state.activeGlyphs, 0);
+  });
+
+  testWidgets('the gliding cursor fades smoothly instead of blinking', (tester) async {
+    final input = TextEditingController(
+      text: 'abc',
+      selection: const TextSelection.collapsed(offset: 3),
+    );
+    addTearDown(input.dispose);
+    await tester.pumpWidget(_host(input));
+    final state = tester.state<AnimatedComposerTextState>(find.byType(AnimatedComposerText));
+
+    input.selection = const TextSelection.collapsed(offset: 0);
+    await tester.pump();
+    for (var i = 0; i < 4; i++) {
+      await tester.pump(const Duration(milliseconds: 100));
+    }
+    // A 400 ms-old glide is still inside the plugin's 500 ms solid window.
+    expect(state.drawnCursorAlpha, 1);
+  });
+
   testWidgets('an edit in the middle only animates the new glyph', (tester) async {
     final input = TextEditingController(text: 'abc');
     addTearDown(input.dispose);

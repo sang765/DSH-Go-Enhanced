@@ -137,6 +137,10 @@ class AnimatedComposerTextState extends State<AnimatedComposerText> with SingleT
   final math.Random _random = math.Random();
   late final Ticker _ticker = Ticker(_tick, debugLabel: 'AnimatedComposerText');
   Duration _now = Duration.zero;
+  /// [Ticker] reports time since start(), not a per-frame delta. Keep the last
+  /// reported stamp so glyph ages, particle physics and the caret fade all use
+  /// real elapsed time, like TypingFx's SystemClock-based clock.
+  Duration _lastElapsed = Duration.zero;
   int _nextId = 0;
   String _text = '';
   double _width = 0;
@@ -172,6 +176,12 @@ class AnimatedComposerTextState extends State<AnimatedComposerText> with SingleT
 
   @visibleForTesting
   double get caretTargetX => _targetX;
+
+  @visibleForTesting
+  Duration get animationClock => _now;
+
+  @visibleForTesting
+  double get drawnCursorAlpha => _cursorAlpha;
 
   bool get _active => activeGlyphs > 0 || _bits.isNotEmpty;
 
@@ -255,7 +265,11 @@ class AnimatedComposerTextState extends State<AnimatedComposerText> with SingleT
     });
     // Two controller notifications in one frame (text + selection, or a paste
     // that also moves the caret) must not restart an already-running ticker.
-    if ((_active || _cursorMoving) && !_ticker.isActive) _ticker.start();
+    if ((_active || _cursorMoving) && !_ticker.isActive) {
+      // start() resets the ticker's elapsed stamp to zero; so must ours.
+      _lastElapsed = Duration.zero;
+      _ticker.start();
+    }
   }
 
   /// Plugin's onEdit: common prefix + common suffix, snapped to grapheme edges
@@ -328,7 +342,8 @@ class AnimatedComposerTextState extends State<AnimatedComposerText> with SingleT
       );
     }
     if (inserted.length > 1) {
-      final gap = math.min(32, 520 / inserted.length).round();
+      // Plugin: min(32, 520 / clusters) with integer division, in milliseconds.
+      final gap = math.min(32, 520 ~/ inserted.length);
       for (var i = 0; i < inserted.length; i++) {
         if (inserted[i].phase == _GlyphPhase.entering) {
           inserted[i].started = _now + Duration(milliseconds: gap * i);
@@ -504,8 +519,13 @@ class AnimatedComposerTextState extends State<AnimatedComposerText> with SingleT
   }
 
   void _tick(Duration elapsed) {
-    _now += elapsed;
-    final dt = (elapsed.inMicroseconds / 1000000).clamp(0.0, 0.032).toDouble();
+    // elapsed is cumulative since start(). Adding it directly would make the
+    // clock run quadratically fast and make the caret's fade oscillate.
+    final delta = elapsed - _lastElapsed;
+    _lastElapsed = elapsed;
+    _now += delta;
+    // Plugin ages glyphs by wall-clock time but caps the physics step at 50 ms.
+    final dt = (delta.inMicroseconds / 1000000).clamp(0.0, 0.05).toDouble();
 
     for (final glyph in _glyphs) {
       if (glyph.phase == _GlyphPhase.entering && _now >= glyph.started + widget.letterDuration) {
@@ -542,6 +562,7 @@ class AnimatedComposerTextState extends State<AnimatedComposerText> with SingleT
       _curX = _targetX;
       _curTop = _targetTop;
       _trailX = _curX;
+      _lastElapsed = Duration.zero;
       _ticker.stop();
     }
     if (mounted) setState(() {});
