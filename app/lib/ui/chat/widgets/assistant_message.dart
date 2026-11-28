@@ -232,11 +232,7 @@ class _AssistantMessageState extends State<AssistantMessage> {
             ),
           ),
         if (item.interrupted) const _InterruptedMark(),
-        if (widget.pluginCard case final card?)
-          Padding(
-            padding: const EdgeInsets.only(top: 8),
-            child: SizedBox(width: double.infinity, child: card),
-          ),
+        if (widget.pluginCard case final card?) card,
         // 一轮结束时和输入条上的胶囊同一节奏展开:胶囊收回多少,这里长出
         // 多少,回答不会先被顶上去再落回来。打开对话时已结束的轮直接展开。
         ExpandReveal(

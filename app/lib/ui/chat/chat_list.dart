@@ -16,8 +16,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../l10n/l10n.dart';
 import '../../pets/pet_signals.dart' show petHeadroomProvider;
-import '../../plugins/native/native_surface.dart' show NativeSurface, nativeTurnNoteProvider;
 import '../../plugins/native/native_model.dart';
+import '../../plugins/native/native_surface.dart' show nativeTurnNoteProvider;
 import '../../state/agents_state.dart' show hostSessionsProvider, selectConversation;
 import '../../state/app_notes.dart';
 import '../../state/artifacts.dart';
