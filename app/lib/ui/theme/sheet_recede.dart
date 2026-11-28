@@ -70,32 +70,29 @@ abstract final class SheetRecede {
   static ValueNotifier<double> coveredFor(ModalRoute<dynamic> route) =>
       _covered.putIfAbsent(route, () => ValueNotifier(0));
 
-  /// Called by an app sheet's route when the route above it changes. The lower
-  /// sheet follows the upper route's own animation so the two move together.
-  static void onNextChanged(ModalRoute<dynamic> route, Route<dynamic>? next) {
-    final notifier = coveredFor(route);
-    final previous = _coverSources.remove(route);
-    final previousListener = _coverListeners.remove(route);
-    if (previous != null && previousListener != null) previous.removeListener(previousListener);
-
-    final upper = next is ModalRoute<dynamic> ? next : null;
-    final animation = upper?.animation;
-    if (animation == null) {
-      notifier.value = 0;
-      return;
-    }
-    void sync() {
-      // On the way out the upper route stops being current before its
-      // animation unwinds; keep following it or the lower sheet jumps back.
-      if (upper!.isCurrent || animation.status == AnimationStatus.reverse) {
-        notifier.value = animation.value;
+  /// Rebinds every open sheet to the sheet pushed above it. `_routes` keeps
+  /// insertion order, so anything but the last sheet has a sheet on top and
+  /// follows that sheet's own animation up and down.
+  static void _refreshCovered() {
+    final routes = _routes.toList();
+    for (var i = 0; i < routes.length; i++) {
+      final route = routes[i];
+      final notifier = coveredFor(route);
+      final above = i + 1 < routes.length ? routes[i + 1] : null;
+      final animation = above?.animation;
+      final previous = _coverSources.remove(route);
+      final previousListener = _coverListeners.remove(route);
+      if (previous != null && previousListener != null) previous.removeListener(previousListener);
+      if (animation == null) {
+        notifier.value = 0;
+        continue;
       }
+      void sync() => notifier.value = animation.value;
+      _coverSources[route] = animation;
+      _coverListeners[route] = sync;
+      animation.addListener(sync);
+      sync();
     }
-
-    _coverSources[route] = animation;
-    _coverListeners[route] = sync;
-    animation.addListener(sync);
-    sync();
   }
 
   /// Drops every observation held for a sheet whose route is gone.
@@ -130,12 +127,18 @@ abstract final class SheetRecede {
   static void _add(ModalRoute<dynamic> route) {
     if (_routes.add(route)) route.animation?.addListener(_update);
     // A sheet comes and goes during a build, which can't rebuild the page.
-    scheduleMicrotask(_update);
+    scheduleMicrotask(() {
+      _update();
+      _refreshCovered();
+    });
   }
 
   static void _remove(ModalRoute<dynamic> route) {
     if (_routes.remove(route)) route.animation?.removeListener(_update);
-    scheduleMicrotask(_update);
+    scheduleMicrotask(() {
+      _update();
+      _refreshCovered();
+    });
   }
 }
 

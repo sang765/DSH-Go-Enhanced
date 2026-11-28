@@ -15,6 +15,7 @@ const _open = Key('open');
 const _push = Key('push');
 const _pop = Key('pop');
 const _stack = Key('stack');
+const _lowerSheet = Key('lowerSheet');
 
 const _screen = 400.0;
 const _statusBar = 59.0;
@@ -34,6 +35,7 @@ Widget _app({required bool fluid}) => MaterialApp(
             onPressed: () => showAppSheet<void>(
               context,
               builder: (_) => Column(
+                key: _lowerSheet,
                 children: [
                   const SizedBox(height: 240),
                   TextButton(
@@ -216,7 +218,7 @@ void main() {
     await tester.tap(find.byKey(_open));
     await tester.pumpAndSettle();
 
-    final lower = find.byType(SheetRecedeSheet).first;
+    final lower = find.byKey(_lowerSheet);
     expect(tester.getRect(lower).width, _screen);
 
     await tester.tap(find.byKey(_stack));
