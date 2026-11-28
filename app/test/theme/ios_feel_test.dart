@@ -34,36 +34,39 @@ Widget _app({required bool fluid}) => MaterialApp(
             key: _open,
             onPressed: () => showAppSheet<void>(
               context,
-              builder: (_) => Column(
+              builder: (_) => SizedBox(
                 key: _lowerSheet,
-                children: [
-                  const SizedBox(height: 240),
-                  TextButton(
-                    key: _stack,
-                    onPressed: () => showAppSheet<void>(
-                      context,
-                      builder: (_) => const SizedBox(height: 200),
+                width: double.infinity,
+                child: Column(
+                  children: [
+                    const SizedBox(height: 240),
+                    TextButton(
+                      key: _stack,
+                      onPressed: () => showAppSheet<void>(
+                        context,
+                        builder: (_) => const SizedBox(height: 200),
+                      ),
+                      child: const Text('stack'),
                     ),
-                    child: const Text('stack'),
-                  ),
-                  TextButton(
-                    key: _push,
-                    onPressed: () => Navigator.of(context).push(
-                      MaterialPageRoute<void>(
-                        builder: (_) => Scaffold(
-                          body: Center(
-                            child: TextButton(
-                              key: _pop,
-                              onPressed: () => Navigator.of(context).pop(),
-                              child: const Text('back'),
+                    TextButton(
+                      key: _push,
+                      onPressed: () => Navigator.of(context).push(
+                        MaterialPageRoute<void>(
+                          builder: (_) => Scaffold(
+                            body: Center(
+                              child: TextButton(
+                                key: _pop,
+                                onPressed: () => Navigator.of(context).pop(),
+                                child: const Text('back'),
+                              ),
                             ),
                           ),
                         ),
                       ),
+                      child: const Text('push'),
                     ),
-                    child: const Text('push'),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
             child: const Text('open'),
