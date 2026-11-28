@@ -872,9 +872,12 @@ class ChatController extends Notifier<ChatState> {
               final inbox = {for (final q in _transcript.inbox) ?q.requestId: q};
               _claimedAt.removeWhere((id, _) => inbox.containsKey(id));
               _withdrawn.removeAll(inbox.keys);
+              final restored = event is InboxSplicedEvent
+                  ? {for (final message in event.inserted) ?message.source.requestId}
+                  : inbox.keys.toSet();
               _pending = List.unmodifiable([
                 for (final prompt in _pending)
-                  if (prompt.failed && inbox.containsKey(prompt.requestId))
+                  if (prompt.failed && restored.contains(prompt.requestId))
                     // Keep local prompts unplaced: _placePending derives the
                     // current inbox slot, or hides it while a move is in flight.
                     prompt.placed(null, null)
@@ -1183,7 +1186,7 @@ class ChatController extends Notifier<ChatState> {
       final inbox = _inboxIds();
       _pending = List.unmodifiable(
         _pending.where(
-          (p) => !_withdrawn.contains(p.requestId) || inbox.contains(p.requestId) || _isMoving(p.requestId),
+          (p) => p.failed || !_withdrawn.contains(p.requestId) || inbox.contains(p.requestId) || _isMoving(p.requestId),
         ),
       );
       // A moving prompt's mark waits: if it never comes back, it goes then.
@@ -1791,6 +1794,32 @@ class ChatController extends Notifier<ChatState> {
     });
   }
 
+  /// A different turn may have started before cancel reached the Host. Wait
+  /// for idle, not just the first turn/end or the stop button being released.
+  Future<bool> _waitForIdleAfterStop(_ChatOperation operation) async {
+    if (!_currentOperation(operation)) return false;
+    if (!_transcript.running) return true;
+    final idle = Completer<bool>();
+    void done(bool result) {
+      if (!idle.isCompleted) idle.complete(result);
+    }
+
+    final unlisten = listenSelf((_, next) {
+      if (!_currentOperation(operation)) {
+        done(false);
+      } else if (!next.running) {
+        done(true);
+      }
+    });
+    final undispose = operation.ref.onDispose(() => done(false));
+    try {
+      return await idle.future.timeout(const Duration(seconds: 10), onTimeout: () => false);
+    } finally {
+      unlisten();
+      undispose();
+    }
+  }
+
   /// Stop just this sent prompt. Its HTTP/RPC can be in flight before its
   /// echo or inbox slot arrives. Keep this follow alive until we can identify
   /// its own slot or running turn, even if the original room has closed.
@@ -1886,7 +1915,8 @@ class ChatController extends Notifier<ChatState> {
   /// place among what else waits (「发送」 does the same for a prompt left
   /// waiting with no turn running). It is taken out of the inbox first: gone
   /// already means the agent has read it, and nothing is stopped. After the
-  /// stop it goes back, which starts the next turn, and prompts queued
+  /// old turn ends it goes back, which starts the next turn. If the stop
+  /// fails, the removed prompt stays visible for retry. Prompts queued
   /// behind it go back after it, or they would overtake it. Resolves to what
   /// could not be put back (the screen returns it to the composer).
   Future<List<PendingPrompt>> sendNow(PendingPrompt prompt) async {
@@ -1895,16 +1925,35 @@ class ChatController extends Notifier<ChatState> {
       return const [];
     }
     final operation = _ChatOperation(ref, client, _syncScope);
+    final hostScope = _approvalScope;
     final behind = [
       for (final p in _waiting().skipWhile((p) => p.requestId != prompt.requestId).skip(1))
         if (p.slot == InboxSlot.nextTurn && p.resendable) p,
     ];
     if (!await _takeOut(operation, prompt)) return const [];
     if (!_currentOperation(operation)) return _retireTaken([prompt]);
-    // Stopped or not, it goes back: a turn that goes on takes it as before.
-    if (state.running) {
-      await _stop(operation, failure: appL10n.stateChatStopFailed);
-      if (!_currentOperation(operation)) return _retireTaken([prompt]);
+    if (_transcript.running) {
+      final accepted = await _stop(operation);
+      final idle = accepted && await _waitForIdleAfterStop(operation);
+      if (!idle || !_currentOperation(operation)) {
+        // Keep the removed prompt on the same Host even if its follow changed.
+        // A replacement Host must never get the old Host's text or attachments.
+        if (ref.mounted && identical(hostScope, _approvalScope)) {
+          _finishMoving(operation, prompt.requestId);
+          final existing = _pending.where((p) => p.requestId == prompt.requestId).firstOrNull;
+          if (existing != null) {
+            _pending = List.unmodifiable([
+              for (final p in _pending) identical(p, existing) ? p.failedAt(_transcript.cursor) : p,
+            ]);
+          } else if (!_inboxIds().contains(prompt.requestId) &&
+              !_transcript.items.whereType<UserChatItem>().any((item) => item.requestId == prompt.requestId)) {
+            // A fresh follow can have already removed the local optimistic copy.
+            _pending = List.unmodifiable([..._pending, prompt.failedAt(_transcript.cursor)]);
+          }
+          state = state.copyWith(pending: _placePending(), error: appL10n.stateChatStopFailed);
+        }
+        return const [];
+      }
     }
     final moved = [prompt];
     for (final p in behind) {
