@@ -35,6 +35,7 @@ whenToUse: The user wants to add something of their own to the dsh-go phone app 
 | 不常用但要顺手的工具 | 本技能：`composer.tools`（加号面板，要较新的 App） |
 | 对整段对话做事：导出、归档 | 本技能：`session.actions`（右侧栏「信息」，要较新的 App） |
 | 每轮一眼看到的数字 | 本技能：`turn.note` + `turnNote(id)`（回合脚注，要较新的 App） |
+| 在聊天里某条回复上下画一张会更新的卡 | 本技能：`chat.views` + `chatView(id)`（锚点 `message.after` / `message.before` / `turn.after` / `composer.above` / `chat.overlay`，要较新的 App） |
 | 某个工具的结果画成卡片 | 本技能：工具 `output.presentationMeta` 返回 `{ "dsh-go/view": 视图 }`，不需要清单 |
 | 把回复读出来、开口就停、跟读字幕 | 本技能：`capabilities` + `media` / `micro` / `overlays`（见下文「声音与字幕」） |
 
@@ -95,6 +96,7 @@ whenToUse: The user wants to add something of their own to the dsh-go phone app 
 | `composer.tools` | 2 | `label` 8 字 | `id` `label` `icon?` `effect?` `panel?` `requires?` | `panel` / `effect` App 直接执行（两者只写一个）；否则 `on(id)` |
 | `session.actions` | 2 | `label` 12 字 | `id` `label` `icon?` `effect?` `requires?` | 同胶囊 |
 | `turn.note` | 1 | 每段 16 字 | `id` | 不能点；`turnNote(id, (scope, emit) => …)` 里 `emit({ 回合序号: { text, tone? } })` |
+| `chat.views` | 4 | `title` 16 字 | `id` `anchor` `title?` `icon?` `hint?` | `anchor` 五选一；`hint` 只帮 App 省流量，画不画由 `view(scope)` 决定（`null` = 不画）；视图里的点按走 `actions` / `on(id)` |
 
 App 另有全局上限：输入框上方胶囊合计 8 个、加号面板工具合计 8 个、回合尾注同时 2 个、note feed 8 条；超过的不显示。面板按钮 pending 状态的 label 不超过 16 字。
 
@@ -137,6 +139,15 @@ export function apply(ctx) {
       data: (scope, emit, caps) => { emit({ today: count() }); return () => {} },
       actions: { reset: (scope, event) => ({ toast: '已清零', patch: { today: 0 } }) },
     })
+
+    // 聊天视图：清单里声明 chat.views 的锚点，view 返回 null 就这一处不画
+    ctx.dshGo.chatView('pr-card', {
+      view: (scope) => pr(scope.messageId)
+        ? { type: 'stack', children: [{ type: 'metric', label: 'PR', value: { $: 'data.state' } }] }
+        : null,
+      data: (scope, emit) => { emit(pollPr(scope.callId)); return () => stopPoll() },
+      actions: { refresh: () => ({ toast: '已刷新' }) },
+    })
   })
 }
 ```
@@ -144,7 +155,7 @@ export function apply(ctx) {
 | 参数 | 内容 |
 |---|---|
 | `scope` | `{ sessionId?, turnId?, messageId?, callId? }`；点按时另有声明过的 `clipboard` / `draft` / `message` |
-| `event` | `{ surface, id, action?, value?, locale }`；面板点按：`action` 是视图里的动作 id，`value` 是 args（`options` → `{ value }`，`confirm` → `{ confirmed }`） |
+| `event` | `{ surface, id, action?, value?, locale }`；面板 / 聊天视图点按：`action` 是视图里的动作 id，`value` 是 args（`options` → `{ value }`，`confirm` → `{ confirmed }`） |
 | `caps` | 视图函数：`{ protocol, app, locale, surfaces, components }`；数据函数：`{ protocol, locale }` |
 
 **返回的效果**（一次 ≤ 4 个，点按后 3 秒内返回才执行）：

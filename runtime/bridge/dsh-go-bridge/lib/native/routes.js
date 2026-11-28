@@ -9,13 +9,13 @@ import { extname, sep } from "node:path";
 import { performance } from "node:perf_hooks";
 import { normalize as normalizeEffects, splitPending } from "./effects.js";
 import { ID, NEGOTIATED_PLACEMENTS, PKG, PROTOCOL, SEMVER } from "./limits.js";
-import { insidePackage, panelTitle } from "./manifest.js";
+import { chatViewTitle, insidePackage, panelTitle } from "./manifest.js";
 import { acceptUpgrade } from "./ws.js";
 import { LOCALE, call, errorText, isPlainObject, normalizeScope, toJson, utf8Bytes, viewStats, withTimeout } from "./util.js";
 
 export const STREAM_PATH = "/dsh-go/v1/stream";
 const BASE = "/dsh-go/v1/";
-const SURFACE_KEYS = { "composer.actions": "composer.actions", "message.actions": "message.actions", "composer.strip": "composer.strip", panel: "panels", "composer.tools": "composer.tools", "session.actions": "session.actions" };
+const SURFACE_KEYS = { "composer.actions": "composer.actions", "message.actions": "message.actions", "composer.strip": "composer.strip", panel: "panels", "composer.tools": "composer.tools", "session.actions": "session.actions", "chat.views": "views" };
 const CONTEXT_FOR = { "composer.actions": ["draft", "clipboard"], "composer.tools": ["draft", "clipboard"], "message.actions": ["message"] };
 const IMAGE_TYPES = { ".png": "image/png", ".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".webp": "image/webp", ".gif": "image/gif" };
 const SUB_ID = /^.{1,32}$/su;
@@ -193,13 +193,17 @@ export function createNativeRoutes(core, { beginUsage = () => () => {} } = {}) {
     if (!ID.test(id)) fail(400, "bad-request", "path must be views/<pkg>/<panel id>");
     const scope = scopeFromQuery(url.searchParams);
     const rec = pluginOrFail(pkg, caps);
-    const item = rec.parsed.items.panels.find((p) => p.id === id);
-    if (item === undefined) fail(404, "not-found", `${pkg} declares no panel ${id}`);
-    const reg = core.registration(pkg, "panels", id);
+    const item = rec.parsed.items.panels.find((p) => p.id === id)
+      ?? rec.parsed.items["chat.views"]?.find((p) => p.id === id);
+    const declared = rec.parsed.ids.get(id);
+    const isChatView = declared === "chat.views";
+    if (item === undefined || (declared !== "panels" && !isChatView)) fail(404, "not-found", `${pkg} declares no panel or chat view ${id}`);
+    const kind = isChatView ? "views" : "panels";
+    const reg = core.registration(pkg, kind, id);
     // Like invoke: a view or first data that finishes after a reload answers no-handler.
     const origin = { uid: rec.uid, stamp: rec.stamp, token: reg?.token };
     const requireCurrent = () => {
-      if (!isCurrent(pkg, "panels", id, origin)) fail(409, "no-handler", "panel registration was unloaded or changed");
+      if (!isCurrent(pkg, kind, id, origin)) fail(409, "no-handler", "view registration was unloaded or changed");
     };
     let viewJson;
     if (reg !== undefined) {
@@ -215,22 +219,28 @@ export function createNativeRoutes(core, { beginUsage = () => () => {} } = {}) {
         fail(500, "plugin-error", `view(${id}) failed`);
       }
       requireCurrent();
-      const json = isPlainObject(result) ? toJson(result) : undefined;
-      if (json === undefined) {
-        core.violation(pkg, "invalid-view", `view(${id}) is not a JSON object`);
-        fail(500, "invalid-view", `view(${id}) is not a JSON object`);
+      // A chat view may answer null for a scope it has nothing to draw; a panel's
+      // view was and remains required to be an object.
+      if (isChatView && (result === null || result === undefined)) {
+        viewJson = null;
+      } else {
+        const json = isPlainObject(result) ? toJson(result) : undefined;
+        if (json === undefined) {
+          core.violation(pkg, "invalid-view", `view(${id}) is not a JSON object`);
+          fail(500, "invalid-view", `view(${id}) is not a JSON object`);
+        }
+        if (json.bytes > L.viewBytes) {
+          core.violation(pkg, "invalid-view", `view(${id}) is ${json.bytes} bytes (max ${L.viewBytes})`);
+          fail(500, "invalid-view", `view(${id}) exceeds ${L.viewBytes} bytes`);
+        }
+        viewJson = json;
       }
-      if (json.bytes > L.viewBytes) {
-        core.violation(pkg, "invalid-view", `view(${id}) is ${json.bytes} bytes (max ${L.viewBytes})`);
-        fail(500, "invalid-view", `view(${id}) exceeds ${L.viewBytes} bytes`);
-      }
-      viewJson = json;
     } else if (item.viewFile !== undefined) {
       viewJson = await staticView(item.viewFile).finally(requireCurrent);
     } else {
       fail(409, "no-handler", `${pkg} has neither panel("${id}") nor a static view`);
     }
-    const stats = { bytes: viewJson.bytes, ...viewStats(viewJson.value) };
+    const stats = viewJson === null ? { bytes: 0, ...viewStats(null) } : { bytes: viewJson.bytes, ...viewStats(viewJson.value) };
     const issues = [];
     if (stats.nodes > L.viewNodes || stats.depth > L.viewDepth) {
       issues.push({ path: `/runtime/${id}`, code: "too-many", severity: "warn", message: `view has ${stats.nodes} nodes / depth ${stats.depth} (max ${L.viewNodes} / ${L.viewDepth}); the app truncates` });
@@ -238,8 +248,8 @@ export function createNativeRoutes(core, { beginUsage = () => () => {} } = {}) {
     let data = null;
     let rev = null;
     let live = false;
-    if (typeof reg?.def.data === "function") {
-      const feed = core.feed(pkg, id, "panel", scope, caps.locale);
+    if (viewJson !== null && typeof reg?.def.data === "function") {
+      const feed = core.feed(pkg, id, isChatView ? "view" : "panel", scope, caps.locale);
       if (feed !== undefined) {
         feed.pin();
         try {
@@ -256,7 +266,17 @@ export function createNativeRoutes(core, { beginUsage = () => () => {} } = {}) {
       }
     }
     core.success(pkg);
-    sendJson(res, 200, { v: PROTOCOL, pkg, id, title: panelTitle(item, caps.locale), view: viewJson.value, data, rev, live, stats, issues });
+    const body = {
+      v: PROTOCOL, pkg, id,
+      title: isChatView ? chatViewTitle(item, caps.locale) : panelTitle(item, caps.locale),
+      view: viewJson === null ? null : viewJson.value,
+      data, rev, live, stats, issues,
+    };
+    if (isChatView) {
+      body.anchor = item.anchor;
+      body.hint = item.hint ?? null;
+    }
+    sendJson(res, 200, body);
   }
 
   // -------------------------------------------------------------- invoke
@@ -273,11 +293,11 @@ export function createNativeRoutes(core, { beginUsage = () => () => {} } = {}) {
     if (typeof body.pkg !== "string" || !PKG.test(body.pkg)) fail(400, "bad-request", "pkg is not a package name");
     if (typeof body.id !== "string" || !ID.test(body.id)) fail(400, "bad-request", "id is not an id");
     const surfaceKey = SURFACE_KEYS[body.surface];
-    if (surfaceKey === undefined) fail(400, "bad-request", "surface must be composer.actions, message.actions, composer.strip or panel");
-    const isPanel = body.surface === "panel";
-    if (body.action !== undefined && (!isPanel || typeof body.action !== "string" || body.action.length < 1 || body.action.length > 64)) fail(400, "bad-request", "action is a 1-64 character string, panel only");
+    if (surfaceKey === undefined) fail(400, "bad-request", "surface must be a supported contribution or view");
+    const isPanel = body.surface === "panel" || body.surface === "chat.views";
+    if (body.action !== undefined && (!isPanel || typeof body.action !== "string" || body.action.length < 1 || body.action.length > 64)) fail(400, "bad-request", "action is a 1-64 character string, panel or chat.views only");
     if (body.value !== undefined) {
-      if (!isPanel) fail(400, "bad-request", "value is panel only");
+      if (!isPanel) fail(400, "bad-request", "value is panel or chat.views only");
       const json = toJson(body.value);
       if (json === undefined || json.bytes > L.invokeValueBytes) fail(413, "too-large", `value exceeds ${L.invokeValueBytes} bytes`);
     }
@@ -293,14 +313,15 @@ export function createNativeRoutes(core, { beginUsage = () => () => {} } = {}) {
     if (body.userGesture !== undefined && typeof body.userGesture !== "boolean") fail(400, "bad-request", "userGesture must be a boolean");
 
     const rec = pluginOrFail(body.pkg);
-    const item = rec.parsed.items[surfaceKey]?.find((x) => x.id === body.id);
+    const itemsKey = surfaceKey === "views" ? "chat.views" : surfaceKey;
+    const item = rec.parsed.items[itemsKey]?.find((x) => x.id === body.id);
     if (item === undefined) fail(404, "not-found", `${body.pkg} declares no ${body.surface} ${body.id}`);
     const capabilityConn = connById.get(body.stream);
     if (!(item.requires ?? []).every(x => capabilityConn?.features?.includes(x))) fail(409, "unsupported", "action requires negotiated capabilities");
     if (item.effect !== undefined) fail(409, "no-handler", `${body.id} has a static effect; the app runs it without invoke`);
-    const panel = isPanel ? core.registration(body.pkg, "panels", body.id) : undefined;
+    const panel = isPanel ? core.registration(body.pkg, surfaceKey, body.id) : undefined;
     const handler = core.registration(body.pkg, "handlers", body.id);
-    let kind = "panels", registration = panel;
+    let kind = isPanel ? surfaceKey : "panels", registration = panel;
     let fn = isPanel && body.action !== undefined ? panel?.def.actions?.[body.action] : undefined;
     if (fn == null) { kind = "handlers"; registration = handler; fn = handler?.def; }
     if (typeof fn !== "function") fail(409, "no-handler", `no handler for ${body.id}${body.action ? `/${body.action}` : ""}`);
@@ -613,10 +634,11 @@ export function createNativeRoutes(core, { beginUsage = () => () => {} } = {}) {
     if (state === "degraded") return end("degraded");
     if (state !== "ok") return end("not-native");
     const declared = rec.parsed.ids.get(msg.id);
-    if (declared !== "panels" && declared !== "composer.strip" && declared !== "turn.note") return end("not-found");
+    if (!["panels", "composer.strip", "turn.note", "chat.views"].includes(declared)) return end("not-found");
     // A turn's note belongs to a conversation.
     if (declared === "turn.note" && scope.scope.sessionId === undefined) return end("not-found");
-    const feed = core.feed(msg.pkg, msg.id, declared === "panels" ? "panel" : declared === "turn.note" ? "note" : "strip", scope, conn.locale);
+    const feedKind = { panels: "panel", "turn.note": "note", "chat.views": "view", "composer.strip": "strip" }[declared];
+    const feed = core.feed(msg.pkg, msg.id, feedKind, scope, conn.locale);
     if (feed === undefined) return end("limit");
     const sub = {
       id: msg.sub,

@@ -62,17 +62,18 @@
             "composer.strip",
             "panel",
             "composer.tools",
-            "session.actions"
+            "session.actions",
+            "chat.views"
           ]
         },
         "action": {
           "type": "string",
           "minLength": 1,
           "maxLength": 64,
-          "description": "panel only"
+          "description": "panel or chat.views only"
         },
         "value": {
-          "description": "panel only; any JSON, <= 4 KiB serialized"
+          "description": "panel or chat.views only; any JSON, <= 4 KiB serialized"
         },
         "scope": {
           "$ref": "#/$defs/scope"

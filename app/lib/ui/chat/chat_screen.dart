@@ -73,10 +73,14 @@ import '../features/session_export_page.dart';
 import '../onboarding/local_install.dart';
 import '../pets/pet_perch.dart';
 import '../pets/pet_stage.dart';
+import '../plugins/native/chat_view_slot.dart';
 import '../plugins/native/composer_strip.dart' show ComposerStripSlot;
 import '../plugins/native/native_composer_bar.dart';
-import '../plugins/native/native_taps.dart' show NativeComposerHost, NativeComposerScope, runNativeAction;
+import '../../plugins/native/native_model.dart' show NativeSurface;
+import '../plugins/native/native_taps.dart'
+    show NativeComposerHost, NativeComposerScope, runNativeAction, runNativeTap;
 import '../plugins/seats/plugin_overlay_layer.dart';
+import '../plugins/view/plugin_view.dart' show PluginActionSource;
 import '../remote/host_status.dart';
 import '../safe_mode/engine_failure_card.dart';
 import '../safe_mode/safe_mode_banner.dart';
@@ -2270,6 +2274,27 @@ class _ChatScreenState extends ConsumerState<ChatScreen> with WidgetsBindingObse
                                           ),
                                         ],
                                       ),
+                                    ),
+                                  ),
+                                // Data-driven chat views above the composer;
+                                // zero high until a plugin declares one, and
+                                // they yield to the strip while generating.
+                                if (sessionId != null && !readOnly && !running)
+                                  ChatViewSlot(
+                                    anchor: 'composer.above',
+                                    scope: DshGoScope(sessionId: sessionId),
+                                    onAction: (action, key) => runNativeTap(
+                                      context,
+                                      ref,
+                                      package: key.package,
+                                      surface: NativeSurface.chatView,
+                                      id: key.id,
+                                      scope: key.scope,
+                                      action: action.id,
+                                      value: action.args,
+                                      userGesture: action.source != PluginActionSource.change,
+                                      gestureAt: action.gestureAt,
+                                      target: key,
                                     ),
                                   ),
                                 if (readOnly)

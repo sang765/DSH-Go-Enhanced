@@ -36,7 +36,7 @@ v1 golden 仍用原基准，不因 v2 更新；v2 的浅深色、窄屏、大字
 
 ## 较新的位置
 
-`composer.tools`、`session.actions`、`turn.note`、面板 `placement: "plugin"`、`presentation: "sheet"` 在协议 v1 内增加，不改已有含义。App 在 `caps.surfaces` 里列出自己能画的；视图函数用 `hasSurface(caps, …)` 判断。
+`composer.tools`、`session.actions`、`turn.note`、`chat.views`、面板 `placement: "plugin"`、`presentation: "sheet"` 在协议 v1 内增加，不改已有含义。App 在 `caps.surfaces` 里列出自己能画的；视图函数用 `hasSurface(caps, …)` 判断。
 
 | 组合 | 结果 |
 |---|---|
@@ -44,6 +44,8 @@ v1 golden 仍用原基准，不因 v2 更新；v2 的浅深色、窄屏、大字
 | 老桥接 + 新 App | 这些键不存在，也不算错误；清单里写了新位置时老桥接记一条 `unknown-surface` |
 
 尾注的上限收紧过一次：一段对话最多跟前 8 个开着尾注的插件，第 9 个起不再显示。之前没有这个上限，排在后面的插件在前面的没占满一轮 2 个名额时也能显示。
+
+`chat.views` 五个锚点是固定 v1 集，没有新增 caps 参数；老 App 忽略未知 surface（记一条 `unknown-surface`），老桥没有 `chatView` 方法，插件用 `typeof ctx.dshGo.chatView === 'function'` 判断后再注册。聊天视图沿用面板的视图预算（32768 字节 / 120 节点 / 8 层），不新增预算档。
 
 ## NA v1.3：选择文件
 

@@ -4,7 +4,7 @@ import { readFileSync, realpathSync, statSync } from "node:fs";
 import { isAbsolute, relative, resolve, sep } from "node:path";
 import { parseCapabilities, RESOURCE_KINDS } from "./capabilities.js";
 import { validate as validateEffect } from "./effects.js";
-import { ICON, ID, LIMITS, NEGOTIATED_PLACEMENTS, PLACEMENTS, PRESENTATIONS, PROTOCOL, SEMVER, SURFACES, WANTS } from "./limits.js";
+import { ANCHORS, ICON, ID, LIMITS, NEGOTIATED_PLACEMENTS, PLACEMENTS, PRESENTATIONS, PROTOCOL, SEMVER, SURFACES, WANTS } from "./limits.js";
 import { chars, compareSemver, isPlainObject, parseText, resolveText, toJson, truncateChars, viewStats } from "./util.js";
 
 const TOP_KEYS = new Set(["v", "minApp", "title", "icon", "wants", "assets", "contributes", "capabilities"]);
@@ -16,6 +16,7 @@ const ITEM_KEYS = {
   "composer.tools": new Set(["id", "label", "icon", "effect", "panel", "requires"]),
   "session.actions": new Set(["id", "label", "icon", "effect", "requires"]),
   "turn.note": new Set(["id"]),
+  "chat.views": new Set(["id", "anchor", "title", "icon", "hint"]),
 };
 const LABEL_LIMIT = {
   "composer.actions": LIMITS.textChars.composerAction,
@@ -24,12 +25,49 @@ const LABEL_LIMIT = {
   "session.actions": LIMITS.textChars.sessionAction,
 };
 const ACTION_SURFACES = Object.keys(LABEL_LIMIT);
-// Only these four are always there. A later surface appears when a plugin declares it, so a plugin
-// that uses none of them gets exactly the row it always did.
-const baseItems = () => ({ "composer.actions": [], "message.actions": [], "composer.strip": [], panels: [] });
+// These five are always there. Other surfaces appear when a plugin declares them.
+const baseItems = () => ({ "composer.actions": [], "message.actions": [], "composer.strip": [], panels: [], "chat.views": [] });
 
 const issue = (path, code, severity, message) => ({ path, code, severity, message });
 const ptr = (...parts) => `/dshGo${parts.map((p) => `/${String(p).replaceAll("~", "~0").replaceAll("/", "~1")}`).join("")}`;
+
+/**
+ * Advisory chat-view hint: `role` (user | assistant) and up to 8 tool names of at most 64 chars.
+ * Unknown keys warn; an invalid hint is dropped on its own, leaving the item intact.
+ */
+function parseHint(raw, at, issues) {
+  if (!isPlainObject(raw)) {
+    issues.push(issue(at, "invalid-field", "error", "hint must be an object"));
+    return undefined;
+  }
+  for (const k of Object.keys(raw)) {
+    if (k !== "role" && k !== "tools") issues.push(issue(`${at}/${k}`, "unknown-field", "warn", `unknown key ${k}`));
+  }
+  const hint = {};
+  if (raw.role !== undefined) {
+    if (raw.role !== "user" && raw.role !== "assistant") {
+      issues.push(issue(`${at}/role`, "invalid-field", "error", "hint.role must be user or assistant"));
+      return undefined;
+    }
+    hint.role = raw.role;
+  }
+  if (raw.tools !== undefined) {
+    if (!Array.isArray(raw.tools) || raw.tools.length > 8) {
+      issues.push(issue(`${at}/tools`, "invalid-field", "error", "hint.tools must be an array of at most 8 names"));
+      return undefined;
+    }
+    const tools = [];
+    for (const [i, name] of raw.tools.entries()) {
+      if (typeof name !== "string" || chars(name) > 64) {
+        issues.push(issue(`${at}/tools/${i}`, "invalid-field", "error", "hint.tools entries must be strings of at most 64 characters"));
+        return undefined;
+      }
+      tools.push(name);
+    }
+    hint.tools = tools;
+  }
+  return hint;
+}
 
 /** Resolves a manifest-relative path inside the package directory, or undefined. */
 export function insidePackage(pkgDir, rel) {
@@ -154,7 +192,22 @@ export function parseManifest(pkgJson, pkgDir) {
         if (typeof raw.icon === "string" && ICON.test(raw.icon)) item.icon = raw.icon;
         else issues.push(issue(at("icon"), "invalid-field", "error", "icon must match ^[a-z][a-z0-9-]{0,31}$"));
       }
-      if (surface === "turn.note") {
+      if (surface === "chat.views") {
+        if (typeof raw.anchor !== "string" || !ANCHORS.includes(raw.anchor)) {
+          issues.push(issue(at("anchor"), "invalid-field", "error", `anchor must be one of ${ANCHORS.join(", ")}`));
+          return;
+        }
+        item.anchor = raw.anchor;
+        if (raw.title !== undefined) {
+          const title = parseText(raw.title);
+          if (title === undefined) issues.push(issue(at("title"), "invalid-field", "error", "title must be a non-empty string or locale map"));
+          else item.title = title;
+        }
+        if (raw.hint !== undefined) {
+          const hint = parseHint(raw.hint, at("hint"), issues);
+          if (hint !== undefined) item.hint = hint;
+        }
+      } else if (surface === "turn.note") {
         // Nothing to show until its data function pushes.
       } else if (ACTION_SURFACES.includes(surface)) {
         item.label = parseText(raw.label);
@@ -256,8 +309,8 @@ function placementFor(placement, caps) {
 
 /**
  * Plugin row of the contributions response. `caps`: { versions: number[], app, locale, surfaces };
- * `live`: { panels: Map id->{data:boolean}, strips: Set, handlers: Set, degraded: boolean,
- * runtimeIssues: issue[] }.
+ * `live`: { panels: Map id->{data:boolean}, views: Map id->{data:boolean}, strips: Set,
+ * handlers: Set, degraded: boolean, runtimeIssues: issue[] }.
  */
 export function renderPlugin(parsed, caps, live) {
   const issues = [...parsed.issues];
@@ -344,6 +397,20 @@ export function renderPlugin(parsed, caps, live) {
       if (!ready) issues.push(issue(itemPtr("turn.note", it), "no-handler", "warn", `${it.id} has no turnNote("${it.id}") registration`));
       (row.contributes["turn.note"] ??= []).push({ id: it.id, ready });
     });
+    parsed.items["chat.views"]?.forEach((it) => {
+      const reg = live.views?.get(it.id);
+      const ready = reg !== undefined;
+      if (!ready) issues.push(issue(itemPtr("chat.views", it), "no-handler", "warn", `${it.id} has no chatView("${it.id}") registration`));
+      (row.contributes["chat.views"] ??= []).push({
+        id: it.id,
+        anchor: it.anchor,
+        title: text(it.title, LIMITS.textChars.chatViewTitle, itemPtr("chat.views", it, "title")) ?? null,
+        ...(it.icon === undefined ? {} : { icon: it.icon }),
+        ...(it.hint === undefined ? {} : { hint: it.hint }),
+        ready,
+        live: reg?.data === true,
+      });
+    });
   }
   // v1.2 (only for plugins that declare capabilities): kept even when this app negotiated none.
   if (parsed.capabilities !== undefined) {
@@ -360,13 +427,22 @@ export function panelTitle(item, locale) {
   return chars(s) <= LIMITS.textChars.panelTitle ? s : truncateChars(s, LIMITS.textChars.panelTitle);
 }
 
+/** Resolved display title of a chat view for one locale; null when it has none. */
+export function chatViewTitle(item, locale) {
+  const s = resolveText(item.title, locale);
+  if (s === undefined) return null;
+  return chars(s) <= LIMITS.textChars.chatViewTitle ? s : truncateChars(s, LIMITS.textChars.chatViewTitle);
+}
+
 
 /**
  * Pure entry for the SDK check and test hosts (no DSH): what the bridge would publish for one
  * package.json. Static view files are read and checked like GET /views does.
  * opts: { locale = "zh", app = "999.0.0", versions = [1], surfaces = all of them,
  *         handlers = "assume" (every contribution counts as registered) | iterable of on() ids,
- *         panels / strips / dataPanels = iterables of panel() / strip() / panel-with-data ids }.
+ *         panels / strips / dataPanels = iterables of panel() / strip() / panel-with-data ids,
+ *         chatViews / dataChatViews (or views / dataViews) = iterables of chatView() /
+ *         chatView-with-data ids }.
  * Returns { state, plugin, issues } (plugin = the contributions row; issues as in §3.3), or
  * { state: "absent", plugin: null, issues: [] } when package.json has no dshGo.
  */
@@ -378,8 +454,12 @@ export function checkManifest(pkgJson, pkgDir, opts = {}) {
   const all = (surfaces) => surfaces.flatMap((k) => (parsed.items[k] ?? []).map((it) => it.id));
   const dataPanels = new Set(opts.dataPanels ?? []);
   const panelIds = assume ? all(["panels"]) : [...(opts.panels ?? [])];
+  // Without registrations every contribution is assumed ready and live, like the SDK check does.
+  const viewIds = new Set(assume ? all(["chat.views"]) : (opts.chatViews ?? opts.views ?? []));
+  const dataViews = new Set(assume ? all(["chat.views"]) : (opts.dataChatViews ?? opts.dataViews ?? []));
   const live = {
     panels: new Map(panelIds.map((id) => [id, { data: dataPanels.has(id) }])),
+    views: new Map([...viewIds].map((id) => [id, { data: dataViews.has(id) }])),
     strips: new Set(assume ? all(["composer.strip"]) : (opts.strips ?? [])),
     notes: new Set(assume ? all(["turn.note"]) : (opts.notes ?? [])),
     handlers: new Set(assume ? all([...ACTION_SURFACES, "composer.strip", "panels"]) : opts.handlers),

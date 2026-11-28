@@ -70,9 +70,12 @@ abstract final class DshGoSurfaces {
   static const sessionActions = 'session.actions';
   static const turnNote = 'turn.note';
 
+  /// Data-driven views declared for fixed chat anchors (plugin-chat-views contract).
+  static const chatView = 'chat.views';
+
   /// What an app that draws the newer places says in [DshGoCaps.surfaces]. A bridge moves a panel
   /// that asked only for [DshGoPanel.pluginPage] somewhere else for an app that doesn't list it.
-  static const all = [...v1, composerTools, sessionActions, turnNote, DshGoPanel.pluginPage];
+  static const all = [...v1, composerTools, sessionActions, turnNote, chatView, DshGoPanel.pluginPage];
 }
 
 // -----------------------------------------------------------------------------
@@ -374,6 +377,83 @@ class DshGoPanel {
   final String? micro;
 }
 
+/// A view a plugin declares for one of the fixed chat anchors (`chat.views`).
+/// [role] and [tools] come from the advisory `hint`: they let a client skip a
+/// fetch, but never decide what to draw.
+class DshGoChatView {
+  const DshGoChatView({
+    required this.id,
+    required this.anchor,
+    this.title,
+    this.icon,
+    this.role,
+    this.tools = const [],
+    this.ready = true,
+    this.live = false,
+  });
+
+  /// The v1 anchor set (plugin-chat-views contract §3.2).
+  static const anchors = {'message.after', 'message.before', 'turn.after', 'composer.above', 'chat.overlay'};
+
+  static DshGoChatView? fromJson(Object? json) {
+    final map = asMap(json);
+    final id = asString(map?['id']);
+    final anchor = asString(map?['anchor']);
+    if (map == null || id == null || id.isEmpty || anchor == null || !anchors.contains(anchor)) return null;
+    final hint = asMapOrEmpty(map['hint']);
+    final role = asString(hint['role']);
+    return DshGoChatView(
+      id: id,
+      anchor: anchor,
+      title: asString(map['title']),
+      icon: asString(map['icon']),
+      role: role == 'user' || role == 'assistant' ? role : null,
+      tools: asStringList(hint['tools']).take(8).toList(),
+      ready: asBool(map['ready']) ?? true,
+      live: asBool(map['live']) ?? false,
+    );
+  }
+
+  final String id;
+  final String anchor;
+  final String? title;
+  final String? icon;
+
+  /// `hint.role`: `user` or `assistant`; null when the plugin gave no hint.
+  final String? role;
+
+  /// `hint.tools`: tool-call names the message may contain.
+  final List<String> tools;
+  final bool ready;
+  final bool live;
+
+  @override
+  bool operator ==(Object other) =>
+      other is DshGoChatView &&
+      other.id == id &&
+      other.anchor == anchor &&
+      other.title == title &&
+      other.icon == icon &&
+      other.role == role &&
+      other.ready == ready &&
+      other.live == live &&
+      _sameStrings(other.tools, tools);
+
+  @override
+  int get hashCode => Object.hash(id, anchor, title, icon, role, ready, live, Object.hashAll(tools));
+
+  @override
+  String toString() => 'DshGoChatView($id, $anchor)';
+}
+
+bool _sameStrings(List<String> a, List<String> b) {
+  if (a.length != b.length) return false;
+  for (var i = 0; i < a.length; i++) {
+    if (a[i] != b[i]) return false;
+  }
+  return true;
+}
+
 /// One plugin's native part as the bridge read it.
 class DshGoPlugin {
   const DshGoPlugin({
@@ -391,6 +471,7 @@ class DshGoPlugin {
     this.composerTools = const [],
     this.sessionActions = const [],
     this.turnNotes = const [],
+    this.chatViews = const [],
     this.issues = const [],
     this.capabilities = const {},
     this.media = const [],
@@ -425,6 +506,7 @@ class DshGoPlugin {
         for (final item in asListOrEmpty(contributes[DshGoSurfaces.turnNote]))
           if (asMap(item) case final note? when asBool(note['ready']) ?? false) ?asString(note['id']),
       ],
+      chatViews: list(DshGoSurfaces.chatView, DshGoChatView.fromJson),
       issues: [for (final item in asListOrEmpty(map['issues'])) ?DshGoIssue.fromJson(item)],
       capabilities: asStringList(map['capabilities']).where(dshGoFeatures.contains).toSet(),
       media: list('media', dshGoResourceId).take(2).toList(),
@@ -450,6 +532,9 @@ class DshGoPlugin {
   final List<DshGoAction> composerTools;
   final List<DshGoAction> sessionActions;
   final List<String> turnNotes;
+
+  /// Chat views at declared anchors. Unknown anchors are dropped here too.
+  final List<DshGoChatView> chatViews;
 
   /// [state] is `ok`: the native part shows. Otherwise the contributions are
   /// empty and the app falls back to the web.
@@ -579,7 +664,7 @@ class DshGoInvocation {
   /// The contribution's id (the panel's id for a tap inside a panel).
   final String id;
 
-  /// `composer.actions`, `message.actions`, `composer.strip`, `panel`.
+  /// `composer.actions`, `message.actions`, `composer.strip`, `panel`, `chat.views`.
   final String surface;
 
   /// A panel control's action name.

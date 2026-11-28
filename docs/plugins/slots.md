@@ -121,6 +121,9 @@ export function apply(ctx) {
 | `composer.tools` | 输入框加号面板，和附件磁贴同一网格 | `id`、`label`、`icon?`、`effect?`、`panel?`、`requires?` | 2（整个面板最多 8 个） | `label` 8 字 | `panel` 或 `effect` 由 App 直接执行；都没有就 invoke `on(id)`。`panel` 和 `effect` 只能写一个 |
 | `session.actions` | 右侧栏「信息」的操作行，右侧显示插件名 | `id`、`label`、`icon?`、`effect?`、`requires?` | 2 | `label` 12 字 | 同胶囊，`scope` 带 `sessionId` |
 | `turn.note` | 每轮回合脚注的末尾 | `id` | 1（每轮最多显示 2 个插件） | 每段 16 字 | 不能点；点脚注仍是打开轨迹 |
+| `chat.views` | 聊天里的锚点：回复上/下、回合尾、输入框上、聊天浮层 | `id`、`anchor`（必填）、`title?`、`icon?`、`hint?` | 4 | `title` 16 字 | 视图里的按钮 / 行走 `actions`，再退回 `on(id)` |
+
+**聊天视图**用 `chatView(id, { view, data, actions })` 注册，适合在聊天里画会更新的卡片。`anchor` 取 `message.after`、`message.before`、`turn.after`、`composer.above`、`chat.overlay` 之一；`view(scope, caps)` 返回视图或 `null`（`null` = 这一处不画）。`hint: { role?, tools? }` 只让 App 少拉几次视图，画不画始终由插件决定。订阅 scope 带 `sessionId`，锚点需要的 `messageId` / `turnId` 由 App 补上。旧桥没有 `chatView`，先判断 `typeof ctx.dshGo.chatView === 'function'`。
 
 ```jsonc
 "contributes": {

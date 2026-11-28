@@ -16,6 +16,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../l10n/l10n.dart';
 import '../../pets/pet_signals.dart' show petHeadroomProvider;
+import '../../plugins/native/native_model.dart' show NativeSurface;
 import '../../plugins/native/native_surface.dart' show nativeTurnNoteProvider;
 import '../../state/agents_state.dart' show hostSessionsProvider, selectConversation;
 import '../../state/app_notes.dart';
@@ -33,6 +34,9 @@ import '../../state/settings_state.dart';
 import '../common/app_dialog.dart';
 import '../common/bleed.dart';
 import '../common/ui_trace.dart';
+import '../plugins/native/chat_view_slot.dart';
+import '../plugins/native/native_taps.dart' show runNativeTap;
+import '../plugins/view/plugin_view.dart' show PluginActionSource;
 import '../pets/pet_perch.dart';
 import '../theme/app_icons.dart';
 import '../theme/theme.dart';
@@ -1099,6 +1103,16 @@ class _ChatListState extends ConsumerState<ChatList> with SingleTickerProviderSt
                 bottom: widget.bottomInset + 12,
                 child: _jumpButton(s),
               ),
+              // Floating over the reading column, clipped to the chat area
+              // this Stack already occupies (between the bar and composer).
+              Positioned.fill(
+                child: ClipRect(
+                  child: Align(
+                    alignment: Alignment.topCenter,
+                    child: _chatViewSlot('chat.overlay', DshGoScope(sessionId: widget.sessionId)),
+                  ),
+                ),
+              ),
             ],
           );
         },
@@ -1327,6 +1341,8 @@ class _ChatListState extends ConsumerState<ChatList> with SingleTickerProviderSt
       onRegenerate: prompt == null ? null : () => _regenerate(item, prompt),
       regenerating: _regeneratingId == item.id,
       onQuote: widget.onQuote == null ? null : _quote,
+      chatViewBefore: _messageChatViewSlot('message.before', item, footnote?.turn),
+      chatViewAfter: _messageChatViewSlot('message.after', item, footnote?.turn),
       footnote: footnote == null ? null : _footnote(footnote),
     );
     // Always in a scope, so a reply that grows a visual block keeps its
@@ -1350,11 +1366,54 @@ class _ChatListState extends ConsumerState<ChatList> with SingleTickerProviderSt
     );
   }
 
+  /// One anchor's chat views, with this screen's tap handling. The lambda's
+  /// parameters are inferred from [ChatViewSlot.onAction].
+  Widget _chatViewSlot(String anchor, DshGoScope scope, {Key? slotKey, String? role, EdgeInsetsGeometry? childPadding}) => ChatViewSlot(
+    key: slotKey,
+    anchor: anchor,
+    scope: scope,
+    role: role,
+    childPadding: childPadding ?? const EdgeInsets.only(top: 8),
+    onAction: (action, key) => runNativeTap(
+      context,
+      ref,
+      package: key.package,
+      surface: NativeSurface.chatView,
+      id: key.id,
+      scope: key.scope,
+      action: action.id,
+      value: action.args,
+      userGesture: action.source != PluginActionSource.change,
+      gestureAt: action.gestureAt,
+      target: key,
+    ),
+  );
+
+  /// Message anchors need a durable turn and message; a streaming draft has
+  /// neither, so it never starts a fetch.
+  Widget? _messageChatViewSlot(String anchor, AssistantChatItem item, int? turn) {
+    if (item.streaming || item.seq == null || turn == null) return null;
+    return _chatViewSlot(
+      anchor,
+      DshGoScope(sessionId: widget.sessionId, turnId: '$turn', messageId: item.id),
+      role: 'assistant',
+      childPadding: anchor == 'message.before' ? const EdgeInsets.only(bottom: 8) : const EdgeInsets.only(top: 8),
+      slotKey: ValueKey('chat-view|$anchor|${item.seq}'),
+    );
+  }
+
   Widget _footnote(TurnTrace trace) => Consumer(
-    builder: (context, ref, _) => TurnFootnote(
-      trace: trace,
-      notes: ref.watch(nativeTurnNoteProvider((widget.sessionId, trace.turn))),
-      onTap: () => showTrajectorySheet(context, sessionId: widget.sessionId, turn: trace.turn),
+    builder: (context, ref, _) => Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        TurnFootnote(
+          trace: trace,
+          notes: ref.watch(nativeTurnNoteProvider((widget.sessionId, trace.turn))),
+          onTap: () => showTrajectorySheet(context, sessionId: widget.sessionId, turn: trace.turn),
+        ),
+        _chatViewSlot('turn.after', DshGoScope(sessionId: widget.sessionId, turnId: '${trace.turn}')),
+      ],
     ),
   );
 

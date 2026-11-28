@@ -105,7 +105,7 @@ test("presentation: sheet is kept, anything else is an error and stays a page", 
 });
 
 test("a plugin using none of them gets the row it always did; one using them gets only those", () => {
-  const base = ["composer.actions", "message.actions", "composer.strip", "panels"];
+  const base = ["composer.actions", "message.actions", "composer.strip", "panels", "chat.views"];
   const old = check("old", { "composer.actions": [{ id: "a", label: "A" }] });
   assert.deepEqual(Object.keys(old.plugin.contributes), base);
   const some = check("some", { "session.actions": [{ id: "a", label: "A" }] });

@@ -26,7 +26,7 @@ export type JsonValue = string | number | boolean | null | JsonValue[] | { [key:
 export type { View, ViewNode, ViewBinding as Binding, Manifest, ContributionsIssue as Issue }
 export type Effect = InvokeEffect
 export type StaticEffect = InvokeStaticEffect
-export type Surface = 'composer.actions' | 'message.actions' | 'composer.strip' | 'panels' | 'composer.tools' | 'session.actions' | 'turn.note'
+export type Surface = 'composer.actions' | 'message.actions' | 'composer.strip' | 'panels' | 'composer.tools' | 'session.actions' | 'turn.note' | 'chat.views'
 export type Component = ViewNode['type']
 export type Tone = Exclude<ViewTone, ViewBinding>
 export type Icon = Exclude<ViewIcon, ViewBinding>
@@ -63,7 +63,7 @@ export interface Caps {
 export type FileSelection = InvokeFileSelection
 
 export interface InvokeEvent {
-  surface: 'composer.actions' | 'message.actions' | 'composer.strip' | 'panel' | 'composer.tools' | 'session.actions'
+  surface: 'composer.actions' | 'message.actions' | 'composer.strip' | 'panel' | 'composer.tools' | 'session.actions' | 'chat.views'
   /** Contribution id (the panel id for taps inside a panel). */
   id: string
   /** Panel taps: the view's action id (button, list row, options, confirm). */
@@ -124,6 +124,13 @@ export interface PanelDefinition<D = Record<string, unknown>> {
   actions?: Record<string, InvokeHandler>
 }
 
+/** A live view mounted in chat at one of the fixed anchors. `null` means "draw nothing here". */
+export interface ChatViewDefinition<D = Record<string, unknown>> {
+  view: View | null | ((scope: Scope, caps: Caps) => View | null | Promise<View | null>)
+  data?: DataFunction<D>
+  actions?: Record<string, InvokeHandler>
+}
+
 /** The `dshGo` service the bridge provides; only inside `ctx.inject(['dshGo'], …)`. */
 export interface DshGoService {
   readonly v: 1
@@ -132,6 +139,8 @@ export interface DshGoService {
   micro(id: string, def: { data: DataFunction<MicroData> }): Cancel
   onCapability(handler: (scope: Scope, event: CapabilityEvent) => void | Promise<void>): Cancel
   panel<D = Record<string, unknown>>(id: string, def: PanelDefinition<D>): Cancel
+  /** A view drawn into chat (message.after/before, turn.after, composer.above, chat.overlay). */
+  chatView<D = Record<string, unknown>>(id: string, def: ChatViewDefinition<D>): Cancel
   strip(id: string, data: DataFunction<StreamStripData & {}> | { data: DataFunction<StreamStripData & {}> }): Cancel
   /**
    * Per-turn footnotes for a conversation: emit `{ [turnId]: { text, tone? } }` (≤ 16 characters each).

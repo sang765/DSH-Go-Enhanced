@@ -121,6 +121,9 @@ These need a newer app. Check with `hasSurface(caps, 'composer.tools')`. Where t
 | `composer.tools` | The composer's plus panel, on the attachment tiles' grid | `id`, `label`, `icon?`, `effect?`, `panel?`, `requires?` | 2 (the panel shows at most 8) | `label` 8 | `panel` or `effect` runs in the app; with neither, invoke `on(id)`. Write `panel` or `effect`, not both |
 | `session.actions` | An action row in the side panel's Info, with the plugin's name on the right | `id`, `label`, `icon?`, `effect?`, `requires?` | 2 | `label` 12 | As capsules; `scope` has `sessionId` |
 | `turn.note` | The end of each turn's footnote | `id` | 1 (a turn shows at most 2 plugins) | 16 each | Not tappable; tapping the footnote still opens the trajectory |
+| `chat.views` | Anchors in chat: above/below a reply, turn footer, above composer, chat overlay | `id`, `anchor` (required), `title?`, `icon?`, `hint?` | 4 | `title` 16 | Buttons / rows invoke `actions`, falling back to `on(id)` |
+
+**Chat views** register with `chatView(id, { view, data, actions })` for live cards inside chat. `anchor` is one of `message.after`, `message.before`, `turn.after`, `composer.above`, `chat.overlay`; `view(scope, caps)` returns a view or `null` (`null` = draw nothing at this anchor). `hint: { role?, tools? }` only lets the app skip fetches; the plugin's view is always authoritative. The scope carries `sessionId`, with `messageId` / `turnId` supplied as the anchor needs. Older bridges have no `chatView`, so check `typeof ctx.dshGo.chatView === 'function'` first.
 
 ```jsonc
 "contributes": {
