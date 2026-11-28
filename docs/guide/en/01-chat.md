@@ -103,8 +103,9 @@ The round button at the bottom of the chat list opens **All features**, where ev
 
 ## Organize the chat list
 
-Touch and hold a chat for **Pin**, **Rename**, **Move to folder**, **Share**, **Select**, **Archive** and **Delete permanently**.
+Touch and hold a chat for **Pin**, **Rename**, **Move to folder**, **Copy**, **Share**, **Select**, **Archive** and **Delete permanently**.
 
+- **Copy** shows this chat's ID below its label and puts it on the clipboard; a brief **Copied** notice confirms it. The ID identifies the chat on this host — copying it changes nothing.
 - **Archive** stops a turn in progress. Tap **Undo** on the notice within 4 seconds to keep the chat as it was, turn included; leaving the app archives it at once.
 - **Delete permanently** removes the chat record from this host and cannot be undone — unlike archive. The working folder, generated files, branched chats, shared attachments and published cloud shares stay; delete cloud shares separately.
 - Deletion asks for confirmation first. A running chat must be stopped. Subagent chats are deleted along with the chat; a chat that still has scheduled tasks is refused by the host. It needs a host that supports it: on an older host the action says so and archive stays the only option — it never falls back to archive silently.
