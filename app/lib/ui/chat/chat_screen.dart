@@ -76,7 +76,7 @@ import '../pets/pet_stage.dart';
 import '../plugins/native/chat_view_slot.dart';
 import '../plugins/native/composer_strip.dart' show ComposerStripSlot;
 import '../plugins/native/native_composer_bar.dart';
-import '../plugins/native/native_model.dart' show NativeSurface;
+import '../../plugins/native/native_model.dart' show NativeSurface;
 import '../plugins/native/native_taps.dart'
     show NativeComposerHost, NativeComposerScope, runNativeAction, runNativeTap;
 import '../plugins/seats/plugin_overlay_layer.dart';

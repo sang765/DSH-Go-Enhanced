@@ -474,7 +474,7 @@ void main() {
         'rev': '1',
         'live': true,
         'view': {'type': 'text', 'text': 'PR 标题'},
-      })!;
+      }, pkg: 'p', id: 'pr');
       bridge.views['p/elsewhere'] = DshGoView.fromJson({
         'v': 1,
         'pkg': 'p',
@@ -482,7 +482,7 @@ void main() {
         'rev': '1',
         'live': true,
         'view': {'type': 'text', 'text': '别处'},
-      })!;
+      }, pkg: 'p', id: 'elsewhere');
       await tester.pumpWidget(
         testApp(
           const Scaffold(
