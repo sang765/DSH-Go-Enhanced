@@ -301,7 +301,7 @@ export function createNativeRoutes(core, { beginUsage = () => () => {} } = {}) {
     const item = rec.parsed.items[body.surface]?.find((x) => x.id === body.id);
     if (item === undefined) fail(404, "not-found", `${body.pkg} declares no ${body.surface} ${body.id}`);
     const capabilityConn = connById.get(body.stream);
-    if (surfaceKey !== "message.card" && !(item.requires ?? []).every(x => capabilityConn?.features?.includes(x))) fail(409, "unsupported", "action requires negotiated capabilities");
+    if (!(item.requires ?? []).every(x => capabilityConn?.features?.includes(x))) fail(409, "unsupported", "action requires negotiated capabilities");
     if (item.effect !== undefined) fail(409, "no-handler", `${body.id} has a static effect; the app runs it without invoke`);
     const panel = isPanel ? core.registration(body.pkg, viewSurface, body.id) : undefined;
     const handler = core.registration(body.pkg, "handlers", body.id);

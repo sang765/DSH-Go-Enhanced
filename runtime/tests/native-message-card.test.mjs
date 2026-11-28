@@ -29,9 +29,15 @@ async function fixture(t) {
   server.listen(0, '127.0.0.1');
   await once(server, 'listening');
   const base = `http://127.0.0.1:${server.address().port}`;
+  const sockets = new Set();
+  server.on('connection', socket => {
+    sockets.add(socket);
+    socket.on('close', () => sockets.delete(socket));
+  });
   t.after(async () => {
     routes.dispose();
     core.dispose();
+    for (const socket of sockets) socket.destroy();
     server.closeAllConnections();
     await new Promise(resolve => server.close(resolve));
     rmSync(dir, { recursive: true, force: true });
@@ -71,5 +77,6 @@ test('a card stream accepts a fully scoped message and publishes data', async t 
   ws.send(JSON.stringify({ t: 'hello', v: [1] }));
   ws.send(JSON.stringify({ t: 'sub', sub: 'one', pkg: 'card-fixture', id: 'pr', scope: { sessionId: 's', turnId: '3', messageId: 'a9' } }));
   await new Promise(resolve => setTimeout(resolve, 20));
+  ws.close();
   assert.ok(messages.some(message => message.t === 'data' && message.sub === 'one' && message.data.title === 'a9'));
 });

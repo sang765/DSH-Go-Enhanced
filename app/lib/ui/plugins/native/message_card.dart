@@ -6,7 +6,6 @@ import '../../../plugins/native/native_model.dart';
 import '../../../plugins/native/native_state.dart';
 import '../../../plugins/native/native_surface.dart';
 import '../view/plugin_view.dart';
-import 'native_taps.dart';
 
 /// The plugins' live cards for one durable assistant reply. It stays empty
 /// until a plugin publishes a view; the reply itself is never replaced.

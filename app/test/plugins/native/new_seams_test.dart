@@ -262,7 +262,7 @@ void main() {
         'v': 1, 'pkg': 'p', 'id': 'pr', 'title': 'PR', 'rev': '1', 'live': true,
         'view': {'type': 'text', 'text': 'PR title'},
         'data': {'hasCards': true},
-      })!;
+      }, pkg: 'p', id: 'pr');
       await tester.pumpWidget(testApp(
         const Scaffold(body: NativeMessageCardSlot(sessionId: 's', turnId: '3', messageId: 'a9', replyText: 'reply', onAction: _unusedAction)),
         overrides: nativeOverrides(bridge),
