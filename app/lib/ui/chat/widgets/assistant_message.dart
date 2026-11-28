@@ -217,10 +217,7 @@ class _AssistantMessageState extends State<AssistantMessage> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         if (widget.chatViewBefore case final before?)
-          Padding(
-            padding: const EdgeInsets.only(bottom: 8),
-            child: SizedBox(width: double.infinity, child: before),
-          ),
+          SizedBox(width: double.infinity, child: before),
         if (reasoning.isNotEmpty) ...[
           _thinkingPill(reasoning, streaming && text.isEmpty, streaming),
           if (text.isNotEmpty && !_textAfterThinking) const SizedBox(height: 8),
@@ -240,10 +237,7 @@ class _AssistantMessageState extends State<AssistantMessage> {
           ),
         if (item.interrupted) const _InterruptedMark(),
         if (widget.chatViewAfter case final after?)
-          Padding(
-            padding: const EdgeInsets.only(top: 8),
-            child: SizedBox(width: double.infinity, child: after),
-          ),
+          SizedBox(width: double.infinity, child: after),
         // 一轮结束时和输入条上的胶囊同一节奏展开:胶囊收回多少,这里长出
         // 多少,回答不会先被顶上去再落回来。打开对话时已结束的轮直接展开。
         ExpandReveal(

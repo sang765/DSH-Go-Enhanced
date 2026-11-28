@@ -1368,11 +1368,12 @@ class _ChatListState extends ConsumerState<ChatList> with SingleTickerProviderSt
 
   /// One anchor's chat views, with this screen's tap handling. The lambda's
   /// parameters are inferred from [ChatViewSlot.onAction].
-  Widget _chatViewSlot(String anchor, DshGoScope scope, {Key? slotKey, String? role}) => ChatViewSlot(
+  Widget _chatViewSlot(String anchor, DshGoScope scope, {Key? slotKey, String? role, EdgeInsetsGeometry? childPadding}) => ChatViewSlot(
     key: slotKey,
     anchor: anchor,
     scope: scope,
     role: role,
+    childPadding: childPadding ?? const EdgeInsets.only(top: 8),
     onAction: (action, key) => runNativeTap(
       context,
       ref,
@@ -1396,6 +1397,7 @@ class _ChatListState extends ConsumerState<ChatList> with SingleTickerProviderSt
       anchor,
       DshGoScope(sessionId: widget.sessionId, turnId: '$turn', messageId: item.id),
       role: 'assistant',
+      childPadding: anchor == 'message.before' ? const EdgeInsets.only(bottom: 8) : const EdgeInsets.only(top: 8),
       slotKey: ValueKey('chat-view|$anchor|${item.seq}'),
     );
   }

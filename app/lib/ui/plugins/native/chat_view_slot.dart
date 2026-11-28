@@ -23,6 +23,7 @@ class ChatViewSlot extends ConsumerWidget {
     this.scope = DshGoScope.none,
     this.role,
     this.tools = const [],
+    this.childPadding = const EdgeInsets.only(top: 8),
     required this.onAction,
   });
 
@@ -35,6 +36,10 @@ class ChatViewSlot extends ConsumerWidget {
 
   /// Tool-call names present here; empty means "cannot rule anything out".
   final List<String> tools;
+
+  /// Space between the slot and the view only when there is something to draw;
+  /// an empty slot stays zero high so chat goldens never shift.
+  final EdgeInsetsGeometry childPadding;
 
   final Future<bool> Function(PluginAction action, NativeSurfaceKey key) onAction;
 
@@ -60,7 +65,7 @@ class ChatViewSlot extends ConsumerWidget {
         if (!state.hasView || state.failure != null || bridge == null) continue;
         children.add(
           Padding(
-            padding: const EdgeInsets.only(top: 8),
+            padding: childPadding,
             child: PluginFrame(
               pluginName: ref.watch(nativePluginTitleProvider(plugin.package)),
               icon: plugin.icon,
