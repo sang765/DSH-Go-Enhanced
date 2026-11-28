@@ -17765,6 +17765,9 @@ class L10nEn extends L10n {
   String get plugslotsSurfaceTurnNote => 'Turn notes';
 
   @override
+  String get plugslotsSurfaceMessageCard => 'Message cards';
+
+  @override
   String get plugslotsSurfaceComposerActions => 'Composer buttons';
 
   @override
