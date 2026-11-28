@@ -67,7 +67,7 @@ abstract final class SheetRecede {
   static final _coverListeners = <ModalRoute<dynamic>, void Function()>{};
 
   /// A sheet's own recede, driven by whatever is currently pushed above it.
-  static ValueListenable<double> coveredFor(ModalRoute<dynamic> route) =>
+  static ValueNotifier<double> coveredFor(ModalRoute<dynamic> route) =>
       _covered.putIfAbsent(route, () => ValueNotifier(0));
 
   /// Called by an app sheet's route when the route above it changes. The lower
