@@ -30,6 +30,7 @@ import '../chat/media/media_format.dart' show chatTitleShown;
 import '../companion/companion_drawer_row.dart';
 import '../companion/companion_page.dart';
 import '../common/app_sheet.dart';
+import '../common/brief_notice.dart';
 import '../common/empty_view.dart';
 import '../common/pressable.dart';
 import '../common/smooth_size.dart';
@@ -604,6 +605,12 @@ class _SessionList extends ConsumerWidget {
                       onTap: () => Navigator.pop(sheet, 'folder'),
                     ),
                     ListTile(
+                      leading: const Icon(AppIcons.copy),
+                      title: Text(context.l10n.commonCopy),
+                      subtitle: Text(s.sessionId, maxLines: 1, overflow: TextOverflow.ellipsis),
+                      onTap: () => Navigator.pop(sheet, 'copyId'),
+                    ),
+                    ListTile(
                       leading: const Icon(AppIcons.share),
                       title: Text(context.l10n.commonShare),
                       onTap: () => Navigator.pop(sheet, 'share'),
@@ -647,6 +654,10 @@ class _SessionList extends ConsumerWidget {
             SnackBar(content: Text(action == 'pin' ? appL10n.shellPinFailed : appL10n.shellUnpinFailed)),
           );
         }
+      case 'copyId':
+        HapticFeedback.lightImpact();
+        await Clipboard.setData(ClipboardData(text: s.sessionId));
+        messenger?.showBriefNotice(appL10n.commonCopied);
       case 'share':
         await shareConversation(context, s.sessionId);
       case 'folder':

@@ -16,6 +16,7 @@ import 'package:dsh_app/ui/shell/drawer/selection_bars.dart';
 import 'package:dsh_app/ui/shell/drawer/session_tile.dart';
 import 'package:dsh_app/ui/shell/home_shell.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -28,6 +29,16 @@ Future<void> _settle(WidgetTester tester) async {
   await tester.pump();
   await tester.pump(const Duration(milliseconds: 450));
   await tester.pump(const Duration(milliseconds: 450));
+}
+
+List<String> _mockClipboard(WidgetTester tester) {
+  final copied = <String>[];
+  tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(SystemChannels.platform, (call) async {
+    if (call.method == 'Clipboard.setData') copied.add((call.arguments as Map)['text'] as String);
+    return null;
+  });
+  addTearDown(() => tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(SystemChannels.platform, null));
+  return copied;
 }
 
 Future<(DrawerHost, ProviderContainer)> _start(
@@ -116,6 +127,19 @@ void main() {
     await tester.tap(find.text('撤销'));
     await _settle(tester);
     expect(container.read(drawerViewProvider).folderOf, isEmpty);
+  });
+
+  testWidgets('copy session ID from the long-press menu writes the chat id to the clipboard', (tester) async {
+    final (_, container) = await _start(tester);
+    final copied = _mockClipboard(tester);
+    await tester.longPress(_tile('深色模式'));
+    await _settle(tester);
+    await tester.tap(find.widgetWithText(ListTile, '复制'));
+    await _settle(tester);
+    expect(copied, ['s2']);
+    expect(find.text('已复制'), findsOneWidget);
+    // Copying is read-only: the chat and its selection stay as they were.
+    expect(container.read(currentSessionProvider), 's2');
   });
 
   testWidgets('deleting a folder keeps its conversations; undo brings it back', (tester) async {
