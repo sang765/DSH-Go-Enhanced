@@ -264,7 +264,7 @@ Future<String?> askFolderName(
 typedef Crumb = ({String label, String path});
 
 /// Breadcrumbs as people read them: inside the phone's storage from
-/// 「手机存储」, inside the home folder from 「主目录」, else from the root.
+/// 「手机内部存储」, inside the home folder from 「主目录」, else from the root.
 List<Crumb> displayCrumbs(DirectoryLevel level, {required bool local}) {
   final crumbs = level.crumbs;
   final storage = local ? crumbs.indexWhere((c) => c.path == phoneStorageRoot) : -1;

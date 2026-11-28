@@ -152,7 +152,7 @@ void main() {
       await tester.tap(find.text('添加工作区'));
       await _settle(tester);
       expect(find.byType(DirectoryLocationsSheet), findsOneWidget);
-      expect(find.text('手机存储'), findsOneWidget);
+      expect(find.text('手机内部存储'), findsOneWidget);
 
       await tester.tap(find.text('主目录'));
       await _settle(tester);
@@ -221,7 +221,7 @@ void main() {
       await _settle(tester);
       expect(host.argsOf('directoryPicker/list').last, {'path': '/sdcard/Documents'});
       // Phone storage reads as such in the crumbs.
-      expect(find.widgetWithText(BreadcrumbCapsule, '手机存储'), findsOneWidget);
+      expect(find.widgetWithText(BreadcrumbCapsule, '手机内部存储'), findsOneWidget);
       expect(find.text('blog'), findsOneWidget);
     });
 

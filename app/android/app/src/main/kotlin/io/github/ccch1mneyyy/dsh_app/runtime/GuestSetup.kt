@@ -134,7 +134,7 @@ object GuestSetup {
         |""".trimMargin()
 
     // l10n:keep guest path
-    private const val STORAGE_GRANTED_EN = "The user has authorized access to phone storage: internal phone storage is mounted at `/sdcard` (`/root/手机存储` is a shortcut to it; photos are in `/sdcard/DCIM`, and downloads are in `/sdcard/Download`). Before modifying or deleting user files, explain the change and obtain confirmation; put files produced for the user in `/sdcard/Download/DSH-Go/`."
+    private const val STORAGE_GRANTED_EN = "The user has authorized access to phone storage: internal phone storage is mounted at `/sdcard` (photos are in `/sdcard/DCIM`, and downloads are in `/sdcard/Download`). Before modifying or deleting user files, explain the change and obtain confirmation; put files produced for the user in `/sdcard/Download/DSH-Go/`."
     private const val STORAGE_UNAVAILABLE_EN = "User files such as phone photos and downloads are not in this environment and cannot be seen here; if access is needed, ask the user to turn on \"Access phone files\" in the App's settings."
     private const val DIRECT_ENVIRONMENT_FROM_EN = "Ubuntu 24.04 environment (proot, no root required)"
     private const val DIRECT_ENVIRONMENT_TO_EN = "Ubuntu 24.04 runtime environment (the engine starts directly; bash/git/python/apt tools still run through proot)"
@@ -197,7 +197,7 @@ object GuestSetup {
                 if (phoneStorage) {
                     if (english) STORAGE_GRANTED_EN else {
                         // l10n:keep agent prompt
-                        "用户已授权访问手机存储：手机内部存储挂载在 `/sdcard`（`/root/手机存储` 是它的快捷方式；相册在 `/sdcard/DCIM`，下载在 `/sdcard/Download`）。改动或删除用户文件前先说明并确认；给用户的产出文件放到 `/sdcard/Download/DSH-Go/`。"
+                        "用户已授权访问手机存储：手机内部存储挂载在 `/sdcard`（相册在 `/sdcard/DCIM`，下载在 `/sdcard/Download`）。改动或删除用户文件前先说明并确认；给用户的产出文件放到 `/sdcard/Download/DSH-Go/`。"
                     }
                 } else {
                     if (english) STORAGE_UNAVAILABLE_EN else {

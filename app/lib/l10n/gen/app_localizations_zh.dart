@@ -18462,19 +18462,19 @@ class L10nZh extends L10n {
   String get remoteDirectoryHome => '主目录';
 
   @override
-  String get remoteDirectoryPhoneStorage => '手机存储';
+  String get remoteDirectoryPhoneStorage => '手机内部存储';
 
   @override
   String get remoteDirectoryDownloads => '下载';
 
   @override
-  String get remoteDirectoryDownloadsPath => '手机存储/Download';
+  String get remoteDirectoryDownloadsPath => '手机内部存储/Download';
 
   @override
   String get remoteDirectoryDocuments => '文档';
 
   @override
-  String get remoteDirectoryDocumentsPath => '手机存储/Documents';
+  String get remoteDirectoryDocumentsPath => '手机内部存储/Documents';
 
   @override
   String get remoteDirectoryLocations => '位置';
@@ -18674,7 +18674,7 @@ class L10nZh extends L10n {
 
   @override
   String remoteDirectoryPhonePath(String path) {
-    return '手机存储/$path';
+    return '手机内部存储/$path';
   }
 
   @override

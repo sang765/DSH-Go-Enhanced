@@ -759,11 +759,11 @@
   "remoteDirectoryChoose": "选择",
   "remoteDirectoryDefault": "默认工作目录",
   "remoteDirectoryHome": "主目录",
-  "remoteDirectoryPhoneStorage": "手机存储",
+  "remoteDirectoryPhoneStorage": "手机内部存储",
   "remoteDirectoryDownloads": "下载",
-  "remoteDirectoryDownloadsPath": "手机存储/Download",
+  "remoteDirectoryDownloadsPath": "手机内部存储/Download",
   "remoteDirectoryDocuments": "文档",
-  "remoteDirectoryDocumentsPath": "手机存储/Documents",
+  "remoteDirectoryDocumentsPath": "手机内部存储/Documents",
   "remoteDirectoryLocations": "位置",
   "remoteDirectoryRecent": "最近",
   "remoteDirectoryEnterPath": "输入路径",
@@ -880,7 +880,7 @@
   "remoteWorkspaceRemoveAction": "移除工作区",
   "remoteWorkspaceNewGroup": "新建分组",
   "remoteWorkspaceGroupName": "分组名称",
-  "remoteDirectoryPhonePath": "手机存储/{path}",
+  "remoteDirectoryPhonePath": "手机内部存储/{path}",
   "@remoteDirectoryPhonePath": {
     "placeholders": {
       "path": {
