@@ -35,7 +35,7 @@ Widget _app({required bool fluid}) => MaterialApp(
               context,
               builder: (_) => Column(
                 children: [
-                  const SizedBox(height: 300),
+                  const SizedBox(height: 240),
                   TextButton(
                     key: _stack,
                     onPressed: () => showAppSheet<void>(
