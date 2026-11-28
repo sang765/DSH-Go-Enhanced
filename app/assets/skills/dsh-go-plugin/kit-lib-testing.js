@@ -415,7 +415,10 @@ export function createTestHost(options = {}) {
       } else {
         throw new HostError(409, 'no-handler', `${parsed.pkg} has neither a registered view nor a static view for ${id}`)
       }
-      if (view === null) return { view: null, stats: { bytes: 0, nodes: 0, depth: 0 }, source: reg !== undefined ? 'registered' : 'file' }
+      // A chat view function may answer null/undefined for a scope it has nothing
+      // to draw; the bridge maps both to view:null. A panel view is still object-only.
+      if (chatItem !== undefined && (view === null || view === undefined)) return { view: null, stats: { bytes: 0, nodes: 0, depth: 0 }, source: reg !== undefined ? 'registered' : 'file' }
+      if (view === null) throw new HostError(500, 'invalid-view', `view(${id}) is not a JSON object`)
       const json = isPlainObject(view) ? toJson(view) : undefined
       if (json === undefined) throw new HostError(500, 'invalid-view', `view(${id}) is not a JSON object`)
       if (json.bytes > LIMITS.viewBytes) throw new HostError(500, 'invalid-view', `view(${id}) exceeds ${LIMITS.viewBytes} bytes`)

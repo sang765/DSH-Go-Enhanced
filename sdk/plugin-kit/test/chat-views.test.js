@@ -59,6 +59,14 @@ test('a null view draws nothing; a live view feeds data', async () => {
   feed.stop()
 })
 
+test('a chat view function returning undefined is a no-view, like the bridge', async () => {
+  const host = createTestHost({ dir: '/nonexistent', pkg: pkg({ 'chat.views': [{ id: 'pr', anchor: 'message.after' }] }) })
+  host.ctx.inject(['dshGo'], (ctx) => {
+    ctx.dshGo.chatView('pr', { view: () => undefined })
+  })
+  assert.equal((await host.view('pr', { messageId: 'm1' })).view, null)
+})
+
 test('chat.views invoke uses actions then falls back to on(id)', async () => {
   const host = createTestHost({ dir: '/nonexistent', pkg: pkg({ 'chat.views': [{ id: 'pr', anchor: 'message.after' }] }) })
   host.ctx.inject(['dshGo'], (ctx) => {
