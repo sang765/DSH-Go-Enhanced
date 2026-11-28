@@ -182,6 +182,13 @@
             },
             "additionalProperties": false
           }
+        },
+        "chat.views": {
+          "type": "array",
+          "maxItems": 4,
+          "items": {
+            "$ref": "#/$defs/chatView"
+          }
         }
       }
     },
@@ -356,6 +363,57 @@
           "description": "How the panel opens: a pushed page (default) or a sheet."
         }
       }
+    },
+    "chatView": {
+      "type": "object",
+      "required": [
+        "id",
+        "anchor"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "anchor": {
+          "enum": [
+            "message.after",
+            "message.before",
+            "turn.after",
+            "composer.above",
+            "chat.overlay"
+          ],
+          "description": "Where in chat the view is mounted."
+        },
+        "title": {
+          "$ref": "#/$defs/text",
+          "description": "<= 16 characters, optional."
+        },
+        "icon": {
+          "$ref": "#/$defs/iconName"
+        },
+        "hint": {
+          "type": "object",
+          "properties": {
+            "role": {
+              "enum": [
+                "user",
+                "assistant"
+              ]
+            },
+            "tools": {
+              "type": "array",
+              "maxItems": 8,
+              "items": {
+                "type": "string",
+                "maxLength": 64
+              }
+            }
+          },
+          "additionalProperties": false,
+          "description": "Advisory filter for the app; view() remains authoritative."
+        }
+      },
+      "additionalProperties": false
     },
     "tool": {
       "type": "object",

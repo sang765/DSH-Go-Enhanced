@@ -6,6 +6,7 @@
 > 改协议：在提交说明里写一行「NA protocol v1 change: …」。v1 内只允许**加可选字段**；删字段、改含义、收紧上限一律算 v2。
 > **v1.1**（2026-10-25，桥接 0.3.0）：延后效果（§4.7）——handler 可返回 `pending`，结果之后经流推回发起点按的那条连接。全部是可选新增，v1 的 App 与插件不受影响。
 > **v1.2**（2026-10-26，桥接 0.4.0）：可选能力（§11）——有限音频、开口检测、小字幕通道、悬浮字幕。只有声明了 `capabilities` 的插件、并且 App 在 `features` 里提出的能力才会启用；不声明、不提出时，清单解析、路由响应、流消息、效果校验与 v1.1 逐字节相同。
+> **v1 可选新增**：`chat.views` 槽位（聊天视图），不影响未声明插件的贡献响应、清单、调用和流格式。完整契约见 [plugin-chat-views-contract.md](plugin-chat-views-contract.md)。
 
 ## 0. 一页看完
 
@@ -108,6 +109,9 @@ v1 内新增，规则和取舍见 [plugin-platform.md](plugin-platform.md) §2�
 | `composer.tools` | 加号面板 | `id`、`label`（必填）、`icon`、`effect`、`panel`、`requires`。`panel` 是打开本插件面板的简写，和 `effect` 互斥 | 2 | `label` 8 |
 | `session.actions` | 右侧栏「信息」 | `id`、`label`（必填）、`icon`、`effect`、`requires` | 2 | `label` 12 |
 | `turn.note` | 回合脚注 | `id` | 1 | 每段 16 |
+| `chat.views` | 聊天里的五个锚点（回复上/下、回合尾、输入框上、聊天浮层） | `id`、`anchor`（必填）、`title?`、`icon?`、`hint?` | 4 | `title` 16 |
+
+`chat.views` 的视图与数据遵循面板路由，注册方法是 `ctx.dshGo.chatView(id, { view, data, actions })`；`view` 返回 `null` 表示该处不画，桥接回答 `view: null` 且不建数据流。订阅 scope 至少带 `sessionId`，锚点需要的 `messageId` / `turnId` 由 App 补上；视图里的按钮用 surface `chat.views` 调 `actions`，再退回 `on(id)`。`anchor` 五选一：`message.after`、`message.before`、`turn.after`、`composer.above`、`chat.overlay`。`hint` 只是给 App 省流量的建议（`role`、`tools`），画不画始终以插件的 `view()` 为准。旧 App 忽略未知 surface，旧桥没有 `chatView` 方法；插件先判断 `typeof ctx.dshGo.chatView === 'function'`。
 
 面板另有 `placement: "plugin"`（协商：App 的 `surfaces` 没有列出时，只放这里的面板退回 `session.tab`）和 `presentation: "page" | "sheet"`。
 

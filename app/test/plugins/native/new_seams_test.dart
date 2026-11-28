@@ -7,8 +7,10 @@ import 'package:dsh_app/plugins/native/native_state.dart';
 import 'package:dsh_app/plugins/native/native_surface.dart';
 import 'package:dsh_app/ui/chat/widgets/plus_panel.dart';
 import 'package:dsh_app/ui/chat/widgets/turn_footnote.dart';
+import 'package:dsh_app/ui/plugins/native/chat_view_slot.dart';
 import 'package:dsh_app/ui/plugins/native/native_panel.dart';
 import 'package:dsh_app/ui/plugins/native/native_plugin_section.dart';
+import 'package:dsh_app/ui/plugins/view/plugin_view.dart' show PluginAction, PluginFrame;
 import 'package:dsh_app/ui/theme/theme.dart';
 import 'package:dsh_client/dsh_client.dart';
 import 'package:flutter/material.dart';
@@ -18,11 +20,14 @@ import 'package:flutter_test/flutter_test.dart';
 import '../../chat/support/harness.dart';
 import 'support.dart';
 
+Future<bool> _unusedAction(PluginAction action, NativeSurfaceKey key) async => true;
+
 Map<String, Object?> _plugin({
   List<Map<String, Object?>> tools = const [],
   List<Map<String, Object?>> actions = const [],
   List<Map<String, Object?>> notes = const [],
   List<Map<String, Object?>> panels = const [],
+  List<Map<String, Object?>> views = const [],
 }) {
   final row = plugin('p', title: '工具箱', panels: panels);
   row['contributes'] = <String, Object?>{
@@ -34,6 +39,7 @@ Map<String, Object?> _plugin({
       for (final a in actions) {'ready': true, ...a},
     ],
     'turn.note': notes,
+    'chat.views': views,
   };
   return row;
 }
@@ -54,7 +60,7 @@ void main() {
 
     test('caps ask for the new places, the first four stay', () {
       expect(DshGoSurfaces.all, containsAll(DshGoSurfaces.v1));
-      expect(DshGoSurfaces.all, containsAll(['composer.tools', 'session.actions', 'turn.note', 'plugin']));
+      expect(DshGoSurfaces.all, containsAll(['composer.tools', 'session.actions', 'turn.note', 'chat.views', 'plugin']));
     });
 
     test('labels are cut, unready ones and turn notes without a registration are left out', () {
@@ -410,6 +416,150 @@ void main() {
       });
       await pumpFrames(tester);
       expect(find.text('¥0.03'), findsOneWidget);
+    });
+  });
+
+  group('a chat view', () {
+    test('hints are parsed, unready and unknown-anchor entries are left out', () {
+      final p = _shape(
+        _plugin(
+          views: [
+            {
+              'id': 'pr',
+              'anchor': 'message.after',
+              'ready': true,
+              'title': 'PR',
+              'hint': {'role': 'assistant', 'tools': ['github_pr', 'lint']},
+            },
+            {'id': 'before', 'anchor': 'message.before', 'ready': true},
+            {'id': 'off', 'anchor': 'turn.after', 'ready': false},
+            {'id': 'bad', 'anchor': 'somewhere.else', 'ready': true},
+          ],
+        ),
+      );
+      expect(p.chatViews.map((v) => v.id), ['pr', 'before']);
+      expect(p.chatViews.first.anchor, 'message.after');
+      expect(p.chatViews.first.role, 'assistant');
+      expect(p.chatViews.first.tools, ['github_pr', 'lint']);
+      expect(p.declared, contains(NativeSurface.chatView));
+      expect(p.isEmpty, isFalse);
+    });
+
+    test('an older bridge with no chat views leaves the plugin unchanged', () {
+      final p = _shape(_plugin());
+      expect(p.chatViews, isEmpty);
+      expect(p.declared, isNot(contains(NativeSurface.chatView)));
+    });
+
+    testWidgets('a slot draws its anchor and subscribes with the slot scope', (tester) async {
+      final bridge = FakeBridge(
+        contributions([
+          _plugin(
+            views: [
+              {
+                'id': 'pr',
+                'anchor': 'message.after',
+                'ready': true,
+                'hint': {'role': 'assistant'},
+              },
+              {'id': 'elsewhere', 'anchor': 'turn.after', 'ready': true},
+            ],
+          ),
+        ]),
+      );
+      bridge.views['p/pr'] = DshGoView.fromJson({
+        'v': 1,
+        'pkg': 'p',
+        'id': 'pr',
+        'rev': '1',
+        'live': true,
+        'view': {'type': 'text', 'text': 'PR 标题'},
+      })!;
+      bridge.views['p/elsewhere'] = DshGoView.fromJson({
+        'v': 1,
+        'pkg': 'p',
+        'id': 'elsewhere',
+        'rev': '1',
+        'live': true,
+        'view': {'type': 'text', 'text': '别处'},
+      })!;
+      await tester.pumpWidget(
+        testApp(
+          const Scaffold(
+            body: ChatViewSlot(
+              anchor: 'message.after',
+              role: 'assistant',
+              scope: DshGoScope(sessionId: 's', turnId: '3', messageId: 'a9'),
+              onAction: _unusedAction,
+            ),
+          ),
+          overrides: nativeOverrides(bridge),
+        ),
+      );
+      await pumpFrames(tester);
+      expect(find.text('PR 标题'), findsOneWidget);
+      expect(find.text('别处'), findsNothing);
+      expect(bridge.socket.subOf('pr')!['scope'], {'sessionId': 's', 'turnId': '3', 'messageId': 'a9'});
+    });
+
+    testWidgets('role and tools hints skip a fetch a slot cannot match', (tester) async {
+      final bridge = FakeBridge(
+        contributions([
+          _plugin(
+            views: [
+              {
+                'id': 'wrong-role',
+                'anchor': 'message.after',
+                'ready': true,
+                'hint': {'role': 'user'},
+              },
+              {
+                'id': 'wrong-tool',
+                'anchor': 'message.after',
+                'ready': true,
+                'hint': {'tools': ['github_pr']},
+              },
+            ],
+          ),
+        ]),
+      );
+      await tester.pumpWidget(
+        testApp(
+          const Scaffold(
+            body: ChatViewSlot(
+              anchor: 'message.after',
+              role: 'assistant',
+              tools: ['translate'],
+              onAction: _unusedAction,
+            ),
+          ),
+          overrides: nativeOverrides(bridge),
+        ),
+      );
+      await pumpFrames(tester);
+      expect(find.byType(PluginFrame), findsNothing);
+      expect(bridge.views, isEmpty);
+    });
+
+    testWidgets('an empty anchor draws nothing and starts no view read', (tester) async {
+      final bridge = FakeBridge(
+        contributions([
+          _plugin(
+            views: [
+              {'id': 'elsewhere', 'anchor': 'turn.after', 'ready': true},
+            ],
+          ),
+        ]),
+      );
+      await tester.pumpWidget(
+        testApp(
+          const Scaffold(body: ChatViewSlot(anchor: 'message.after', onAction: _unusedAction)),
+          overrides: nativeOverrides(bridge),
+        ),
+      );
+      await pumpFrames(tester);
+      expect(find.byType(PluginFrame), findsNothing);
+      expect(bridge.views, isEmpty);
     });
   });
 }

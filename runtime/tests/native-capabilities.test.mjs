@@ -102,7 +102,7 @@ async function fixture(t, declaration = manifest) {
 
 test('old manifest/effect semantics and 4Hz budget remain unchanged', () => {
   const parsed = parseManifest({ name: 'old', dshGo: { v: 1, contributes: {} } }, '.');
-  assert.equal(parsed.capabilities, undefined); assert.deepEqual(Object.keys(parsed.items), ['composer.actions', 'message.actions', 'composer.strip', 'panels']); assert.equal(LIMITS.dataHz, 4); assert.equal(LIMITS.dataBytes, 32768);
+  assert.equal(parsed.capabilities, undefined); assert.deepEqual(Object.keys(parsed.items), ['composer.actions', 'message.actions', 'composer.strip', 'panels', 'chat.views']); assert.equal(LIMITS.dataHz, 4); assert.equal(LIMITS.dataBytes, 32768);
   const e = { type: 'audio', op: 'play', instance: 'one', src: 'media:clip' };
   for (const opts of [{}, { static: true }, { deferred: true }]) assert.equal(normalize(e, { panels: new Set(), ...opts }).effects.length, 0);
   assert.deepEqual(normalize({ toast: 'Hi' }, { panels: new Set() }).effects, [{ type: 'toast', text: 'Hi' }]);
@@ -242,7 +242,7 @@ test('v1.1 plugins are untouched: undeclared capability effects and keys keep th
   const w = await f.ws(['audio']); const r = await f.invoke(w);
   assert.deepEqual(r.effects, [{ type: 'toast', text: 'hi' }]); assert.equal(r.issues[0].code, 'unknown-effect');
   const row = (await (await f.request('contributions?features=audio')).json()).plugins[0];
-  assert.equal(row.capabilities, undefined); assert.deepEqual(Object.keys(row.contributes), ['composer.actions', 'message.actions', 'composer.strip', 'panels']);
+  assert.equal(row.capabilities, undefined); assert.deepEqual(Object.keys(row.contributes), ['composer.actions', 'message.actions', 'composer.strip', 'panels', 'chat.views']);
 });
 
 test('declared but not negotiated: dropped without a violation, the plugin is never degraded', async t => {

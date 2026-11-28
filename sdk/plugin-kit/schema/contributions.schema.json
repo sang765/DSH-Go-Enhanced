@@ -218,6 +218,13 @@
                   }
                 }
               }
+            },
+            "chat.views": {
+              "type": "array",
+              "maxItems": 4,
+              "items": {
+                "$ref": "#/$defs/chatViewEntry"
+              }
             }
           }
         },
@@ -371,6 +378,66 @@
         }
       }
     },
+    "chatViewEntry": {
+      "type": "object",
+      "required": [
+        "id",
+        "anchor",
+        "title",
+        "ready",
+        "live"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "anchor": {
+          "enum": [
+            "message.after",
+            "message.before",
+            "turn.after",
+            "composer.above",
+            "chat.overlay"
+          ]
+        },
+        "title": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "maxLength": 16
+        },
+        "icon": {
+          "$ref": "#/$defs/iconName"
+        },
+        "hint": {
+          "type": "object",
+          "properties": {
+            "role": {
+              "enum": [
+                "user",
+                "assistant"
+              ]
+            },
+            "tools": {
+              "type": "array",
+              "maxItems": 8,
+              "items": {
+                "type": "string",
+                "maxLength": 64
+              }
+            }
+          },
+          "additionalProperties": false
+        },
+        "ready": {
+          "type": "boolean"
+        },
+        "live": {
+          "type": "boolean"
+        }
+      }
+    },
     "issue": {
       "type": "object",
       "required": [
@@ -487,12 +554,36 @@
           "$ref": "#/$defs/id"
         },
         "title": {
-          "type": "string",
+          "type": [
+            "string",
+            "null"
+          ],
           "maxLength": 16
         },
+        "anchor": {
+          "enum": [
+            "message.after",
+            "message.before",
+            "turn.after",
+            "composer.above",
+            "chat.overlay"
+          ],
+          "description": "Only on chat.views responses."
+        },
+        "hint": {
+          "type": "object",
+          "description": "Only on chat.views responses."
+        },
         "view": {
-          "$ref": "view.schema.json",
-          "description": "View format: docs/design/native-plugins-views.md; <= 32 KiB enforced by the bridge"
+          "anyOf": [
+            {
+              "$ref": "view.schema.json"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "View format: docs/design/native-plugins-views.md; <= 32 KiB enforced by the bridge. null when the plugin's view() returned null."
         },
         "data": {
           "type": [
@@ -561,6 +652,9 @@
             },
             "turn.note": {
               "const": 1
+            },
+            "chat.views": {
+              "const": 4
             }
           }
         },
@@ -592,6 +686,9 @@
               "const": 12
             },
             "turnNote": {
+              "const": 16
+            },
+            "chatViewTitle": {
               "const": 16
             }
           }

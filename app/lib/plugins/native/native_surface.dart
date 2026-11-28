@@ -15,7 +15,7 @@ import '../../state/hosts_state.dart';
 import 'native_model.dart';
 import 'native_state.dart';
 
-/// One surface instance: a plugin's strip or panel in a conversation.
+/// One surface instance: a plugin's strip, panel or chat view in a conversation.
 @immutable
 class NativeSurfaceKey {
   const NativeSurfaceKey({
@@ -28,7 +28,8 @@ class NativeSurfaceKey {
 
   final String package;
 
-  /// [NativeSurface.composerStrip], [NativeSurface.panel] or [NativeSurface.turnNote].
+  /// [NativeSurface.composerStrip], [NativeSurface.panel], [NativeSurface.turnNote]
+  /// or [NativeSurface.chatView].
   final NativeSurface surface;
   final String id;
   final DshGoScope scope;
@@ -150,7 +151,7 @@ class NativeSurfaceController extends Notifier<NativeSurfaceState> {
   HostRef? _host;
   NativeSurfaceState? _retained;
 
-  bool get _panel => key.surface == NativeSurface.panel;
+  bool get _panel => key.surface == NativeSurface.panel || key.surface == NativeSurface.chatView;
 
   @override
   NativeSurfaceState build() {
@@ -175,6 +176,7 @@ class NativeSurfaceController extends Notifier<NativeSurfaceState> {
         return switch (key.surface) {
           NativeSurface.panel => plugin.panels.any((panel) => panel.id == key.id),
           NativeSurface.turnNote => plugin.turnNotes.contains(key.id),
+          NativeSurface.chatView => plugin.chatViews.any((view) => view.id == key.id),
           _ => plugin.strips.any((strip) => strip.id == key.id),
         };
       }),
@@ -211,7 +213,7 @@ class NativeSurfaceController extends Notifier<NativeSurfaceState> {
   void _issue(String code) =>
       _diagnostics.report(key.package, key.pointer, [NativeIssue('', nativeIssueText(code), code: code)]);
 
-  /// Reads the panel's view (and initial data); then follows the stream.
+  /// Reads a panel's or chat view's view (and initial data); then follows the stream.
   Future<void> _read() async {
     if (!ref.mounted) return;
     final client = ref.read(nativeBridgeProvider);

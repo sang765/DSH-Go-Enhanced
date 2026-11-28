@@ -550,6 +550,20 @@ export interface ManifestPanel {
   presentation?: "page" | "sheet"
 }
 
+export interface ManifestChatView {
+  id: ManifestId
+  /** Where in chat the view is mounted. */
+  anchor: "message.after" | "message.before" | "turn.after" | "composer.above" | "chat.overlay"
+  /** <= 16 characters, optional. */
+  title?: ManifestText
+  icon?: ManifestIconName
+  /** Advisory filter for the app; view() remains authoritative. */
+  hint?: {
+    role?: "user" | "assistant"
+    tools?: string[]
+  }
+}
+
 export interface ManifestTool {
   id: ManifestId
   /** <= 8 characters */
@@ -592,6 +606,7 @@ export interface Manifest {
     "turn.note"?: {
       id: ManifestId
     }[]
+    "chat.views"?: ManifestChatView[]
   }
   capabilities?: Array<"audio" | "voice" | "micro" | "overlay" | "files">
 }
@@ -615,10 +630,10 @@ export interface InvokeRequest {
   v: 1
   pkg: InvokePkg
   id: InvokeId
-  surface: "composer.actions" | "message.actions" | "composer.strip" | "panel" | "composer.tools" | "session.actions"
-  /** panel only */
+  surface: "composer.actions" | "message.actions" | "composer.strip" | "panel" | "composer.tools" | "session.actions" | "chat.views"
+  /** panel or chat.views only */
   action?: string
-  /** panel only; any JSON, <= 4 KiB serialized */
+  /** panel or chat.views only; any JSON, <= 4 KiB serialized */
   value?: unknown
   scope?: InvokeScope
   /** Only honoured when declared in dshGo.wants and allowed for the surface; each field <= 16 KiB UTF-8. */
@@ -838,6 +853,7 @@ export interface ContributionsPlugin {
       id: ContributionsId
       ready: boolean
     }[]
+    "chat.views"?: ContributionsChatViewEntry[]
   }
   issues: ContributionsIssue[]
   capabilities?: Array<"audio" | "voice" | "micro" | "overlay" | "files">
@@ -876,6 +892,19 @@ export interface ContributionsPanel {
   presentation?: "page" | "sheet"
 }
 
+export interface ContributionsChatViewEntry {
+  id: ContributionsId
+  anchor: "message.after" | "message.before" | "turn.after" | "composer.above" | "chat.overlay"
+  title: string | null
+  icon?: ContributionsIconName
+  hint?: {
+    role?: "user" | "assistant"
+    tools?: string[]
+  }
+  ready: boolean
+  live: boolean
+}
+
 export interface ContributionsIssue {
   /** JSON Pointer from the package.json root, or /runtime/<id> */
   path: string
@@ -898,9 +927,13 @@ export interface ContributionsViewResponse {
   v: 1
   pkg: string
   id: ContributionsId
-  title: string
-  /** View format: docs/design/native-plugins-views.md; <= 32 KiB enforced by the bridge */
-  view: View
+  title: string | null
+  /** Only on chat.views responses. */
+  anchor?: "message.after" | "message.before" | "turn.after" | "composer.above" | "chat.overlay"
+  /** Only on chat.views responses. */
+  hint?: Record<string, unknown>
+  /** View format: docs/design/native-plugins-views.md; <= 32 KiB enforced by the bridge. null when the plugin's view() returned null. */
+  view: View | null
   data: Record<string, unknown> | null
   rev: string | null
   live: boolean
@@ -923,6 +956,7 @@ export interface ContributionsLimits {
     "composer.tools"?: 2
     "session.actions"?: 2
     "turn.note"?: 1
+    "chat.views"?: 4
   }
   textChars?: {
     pluginTitle?: 24
@@ -934,6 +968,7 @@ export interface ContributionsLimits {
     composerTool?: 8
     sessionAction?: 12
     turnNote?: 16
+    chatViewTitle?: 16
   }
   viewBytes?: 32768
   viewNodes?: 120

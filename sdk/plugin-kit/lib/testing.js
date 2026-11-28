@@ -20,7 +20,7 @@ import { parseManifest, renderPlugin } from './bridge/manifest.js'
 import { chars, cleanLine, isPlainObject, sanitizeNotes, toJson, truncateChars, viewStats, withoutNulls } from './bridge/util.js'
 
 const CONTEXT_FOR = { 'composer.actions': ['draft', 'clipboard'], 'composer.tools': ['draft', 'clipboard'], 'message.actions': ['message'] }
-const SURFACE_OF = { 'composer.actions': 'composer.actions', 'message.actions': 'message.actions', 'composer.strip': 'composer.strip', panel: 'panels', 'composer.tools': 'composer.tools', 'session.actions': 'session.actions' }
+const SURFACE_OF = { 'composer.actions': 'composer.actions', 'message.actions': 'message.actions', 'composer.strip': 'composer.strip', panel: 'panels', 'composer.tools': 'composer.tools', 'session.actions': 'session.actions', 'chat.views': 'chat.views' }
 
 /** The caps an up-to-date app sends (protocol §3.1). */
 export function defaultCaps(overrides = {}) {
@@ -28,7 +28,7 @@ export function defaultCaps(overrides = {}) {
     protocol: PROTOCOL,
     app: '99.0.0',
     locale: 'zh-CN',
-    surfaces: ['composer.actions', 'message.actions', 'composer.strip', 'panels', 'composer.tools', 'session.actions', 'turn.note', 'plugin'],
+    surfaces: ['composer.actions', 'message.actions', 'composer.strip', 'panels', 'composer.tools', 'session.actions', 'turn.note', 'chat.views', 'plugin'],
     components: JSON.parse(readFileSync(new URL('../schema/view.schema.json', import.meta.url), 'utf8')).$defs.node.properties.type.enum,
     ...overrides,
   }
@@ -80,15 +80,15 @@ export function createTestHost(options = {}) {
   const logs = []
   const pending = []
   const runtimeIssues = new Map()
-  const regs = { panels: new Map(), strips: new Map(), notes: new Map(), handlers: new Map(), media: new Map(), micro: new Map(), capability: new Map() }
+  const regs = { panels: new Map(), views: new Map(), strips: new Map(), notes: new Map(), handlers: new Map(), media: new Map(), micro: new Map(), capability: new Map() }
   const feeds = new Set()
   const violations = []
 
   const undeclared = (kind, id) => {
     const declared = parsed.ids.get(id)
-    const ok = kind === 'media' || kind === 'micro' ? declared === kind : kind === 'handlers' ? declared !== undefined : kind === 'panels' ? declared === 'panels' : kind === 'notes' ? declared === 'turn.note' : declared === 'composer.strip'
+    const ok = kind === 'media' || kind === 'micro' ? declared === kind : kind === 'handlers' ? declared !== undefined : kind === 'panels' ? declared === 'panels' : kind === 'views' ? declared === 'chat.views' : kind === 'notes' ? declared === 'turn.note' : declared === 'composer.strip'
     if (!ok) {
-      const name = { panels: 'panel', strips: 'strip', notes: 'turnNote', handlers: 'on' }[kind]
+      const name = { panels: 'panel', views: 'chatView', strips: 'strip', notes: 'turnNote', handlers: 'on' }[kind]
       runtimeIssues.set(`undeclared:${kind}:${id}`, { path: `/runtime/${id}`, code: 'undeclared', severity: 'warn', message: `${name}("${id}") is not declared in dshGo.contributes; ignored` })
     }
   }
@@ -123,6 +123,15 @@ export function createTestHost(options = {}) {
       if (def.actions !== undefined && (!isPlainObject(def.actions) || Object.values(def.actions).some((f) => typeof f !== 'function'))) throw new TypeError('dshGo.panel: actions must map names to functions')
       const dispose = addFeedSource(regs.panels, id, { view: def.view, data: def.data, actions: def.actions })
       undeclared('panels', id)
+      return dispose
+    },
+    chatView(id, def) {
+      if (typeof id !== 'string' || !ID.test(id)) throw new TypeError(`dshGo.chatView: id must match ${ID}`)
+      if (!isPlainObject(def) || !(isPlainObject(def.view) || typeof def.view === 'function' || def.view === null)) throw new TypeError('dshGo.chatView: { view } is required (an object, a function or null)')
+      if (def.data !== undefined && typeof def.data !== 'function') throw new TypeError('dshGo.chatView: data must be a function (scope, emit) => cancel')
+      if (def.actions !== undefined && (!isPlainObject(def.actions) || Object.values(def.actions).some((f) => typeof f !== 'function'))) throw new TypeError('dshGo.chatView: actions must map names to functions')
+      const dispose = addFeedSource(regs.views, id, { view: def.view, data: def.data, actions: def.actions, def })
+      undeclared('views', id)
       return dispose
     },
     turnNote(id, def) {
@@ -218,6 +227,7 @@ export function createTestHost(options = {}) {
   function live() {
     return {
       panels: new Map([...regs.panels].map(([id, r]) => [id, { data: typeof r.data === 'function' }])),
+      views: new Map([...regs.views].map(([id, r]) => [id, { data: typeof r.data === 'function' }])),
       strips: new Set(regs.strips.keys()),
       notes: new Set(regs.notes.keys()),
       handlers: new Set(regs.handlers.keys()),
@@ -231,6 +241,7 @@ export function createTestHost(options = {}) {
   function findSurface(id) {
     for (const surface of ['composer.actions', 'message.actions', 'composer.strip', 'composer.tools', 'session.actions']) if (surfaceItem(surface, id)) return surface
     if (surfaceItem('panel', id)) return 'panel'
+    if (surfaceItem('chat.views', id)) return 'chat.views'
     return undefined
   }
 
@@ -310,6 +321,8 @@ export function createTestHost(options = {}) {
         strips: [...regs.strips.keys()],
         notes: [...regs.notes.keys()],
         handlers: [...regs.handlers.keys()],
+        views: [...regs.views.keys()],
+        dataViews: [...regs.views].filter(([, r]) => typeof r.data === 'function').map(([id]) => id),
         dataPanels: [...regs.panels].filter(([, r]) => typeof r.data === 'function').map(([id]) => id),
       }
     },
@@ -331,6 +344,7 @@ export function createTestHost(options = {}) {
       if (item.effect !== undefined) throw new HostError(409, 'no-handler', `${id} has a static effect; the app runs it without invoke`)
       let fn
       if (surface === 'panel' && request.action !== undefined) fn = regs.panels.get(id)?.actions?.[request.action]
+      if (surface === 'chat.views' && request.action !== undefined) fn = regs.views.get(id)?.actions?.[request.action]
       fn ??= regs.handlers.get(id)
       if (typeof fn !== 'function') throw new HostError(409, 'no-handler', `no handler for ${id}${request.action ? `/${request.action}` : ''}`)
       const arg = { ...(request.scope ?? {}) }
@@ -388,17 +402,20 @@ export function createTestHost(options = {}) {
     pendings,
     /** GET /dsh-go/v1/views/<pkg>/<id>: the view your panel(id) returns for `scope`, with stats. */
     async view(id, scope = {}, capsOverride = {}) {
-      const item = parsed.items.panels.find((p) => p.id === id)
-      if (item === undefined) throw new HostError(404, 'not-found', `${parsed.pkg} declares no panel ${id}`)
-      const reg = regs.panels.get(id)
+      const panelItem = parsed.items.panels.find((p) => p.id === id)
+      const chatItem = parsed.items['chat.views']?.find((p) => p.id === id)
+      const item = panelItem ?? chatItem
+      if (item === undefined) throw new HostError(404, 'not-found', `${parsed.pkg} declares no panel/chat view ${id}`)
+      const reg = (panelItem !== undefined ? regs.panels : regs.views).get(id)
       let view
       if (reg !== undefined) {
         view = typeof reg.view === 'function' ? await withTimeout(reg.view({ ...scope }, { ...caps, ...capsOverride }), LIMITS.viewTimeoutMs, `view(${id})`) : reg.view
       } else if (item.viewFile !== undefined) {
         view = JSON.parse(readFileSync(item.viewFile, 'utf8'))
       } else {
-        throw new HostError(409, 'no-handler', `${parsed.pkg} has neither panel("${id}") nor a static view`)
+        throw new HostError(409, 'no-handler', `${parsed.pkg} has neither a registered view nor a static view for ${id}`)
       }
+      if (view === null) return { view: null, stats: { bytes: 0, nodes: 0, depth: 0 }, source: reg !== undefined ? 'registered' : 'file' }
       const json = isPlainObject(view) ? toJson(view) : undefined
       if (json === undefined) throw new HostError(500, 'invalid-view', `view(${id}) is not a JSON object`)
       if (json.bytes > LIMITS.viewBytes) throw new HostError(500, 'invalid-view', `view(${id}) exceeds ${LIMITS.viewBytes} bytes`)
@@ -413,7 +430,7 @@ export function createTestHost(options = {}) {
     subscribe(id, scope = {}) {
       // As the bridge does: the manifest says what this id is, whatever else is registered under it.
       const kind = parsed.ids.get(id)
-      const reg = { 'composer.strip': regs.strips, 'turn.note': regs.notes, panels: regs.panels }[kind]?.get(id)
+      const reg = { 'composer.strip': regs.strips, 'turn.note': regs.notes, panels: regs.panels, 'chat.views': regs.views }[kind]?.get(id)
       const dataFn = reg?.data
       let stopped = false
       let cancel

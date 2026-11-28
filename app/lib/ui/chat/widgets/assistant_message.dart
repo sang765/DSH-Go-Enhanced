@@ -57,6 +57,8 @@ class AssistantMessage extends StatefulWidget {
     this.onRegenerate,
     this.regenerating = false,
     this.onQuote,
+    this.chatViewBefore,
+    this.chatViewAfter,
     this.footnote,
   });
 
@@ -79,6 +81,10 @@ class AssistantMessage extends StatefulWidget {
 
   /// 「引用」:整条回复,或「选择文字」里选中的一段,放到输入框上方。
   final ValueChanged<String>? onQuote;
+
+  /// 插件在这条回复上方 / 正文与操作行之间画的视图;没有时是 0 高。
+  final Widget? chatViewBefore;
+  final Widget? chatViewAfter;
 
   /// 回合脚注(这一轮在这条回复处结束),挂在操作行右端。
   final Widget? footnote;
@@ -210,6 +216,11 @@ class _AssistantMessageState extends State<AssistantMessage> {
     final reply = Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        if (widget.chatViewBefore case final before?)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: SizedBox(width: double.infinity, child: before),
+          ),
         if (reasoning.isNotEmpty) ...[
           _thinkingPill(reasoning, streaming && text.isEmpty, streaming),
           if (text.isNotEmpty && !_textAfterThinking) const SizedBox(height: 8),
@@ -228,6 +239,11 @@ class _AssistantMessageState extends State<AssistantMessage> {
             ),
           ),
         if (item.interrupted) const _InterruptedMark(),
+        if (widget.chatViewAfter case final after?)
+          Padding(
+            padding: const EdgeInsets.only(top: 8),
+            child: SizedBox(width: double.infinity, child: after),
+          ),
         // 一轮结束时和输入条上的胶囊同一节奏展开:胶囊收回多少,这里长出
         // 多少,回答不会先被顶上去再落回来。打开对话时已结束的轮直接展开。
         ExpandReveal(
