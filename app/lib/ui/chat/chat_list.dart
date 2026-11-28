@@ -16,6 +16,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../l10n/l10n.dart';
 import '../../pets/pet_signals.dart' show petHeadroomProvider;
+import '../../plugins/native/native_model.dart';
 import '../../plugins/native/native_surface.dart' show nativeTurnNoteProvider;
 import '../../state/agents_state.dart' show hostSessionsProvider, selectConversation;
 import '../../state/app_notes.dart';
@@ -33,6 +34,9 @@ import '../../state/settings_state.dart';
 import '../common/app_dialog.dart';
 import '../common/bleed.dart';
 import '../common/ui_trace.dart';
+import '../plugins/native/message_card.dart';
+import '../plugins/native/native_taps.dart';
+import '../plugins/view/plugin_view.dart' show PluginActionSource;
 import '../pets/pet_perch.dart';
 import '../theme/app_icons.dart';
 import '../theme/theme.dart';
@@ -1327,6 +1331,7 @@ class _ChatListState extends ConsumerState<ChatList> with SingleTickerProviderSt
       onRegenerate: prompt == null ? null : () => _regenerate(item, prompt),
       regenerating: _regeneratingId == item.id,
       onQuote: widget.onQuote == null ? null : _quote,
+      pluginCard: _pluginCard(item, footnote?.turn),
       footnote: footnote == null ? null : _footnote(footnote),
     );
     // Always in a scope, so a reply that grows a visual block keeps its
@@ -1347,6 +1352,30 @@ class _ChatListState extends ConsumerState<ChatList> with SingleTickerProviderSt
       onReply: chat.send,
       onAskResend: chat.send,
       child: message,
+    );
+  }
+
+  Widget? _pluginCard(AssistantChatItem item, int? turn) {
+    if (item.streaming || item.seq == null || turn == null) return null;
+    return NativeMessageCardSlot(
+      sessionId: widget.sessionId,
+      turnId: '$turn',
+      messageId: item.id,
+      replyText: item.text,
+      onAction: (action, key) => runNativeTap(
+        context,
+        ref,
+        package: key.package,
+        surface: NativeSurface.messageCard,
+        id: key.id,
+        scope: key.scope,
+        action: action.id,
+        value: action.args,
+        userGesture: action.source != PluginActionSource.change,
+        gestureAt: action.gestureAt,
+        target: key,
+      ),
+      key: ValueKey('message-card|${item.seq}'),
     );
   }
 

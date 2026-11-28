@@ -69,10 +69,11 @@ abstract final class DshGoSurfaces {
   static const composerTools = 'composer.tools';
   static const sessionActions = 'session.actions';
   static const turnNote = 'turn.note';
+  static const messageCard = 'message.card';
 
   /// What an app that draws the newer places says in [DshGoCaps.surfaces]. A bridge moves a panel
   /// that asked only for [DshGoPanel.pluginPage] somewhere else for an app that doesn't list it.
-  static const all = [...v1, composerTools, sessionActions, turnNote, DshGoPanel.pluginPage];
+  static const all = [...v1, composerTools, sessionActions, turnNote, messageCard, DshGoPanel.pluginPage];
 }
 
 // -----------------------------------------------------------------------------
@@ -391,6 +392,7 @@ class DshGoPlugin {
     this.composerTools = const [],
     this.sessionActions = const [],
     this.turnNotes = const [],
+    this.messageCards = const [],
     this.issues = const [],
     this.capabilities = const {},
     this.media = const [],
@@ -425,6 +427,10 @@ class DshGoPlugin {
         for (final item in asListOrEmpty(contributes[DshGoSurfaces.turnNote]))
           if (asMap(item) case final note? when asBool(note['ready']) ?? false) ?asString(note['id']),
       ],
+      messageCards: [
+        for (final item in asListOrEmpty(contributes[DshGoSurfaces.messageCard]))
+          if (asMap(item) case final card? when asBool(card['ready']) ?? false) ?asString(card['id']),
+      ],
       issues: [for (final item in asListOrEmpty(map['issues'])) ?DshGoIssue.fromJson(item)],
       capabilities: asStringList(map['capabilities']).where(dshGoFeatures.contains).toSet(),
       media: list('media', dshGoResourceId).take(2).toList(),
@@ -450,6 +456,7 @@ class DshGoPlugin {
   final List<DshGoAction> composerTools;
   final List<DshGoAction> sessionActions;
   final List<String> turnNotes;
+  final List<String> messageCards;
 
   /// [state] is `ok`: the native part shows. Otherwise the contributions are
   /// empty and the app falls back to the web.

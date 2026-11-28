@@ -150,7 +150,7 @@ class NativeSurfaceController extends Notifier<NativeSurfaceState> {
   HostRef? _host;
   NativeSurfaceState? _retained;
 
-  bool get _panel => key.surface == NativeSurface.panel;
+  bool get _panel => key.surface == NativeSurface.panel || key.surface == NativeSurface.messageCard;
 
   @override
   NativeSurfaceState build() {
@@ -172,6 +172,7 @@ class NativeSurfaceController extends Notifier<NativeSurfaceState> {
       nativeContributionsProvider.select((contributions) {
         final plugin = contributions.plugin(key.package);
         if (plugin == null || !plugin.native) return false;
+        if (key.surface == NativeSurface.messageCard) return plugin.messageCards.contains(key.id);
         return switch (key.surface) {
           NativeSurface.panel => plugin.panels.any((panel) => panel.id == key.id),
           NativeSurface.turnNote => plugin.turnNotes.contains(key.id),

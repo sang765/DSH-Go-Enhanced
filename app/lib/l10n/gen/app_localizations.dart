@@ -31140,6 +31140,12 @@ abstract class L10n {
   /// **'回合尾注'**
   String get plugslotsSurfaceTurnNote;
 
+  /// No description provided for @plugslotsSurfaceMessageCard.
+  ///
+  /// In zh, this message translates to:
+  /// **'消息卡片'**
+  String get plugslotsSurfaceMessageCard;
+
   /// No description provided for @plugslotsSurfaceComposerActions.
   ///
   /// In zh, this message translates to:

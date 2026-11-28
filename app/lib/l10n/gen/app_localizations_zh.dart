@@ -16852,6 +16852,9 @@ class L10nZh extends L10n {
   String get plugslotsSurfaceTurnNote => '回合尾注';
 
   @override
+  String get plugslotsSurfaceMessageCard => '消息卡片';
+
+  @override
   String get plugslotsSurfaceComposerActions => '输入框按钮';
 
   @override

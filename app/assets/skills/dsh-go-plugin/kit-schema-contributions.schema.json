@@ -204,19 +204,14 @@
               "type": "array",
               "maxItems": 1,
               "items": {
-                "type": "object",
-                "required": [
-                  "id",
-                  "ready"
-                ],
-                "properties": {
-                  "id": {
-                    "$ref": "#/$defs/id"
-                  },
-                  "ready": {
-                    "type": "boolean"
-                  }
-                }
+                "$ref": "#/$defs/feedEntry"
+              }
+            },
+            "message.card": {
+              "type": "array",
+              "maxItems": 1,
+              "items": {
+                "$ref": "#/$defs/feedEntry"
               }
             }
           }
@@ -239,6 +234,21 @@
               "files"
             ]
           }
+        }
+      }
+    },
+    "feedEntry": {
+      "type": "object",
+      "required": [
+        "id",
+        "ready"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "ready": {
+          "type": "boolean"
         }
       }
     },

@@ -18,7 +18,7 @@ const TRACKER = Symbol.for("cordis.tracker");
 const SCAN_MAX_AGE_MS = 2000;
 const CHANGED_DEBOUNCE_MS = 300;
 const SELF = "dsh-go-bridge";
-const REG_NAMES = { panels: "panel", strips: "strip", notes: "turnNote", handlers: "on", media: "media", micro: "micro", capability: "onCapability" };
+const REG_NAMES = { panels: "panel", strips: "strip", notes: "turnNote", cards: "messageCard", handlers: "on", media: "media", micro: "micro", capability: "onCapability" };
 
 /** Loader entry owning a fiber (walks up through `ctx.inject` sub-fibers). */
 export function entryOf(fiber) {
@@ -210,6 +210,7 @@ export class NativeCore {
       panels,
       strips: new Set(regs?.strips.keys() ?? []),
       notes: new Set(regs?.notes.keys() ?? []),
+      cards: new Set(regs?.cards.keys() ?? []),
       handlers: new Set(regs?.handlers.keys() ?? []),
       degraded: h?.degraded === true,
       runtimeIssues: [...(h?.issues.values() ?? [])],
@@ -371,6 +372,11 @@ export class NativeCore {
       if (def.data !== undefined && typeof def.data !== "function") throw new TypeError("dshGo.panel: data must be a function (scope, emit) => cancel");
       if (def.actions !== undefined && (!isPlainObject(def.actions) || Object.values(def.actions).some((f) => typeof f !== "function"))) throw new TypeError("dshGo.panel: actions must map names to functions");
       value = { view: def.view, data: def.data, actions: def.actions };
+    } else if (kind === "cards") {
+      if (!isPlainObject(def) || !(isPlainObject(def.view) || typeof def.view === "function")) throw new TypeError("dshGo.messageCard: { view } is required (an object or a function)");
+      if (typeof def.data !== "function") throw new TypeError("dshGo.messageCard: pass (scope, emit) => cancel or { data }");
+      if (def.actions !== undefined && (!isPlainObject(def.actions) || Object.values(def.actions).some((f) => typeof f !== "function"))) throw new TypeError("dshGo.messageCard: actions must map names to functions");
+      value = { view: def.view, data: def.data, actions: def.actions };
     } else if (kind === "strips" || kind === "micro" || kind === "notes") {
       const data = typeof def === "function" ? def : def?.data;
       if (typeof data !== "function") throw new TypeError(`dshGo.${REG_NAMES[kind]}: pass (scope, emit) => cancel or { data }`);
@@ -389,20 +395,22 @@ export class NativeCore {
   #add(pkg, kind, id, def, token) {
     let regs = this.regs.get(pkg);
     if (regs === undefined) {
-      regs = { panels: new Map(), strips: new Map(), notes: new Map(), handlers: new Map(), media: new Map(), micro: new Map(), capability: new Map() };
+      regs = { panels: new Map(), strips: new Map(), notes: new Map(), cards: new Map(), handlers: new Map(), media: new Map(), micro: new Map(), capability: new Map() };
       this.regs.set(pkg, regs);
     }
     const count = Object.values(regs).reduce((n, entries) => n + entries.size, 0);
     if (count === 0) this.#resetHealth(pkg);
     const replaced = regs[kind].has(id);
     regs[kind].set(id, { def, token });
-    if (replaced && (kind === "panels" || kind === "strips" || kind === "notes")) for (const feed of [...this.feeds.values()]) if (feed.pkg === pkg && feed.id === id) feed.stop("not-found");
+    if (replaced && (kind === "panels" || kind === "strips" || kind === "notes" || kind === "cards")) for (const feed of [...this.feeds.values()]) if (feed.pkg === pkg && feed.id === id) feed.stop("not-found");
     const rec = this.plugin(pkg);
     const declared = rec?.parsed.ids.get(id);
     const ok = kind === "capability" ? (rec?.parsed.capabilities?.length ?? 0) > 0
       : kind === "media" || kind === "micro" ? declared === kind
       : kind === "handlers" ? declared !== undefined
-      : kind === "panels" ? declared === "panels" : kind === "notes" ? declared === "turn.note" : declared === "composer.strip";
+      : kind === "panels" ? declared === "panels"
+      : kind === "notes" ? declared === "turn.note"
+      : kind === "cards" ? declared === "message.card" : declared === "composer.strip";
     if (!ok) {
       const what = kind === "capability" ? "onCapability() needs dshGo.capabilities" : `${REG_NAMES[kind]}("${id}") is not declared in dshGo.contributes`;
       this.runtimeIssue(pkg, `undeclared:${kind}:${id}`, { path: `/runtime/${id}`, code: "undeclared", severity: "warn", message: `${what}; ignored` });
@@ -416,7 +424,7 @@ export class NativeCore {
     const regs = this.regs.get(pkg);
     if (regs?.[kind].get(id)?.token !== token) return;
     regs[kind].delete(id);
-    if (kind === "panels" || kind === "strips" || kind === "notes") for (const feed of [...this.feeds.values()]) if (feed.pkg === pkg && feed.id === id) feed.stop("not-found");
+    if (kind === "panels" || kind === "strips" || kind === "notes" || kind === "cards") for (const feed of [...this.feeds.values()]) if (feed.pkg === pkg && feed.id === id) feed.stop("not-found");
     this.regsVersion++;
     this.capabilityChanged?.();
     this.#scheduleChanged();
@@ -442,6 +450,7 @@ export class NativeCore {
       panel(id, def) { return core.#register(this?.ctx, "panels", id, def); },
       strip(id, def) { return core.#register(this?.ctx, "strips", id, def); },
       turnNote(id, def) { return core.#register(this?.ctx, "notes", id, def); },
+      messageCard(id, def) { return core.#register(this?.ctx, "cards", id, def); },
       media(id, handler) { return core.#register(this?.ctx, "media", id, handler); },
       micro(id, def) { return core.#register(this?.ctx, "micro", id, def); },
       onCapability(handler) { return core.#register(this?.ctx, "capability", "events", handler); },
@@ -470,7 +479,7 @@ export class NativeCore {
       if (idle.length === 0) return undefined;
       idle[0].stop();
     }
-    const reg = this.registration(pkg, kind === "strip" ? "strips" : kind === "note" ? "notes" : "panels", id);
+    const reg = this.registration(pkg, kind === "strip" ? "strips" : kind === "note" ? "notes" : kind === "card" ? "cards" : "panels", id);
     feed = new Feed(this, key, pkg, id, kind, scope.scope, reg?.def.data, typeof locale === "string" ? locale : "");
     this.feeds.set(key, feed);
     feed.start();

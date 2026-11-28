@@ -4,7 +4,7 @@ export const PROTOCOL = 1;
 
 export const LIMITS = Object.freeze({
   manifestBytes: 16384,
-  perPlugin: Object.freeze({ "composer.actions": 2, "message.actions": 2, "composer.strip": 1, panels: 4, "composer.tools": 2, "session.actions": 2, "turn.note": 1 }),
+  perPlugin: Object.freeze({ "composer.actions": 2, "message.actions": 2, "composer.strip": 1, panels: 4, "composer.tools": 2, "session.actions": 2, "turn.note": 1, "message.card": 1 }),
   textChars: Object.freeze({ composerTool: 8, sessionAction: 12, turnNote: 16, pluginTitle: 24, composerAction: 10, messageAction: 12, panelTitle: 16, stripText: 24, toast: 40 }),
   viewBytes: 32768,
   viewNodes: 120,
@@ -62,7 +62,7 @@ export function effectiveLimits(overrides) {
   return Object.freeze(out);
 }
 
-export const SURFACES = ["composer.actions", "message.actions", "composer.strip", "panels", "composer.tools", "session.actions", "turn.note"];
+export const SURFACES = ["composer.actions", "message.actions", "composer.strip", "panels", "composer.tools", "session.actions", "turn.note", "message.card"];
 export const PLACEMENT_PLUGIN = "plugin";
 export const PLACEMENTS = ["session.tab", "features", "chat.panel", PLACEMENT_PLUGIN];
 /** Only where the app says it draws them (`surfaces`): see placementFor in manifest.js. */

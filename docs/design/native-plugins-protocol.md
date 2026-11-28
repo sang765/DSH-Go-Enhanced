@@ -6,6 +6,7 @@
 > 改协议：在提交说明里写一行「NA protocol v1 change: …」。v1 内只允许**加可选字段**；删字段、改含义、收紧上限一律算 v2。
 > **v1.1**（2026-10-25，桥接 0.3.0）：延后效果（§4.7）——handler 可返回 `pending`，结果之后经流推回发起点按的那条连接。全部是可选新增，v1 的 App 与插件不受影响。
 > **v1.2**（2026-10-26，桥接 0.4.0）：可选能力（§11）——有限音频、开口检测、小字幕通道、悬浮字幕。只有声明了 `capabilities` 的插件、并且 App 在 `features` 里提出的能力才会启用；不声明、不提出时，清单解析、路由响应、流消息、效果校验与 v1.1 逐字节相同。
+> **v1 可选新增**：`message.card` 槽位（回复卡片），不影响未声明插件的贡献响应、清单、调用和流格式。
 
 ## 0. 一页看完
 
@@ -108,6 +109,9 @@ v1 内新增，规则和取舍见 [plugin-platform.md](plugin-platform.md) §2�
 | `composer.tools` | 加号面板 | `id`、`label`（必填）、`icon`、`effect`、`panel`、`requires`。`panel` 是打开本插件面板的简写，和 `effect` 互斥 | 2 | `label` 8 |
 | `session.actions` | 右侧栏「信息」 | `id`、`label`（必填）、`icon`、`effect`、`requires` | 2 | `label` 12 |
 | `turn.note` | 回合脚注 | `id` | 1 | 每段 16 |
+| `message.card` | 回复正文下、操作按钮上 | `id` | 1 | 面板视图 |
+
+`message.card` 的 `view` 与 `data` 遵循面板路由，注册方法是 `ctx.dshGo.messageCard(id, { view, data, actions })`；订阅必须带 `sessionId`、`turnId`、`messageId`，按钮使用 surface `message.card` 调 `actions`。`data` 推送完整视图节点给绑定，App 在没有内容时不画。`scope.message` 是可选回复文本，插件也可读取已提交的 `assistant/message`（恢复时重放）。没有此槽位的 App 忽略未知 surface，老 bridge 没有 `messageCard` 方法；插件应先判断该方法是否存在。
 
 面板另有 `placement: "plugin"`（协商：App 的 `surfaces` 没有列出时，只放这里的面板退回 `session.tab`）和 `presentation: "page" | "sheet"`。
 

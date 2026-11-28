@@ -11,7 +11,7 @@ import 'package:flutter/widgets.dart' show IconData;
 import '../../l10n/l10n.dart';
 import 'native_icons.dart';
 
-/// The four places of protocol v1 a plugin can show up in.
+/// The places of protocol v1 a plugin can show up in.
 enum NativeSurface {
   composerActions(DshGoSurfaces.composerActions, DshGoSurfaces.composerActions),
   messageActions(DshGoSurfaces.messageActions, DshGoSurfaces.messageActions),
@@ -19,7 +19,8 @@ enum NativeSurface {
   panel(DshGoSurfaces.panels, DshGoSurfaces.panel),
   composerTools(DshGoSurfaces.composerTools, DshGoSurfaces.composerTools),
   sessionActions(DshGoSurfaces.sessionActions, DshGoSurfaces.sessionActions),
-  turnNote(DshGoSurfaces.turnNote, DshGoSurfaces.turnNote);
+  turnNote(DshGoSurfaces.turnNote, DshGoSurfaces.turnNote),
+  messageCard(DshGoSurfaces.messageCard, DshGoSurfaces.messageCard);
 
   const NativeSurface(this.wire, this.invoke);
 
@@ -37,6 +38,7 @@ enum NativeSurface {
     composerTools => appL10n.plugslotsSurfaceComposerTools,
     sessionActions => appL10n.plugslotsSurfaceSessionActions,
     turnNote => appL10n.plugslotsSurfaceTurnNote,
+    messageCard => appL10n.plugslotsSurfaceMessageCard,
   };
 
   static NativeSurface? byWire(String wire) => values.where((s) => s.wire == wire).firstOrNull;
@@ -326,6 +328,7 @@ class NativePlugin {
     this.composerTools = const [],
     this.sessionActions = const [],
     this.turnNotes = const [],
+    this.messageCards = const [],
     this.issues = const [],
     this.declared = const {},
     this.capabilities = const {},
@@ -358,6 +361,9 @@ class NativePlugin {
   /// Ids of its per-turn notes.
   final List<String> turnNotes;
 
+  /// Ids of its per-message cards.
+  final List<String> messageCards;
+
   /// The bridge's and the app's findings.
   final List<NativeIssue> issues;
 
@@ -383,6 +389,7 @@ class NativePlugin {
       composerTools.isEmpty &&
       sessionActions.isEmpty &&
       turnNotes.isEmpty &&
+      messageCards.isEmpty &&
       composerActions.isEmpty &&
       messageActions.isEmpty &&
       strips.isEmpty &&
@@ -404,6 +411,7 @@ class NativePlugin {
       listEquals(other.composerTools, composerTools) &&
       listEquals(other.sessionActions, sessionActions) &&
       listEquals(other.turnNotes, turnNotes) &&
+      listEquals(other.messageCards, messageCards) &&
       listEquals(other.issues, issues) &&
       setEquals(other.declared, declared) &&
       setEquals(other.capabilities, capabilities) &&
@@ -540,6 +548,7 @@ NativePlugin _plugin(DshGoPlugin p, Set<String> features) {
   final tools = actions(NativeSurface.composerTools, p.composerTools, NativeLimits.toolLabelMax);
   final sessionActions = actions(NativeSurface.sessionActions, p.sessionActions, NativeLimits.menuLabelMax);
   final turnNotes = p.turnNotes.take(1).toList();
+  final messageCards = p.messageCards.take(1).toList();
   return NativePlugin(
     package: p.pkg,
     title: p.title,
@@ -556,6 +565,7 @@ NativePlugin _plugin(DshGoPlugin p, Set<String> features) {
     composerTools: List.unmodifiable(tools),
     sessionActions: List.unmodifiable(sessionActions),
     turnNotes: List.unmodifiable(turnNotes),
+    messageCards: List.unmodifiable(messageCards),
     issues: List.unmodifiable(issues),
     declared: {
       if (composer.isNotEmpty) NativeSurface.composerActions,
@@ -565,6 +575,7 @@ NativePlugin _plugin(DshGoPlugin p, Set<String> features) {
       if (tools.isNotEmpty) NativeSurface.composerTools,
       if (sessionActions.isNotEmpty) NativeSurface.sessionActions,
       if (turnNotes.isNotEmpty) NativeSurface.turnNote,
+      if (messageCards.isNotEmpty) NativeSurface.messageCard,
     },
     capabilities: p.capabilities,
     media: p.capabilities.contains('audio') ? p.media : const [],

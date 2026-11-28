@@ -78,6 +78,7 @@
   "viewUiCategoryLimit": "{first} 个类别，超过上限 {second}",
   "viewUiChildLimit": "超过 {first} 项，后 {second} 项已截断",
   "viewUiChosen": "已选择：{value}",
+  "viewUiChosenOther": "已填写：{value}",
   "viewUiConfirmed": "已确认",
   "viewUiConfirmedValue": "已确认：{value}",
   "viewUiDepthLimit": "第 {first} 层，超过上限 {second} 层",
@@ -115,6 +116,7 @@
   "viewUiFirstSeries": "只画第一组数据",
   "viewUiFirstSeriesCount": "只显示前 {limit} 组数据",
   "viewUiFirstSteps": "已截断：只显示前 {limit} 步",
+  "viewUiFreeTextHint": "其他（自己填）",
   "viewUiGenerating": "正在生成视图",
   "viewUiHiddenItems": "已截断：还有 {count} 项没有显示",
   "viewUiHundredMillion": "{value}亿",
@@ -142,6 +144,7 @@
   "viewUiReplyCancel": "取消：{value}",
   "viewUiReplyChoice": "选择：{value}",
   "viewUiReplyConfirm": "确认：{value}",
+  "viewUiReplyOther": "其他：{value}",
   "viewUiResend": "让它重发",
   "viewUiResendMessage": "上一个 dsh-ui 视图无法显示：{value}。请修正后重发。",
   "viewUiRowLimit": "{first} 行，超过上限 {second}",
@@ -264,6 +267,7 @@
   "viewUiCategoryLimit": "{first, plural, =1{second category} other{{first} categories}}, exceeding the limit of {second}",
   "viewUiChildLimit": "Exceeded {first, plural, =1{second item} other{{first} items}}; last {second, plural, =1{second item truncated} other{{second} items truncated}}",
   "viewUiChosen": "Selected: {value}",
+  "viewUiChosenOther": "Wrote: {value}",
   "viewUiConfirmed": "Confirmed",
   "viewUiConfirmedValue": "Confirmed: {value}",
   "viewUiDepthLimit": "Depth {first} exceeds the limit of {second}",
@@ -301,6 +305,7 @@
   "viewUiFirstSeries": "Drawing only the first series",
   "viewUiFirstSeriesCount": "Showing only the first {limit, plural, =1{1 series} other{{limit} series}}",
   "viewUiFirstSteps": "Truncated: showing only the first {limit, plural, =1{1 step} other{{limit} steps}}",
+  "viewUiFreeTextHint": "Other (type your own)",
   "viewUiGenerating": "Generating view",
   "viewUiHiddenItems": "Truncated: {count, plural, =1{1 more item hidden} other{{count} more items hidden}}",
   "viewUiHundredMillion": "{value}B",
@@ -328,6 +333,7 @@
   "viewUiReplyCancel": "Cancel: {value}",
   "viewUiReplyChoice": "Select: {value}",
   "viewUiReplyConfirm": "Confirm: {value}",
+  "viewUiReplyOther": "Other: {value}",
   "viewUiResend": "Ask to resend",
   "viewUiResendMessage": "The previous dsh-ui view couldn’t be displayed: {value}. Fix it and resend.",
   "viewUiRowLimit": "{first, plural, =1{second row} other{{first} rows}}, exceeding the limit of {second}",
@@ -475,6 +481,9 @@
   "viewUiChosen": [
    "value"
   ],
+  "viewUiChosenOther": [
+   "value"
+  ],
   "viewUiConfirmedValue": [
    "value"
   ],
@@ -564,6 +573,9 @@
    "value"
   ],
   "viewUiReplyConfirm": [
+   "value"
+  ],
+  "viewUiReplyOther": [
    "value"
   ],
   "viewUiResendMessage": [

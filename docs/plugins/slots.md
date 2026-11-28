@@ -121,6 +121,9 @@ export function apply(ctx) {
 | `composer.tools` | 输入框加号面板，和附件磁贴同一网格 | `id`、`label`、`icon?`、`effect?`、`panel?`、`requires?` | 2（整个面板最多 8 个） | `label` 8 字 | `panel` 或 `effect` 由 App 直接执行；都没有就 invoke `on(id)`。`panel` 和 `effect` 只能写一个 |
 | `session.actions` | 右侧栏「信息」的操作行，右侧显示插件名 | `id`、`label`、`icon?`、`effect?`、`requires?` | 2 | `label` 12 字 | 同胶囊，`scope` 带 `sessionId` |
 | `turn.note` | 每轮回合脚注的末尾 | `id` | 1（每轮最多显示 2 个插件） | 每段 16 字 | 不能点；点脚注仍是打开轨迹 |
+| `message.card` | 回复正文下、操作按钮上 | `id` | 1 | 面板视图 | `messageCard(id, { view, data, actions })`；按钮 / 行走 `actions` |
+
+**回复卡片**用 `messageCard(id, { view, data, actions })` 注册。订阅的 `scope` 带 `sessionId`、`turnId`、`messageId`，插件可从已提交的 `assistant/message`（含恢复历史时的重放）提取链接，或通过可选的 `scope.message` 读取当前回复；不要对每条回复无条件请求外部服务。`data` 推完整节点给 `view` 的绑定，例如 `{ hasCards: true, children: [{ type: "stack", children: [...] }] }`，App 没有内容时不画。`view` 可用 `collapsible` 收纳多张卡。较旧的桥接没有 `messageCard`，先判断 `typeof ctx.dshGo.messageCard === 'function'`。
 
 ```jsonc
 "contributes": {
