@@ -3,6 +3,19 @@
 每个版本先中文、后英文。发版时把对应版本的正文（不含版本标题）作为 Release 正文，见 `docs/release.md`。
 
 
+## 1.4.0-sub.6 · 2026-11-28
+
+### 中文
+
+- **新增:长按对话可以复制对话 ID。** 对话列表长按后的操作面板新增**复制**一项，副标题直接显示这条对话的 ID；点按会把 ID 放进剪贴板并短暂显示**已复制**，不会改动对话本身。
+- **验证情况。** 全量 CI 绿灯，包含 Flutter 分析、三个测试分片、Runtime and bridge、Android JVM、伙伴离线回放和 iOS 引擎回归；新增的抽屉流程测试覆盖了复制内容与提示。菜单观感仍需装包后在真机确认。
+
+### English
+
+- **Added: copy a chat's ID from its long-press menu.** The session list's action sheet now has a **Copy** item whose subtitle shows that chat's ID. Tapping it writes the ID to the clipboard and shows a brief **Copied** confirmation; nothing in the chat is changed.
+- **Testing.** Full CI is green, including Flutter analyze and all three test shards, Runtime and bridge, Android JVM, Companion memory offline replay and the iOS engine regression; a new drawer flow test covers the copied text and confirmation. The menu still needs an on-device look with the installed build.
+
+
 ## 1.4.0-sub.5 · 2026-11-27
 
 ### 中文
