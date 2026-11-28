@@ -177,7 +177,7 @@ Agents-Anywhere 的网络与协议对我们没用（全经它自己的服务器�
 | 5 | 语音输入：系统识别优先，打包的 DSH 语音插件兜底 | Whaleness | ☑️ 待真机 |
 | 6 | 用量与余额：token、缓存命中、DeepSeek 余额、低余额提醒 | 201222-L | ☑️ |
 | 7 | 进度卡：todo / plan / goal，排队消息可编辑 | 官方投影 | ☑️ 会话详情 › 进度；排队消息可改插话 / 撤回 |
-| 8 | 手机文件双向打通：`/root/手机存储` 软链、挂载失败跳过、反方向导出到"下载" | DSHA | P0 #1 补完 |
+| 8 | 手机文件双向打通：`/sdcard` 绑定、挂载失败跳过、反方向导出到"下载" | DSHA | P0 #1 补完 |
 
 许可：DSHA、Whaleness、mobile-gateway、201222-L 为 MIT，saya-ch 为 Apache-2.0，可按许可证复用；dsh-pocket 为 GPL-2.0，只参考；Agents-Anywhere、yukiykchen 缺许可文件，需作者授权；ds-harness-remote 的许可见 THIRD_PARTY_NOTICES.md。
 

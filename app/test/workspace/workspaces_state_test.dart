@@ -263,8 +263,8 @@ void main() {
     });
 
     test('paths: phone storage, home, elsewhere', () {
-      expect(displayPath('/sdcard', local: true), '手机存储');
-      expect(displayPath('/sdcard/Documents/notes', local: true), '手机存储/Documents/notes');
+      expect(displayPath('/sdcard', local: true), '手机内部存储');
+      expect(displayPath('/sdcard/Documents/notes', local: true), '手机内部存储/Documents/notes');
       expect(displayPath('/root', local: true), '~');
       expect(displayPath('/root/workspace', local: true), '~/workspace');
       expect(displayPath('/rootfs', local: true), '/rootfs');
@@ -279,7 +279,7 @@ void main() {
       expect(folderNameProblem('新项目'), isNull);
     });
 
-    test('breadcrumbs start at 手机存储 / 主目录 / 根目录', () {
+    test('breadcrumbs start at 手机内部存储 / 主目录 / 根目录', () {
       DirectoryLevel level(String path, {String home = '/root'}) {
         var at = '';
         return DirectoryLevel(
@@ -293,7 +293,7 @@ void main() {
         );
       }
 
-      expect([for (final c in displayCrumbs(level('/sdcard/Download'), local: true)) c.label], ['手机存储', 'Download']);
+      expect([for (final c in displayCrumbs(level('/sdcard/Download'), local: true)) c.label], ['手机内部存储', 'Download']);
       expect([for (final c in displayCrumbs(level('/root/code'), local: true)) c.label], ['主目录', 'code']);
       expect([for (final c in displayCrumbs(level('/srv/www'), local: true)) c.label], ['根目录', 'srv', 'www']);
       expect([for (final c in displayCrumbs(level('/sdcard/x'), local: false)) c.label], ['根目录', 'sdcard', 'x']);

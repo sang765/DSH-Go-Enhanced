@@ -13,7 +13,7 @@ const phoneStorageRoot = '/sdcard';
 /// Home of the engine's user on the phone.
 String get localHome => LocalPaths.home;
 
-/// [path] for display: the phone's storage as 「手机存储」, the home folder as
+/// [path] for display: the phone's storage as 「手机内部存储」, the home folder as
 /// `~` (the engine's `/root` on the phone, [home] elsewhere when known).
 String displayPath(String path, {required bool local, String? home}) {
   if (local) {

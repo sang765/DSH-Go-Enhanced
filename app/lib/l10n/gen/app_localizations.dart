@@ -33981,7 +33981,7 @@ abstract class L10n {
   /// No description provided for @remoteDirectoryPhoneStorage.
   ///
   /// In zh, this message translates to:
-  /// **'手机存储'**
+  /// **'手机内部存储'**
   String get remoteDirectoryPhoneStorage;
 
   /// No description provided for @remoteDirectoryDownloads.
@@ -33993,7 +33993,7 @@ abstract class L10n {
   /// No description provided for @remoteDirectoryDownloadsPath.
   ///
   /// In zh, this message translates to:
-  /// **'手机存储/Download'**
+  /// **'手机内部存储/Download'**
   String get remoteDirectoryDownloadsPath;
 
   /// No description provided for @remoteDirectoryDocuments.
@@ -34005,7 +34005,7 @@ abstract class L10n {
   /// No description provided for @remoteDirectoryDocumentsPath.
   ///
   /// In zh, this message translates to:
-  /// **'手机存储/Documents'**
+  /// **'手机内部存储/Documents'**
   String get remoteDirectoryDocumentsPath;
 
   /// No description provided for @remoteDirectoryLocations.
@@ -34371,7 +34371,7 @@ abstract class L10n {
   /// No description provided for @remoteDirectoryPhonePath.
   ///
   /// In zh, this message translates to:
-  /// **'手机存储/{path}'**
+  /// **'手机内部存储/{path}'**
   String remoteDirectoryPhonePath(String path);
 
   /// No description provided for @remoteDirectoryInvalidName.
