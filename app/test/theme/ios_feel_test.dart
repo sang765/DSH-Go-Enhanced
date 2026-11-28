@@ -14,6 +14,8 @@ const _page = Key('page');
 const _open = Key('open');
 const _push = Key('push');
 const _pop = Key('pop');
+const _stack = Key('stack');
+const _lowerSheet = Key('lowerSheet');
 
 const _screen = 400.0;
 const _statusBar = 59.0;
@@ -32,27 +34,39 @@ Widget _app({required bool fluid}) => MaterialApp(
             key: _open,
             onPressed: () => showAppSheet<void>(
               context,
-              builder: (_) => Column(
-                children: [
-                  const SizedBox(height: 300),
-                  TextButton(
-                    key: _push,
-                    onPressed: () => Navigator.of(context).push(
-                      MaterialPageRoute<void>(
-                        builder: (_) => Scaffold(
-                          body: Center(
-                            child: TextButton(
-                              key: _pop,
-                              onPressed: () => Navigator.of(context).pop(),
-                              child: const Text('back'),
+              builder: (_) => SizedBox(
+                key: _lowerSheet,
+                width: double.infinity,
+                child: Column(
+                  children: [
+                    const SizedBox(height: 240),
+                    TextButton(
+                      key: _stack,
+                      onPressed: () => showAppSheet<void>(
+                        context,
+                        builder: (_) => const SizedBox(height: 200),
+                      ),
+                      child: const Text('stack'),
+                    ),
+                    TextButton(
+                      key: _push,
+                      onPressed: () => Navigator.of(context).push(
+                        MaterialPageRoute<void>(
+                          builder: (_) => Scaffold(
+                            body: Center(
+                              child: TextButton(
+                                key: _pop,
+                                onPressed: () => Navigator.of(context).pop(),
+                                child: const Text('back'),
+                              ),
                             ),
                           ),
                         ),
                       ),
+                      child: const Text('push'),
                     ),
-                    child: const Text('push'),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
             child: const Text('open'),
@@ -198,6 +212,25 @@ void main() {
     await tester.pumpAndSettle();
     expect(SheetRecede.amount.value, 1);
     expect(tester.getRect(find.byKey(_page)).width, closeTo(_screen * SheetRecede.scale, 0.5));
+  }, variant: TargetPlatformVariant.only(TargetPlatform.iOS));
+
+  testWidgets('a sheet sits back while another is stacked on top of it', (tester) async {
+    useScreen(tester);
+    await tester.pumpWidget(_app(fluid: true));
+    await tester.pump();
+    await tester.tap(find.byKey(_open));
+    await tester.pumpAndSettle();
+
+    final lower = find.byKey(_lowerSheet);
+    expect(tester.getRect(lower).width, _screen);
+
+    await tester.tap(find.byKey(_stack));
+    await tester.pumpAndSettle();
+    expect(tester.getRect(lower).width, closeTo(_screen * SheetRecede.coveredScale, 0.5));
+
+    tester.state<NavigatorState>(find.byType(Navigator)).pop();
+    await tester.pumpAndSettle();
+    expect(tester.getRect(lower).width, _screen);
   }, variant: TargetPlatformVariant.only(TargetPlatform.iOS));
 
   testWidgets('the status bar turns light over the dark edge, and back', (tester) async {
