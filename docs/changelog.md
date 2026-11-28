@@ -3,6 +3,19 @@
 每个版本先中文、后英文。发版时把对应版本的正文（不含版本标题）作为 Release 正文，见 `docs/release.md`。
 
 
+## 1.4.0-sub.7 · 2026-11-28
+
+### 中文
+
+- **新增:叠放弹层时,下层弹层会一起缩小。** 在手机上的灵动动效档,从「选择模型」里点开「思考强度」这类二级弹层时,底下那层不再保持原尺寸,而是缩到 95% 并略微收圆上角,跟着上层弹层一起升起、一起落下;上层关掉后恢复原样。平板、桌面和关闭动效时保持原来的行为。
+- **验证情况。** 全量 CI 绿灯:Flutter 分析、三个测试分片、Android JVM、生成文件与工具检查、Kilo 代码审查都通过;新增的弹层叠加测试覆盖了缩小与恢复。真机装包后还需确认手感与模糊玻璃的观感。
+
+### English
+
+- **Added: the lower sheet sits back when another sheet stacks on it.** On phones with fluid motion, opening a second sheet such as Thinking effort from Choose model no longer leaves the first one at full size: it shrinks to 95% with slightly rounder top corners, rises and falls in sync with the sheet above, and returns to normal when that sheet closes. Tablets, desktop and reduced-motion keep the previous behaviour.
+- **Testing.** Full CI is green: Flutter analyze, all three test shards, Android JVM, generated files/tooling checks and the Kilo code review; a new stacked-sheet widget test covers the shrink and restore. The feel and glass appearance still need an on-device look with the installed build.
+
+
 ## 1.4.0-sub.6 · 2026-11-28
 
 ### 中文
