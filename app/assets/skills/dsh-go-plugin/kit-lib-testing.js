@@ -20,7 +20,7 @@ import { parseManifest, renderPlugin } from './bridge/manifest.js'
 import { chars, cleanLine, isPlainObject, sanitizeNotes, toJson, truncateChars, viewStats, withoutNulls } from './bridge/util.js'
 
 const CONTEXT_FOR = { 'composer.actions': ['draft', 'clipboard'], 'composer.tools': ['draft', 'clipboard'], 'message.actions': ['message'] }
-const SURFACE_OF = { 'composer.actions': 'composer.actions', 'message.actions': 'message.actions', 'composer.strip': 'composer.strip', panel: 'panels', 'composer.tools': 'composer.tools', 'session.actions': 'session.actions' }
+const SURFACE_OF = { 'composer.actions': 'composer.actions', 'message.actions': 'message.actions', 'composer.strip': 'composer.strip', panel: 'panels', 'composer.tools': 'composer.tools', 'session.actions': 'session.actions', 'message.card': 'message.card' }
 
 /** The caps an up-to-date app sends (protocol §3.1). */
 export function defaultCaps(overrides = {}) {
@@ -28,7 +28,7 @@ export function defaultCaps(overrides = {}) {
     protocol: PROTOCOL,
     app: '99.0.0',
     locale: 'zh-CN',
-    surfaces: ['composer.actions', 'message.actions', 'composer.strip', 'panels', 'composer.tools', 'session.actions', 'turn.note', 'plugin'],
+    surfaces: ['composer.actions', 'message.actions', 'composer.strip', 'panels', 'composer.tools', 'session.actions', 'turn.note', 'message.card', 'plugin'],
     components: JSON.parse(readFileSync(new URL('../schema/view.schema.json', import.meta.url), 'utf8')).$defs.node.properties.type.enum,
     ...overrides,
   }
@@ -80,15 +80,15 @@ export function createTestHost(options = {}) {
   const logs = []
   const pending = []
   const runtimeIssues = new Map()
-  const regs = { panels: new Map(), strips: new Map(), notes: new Map(), handlers: new Map(), media: new Map(), micro: new Map(), capability: new Map() }
+  const regs = { panels: new Map(), strips: new Map(), notes: new Map(), cards: new Map(), handlers: new Map(), media: new Map(), micro: new Map(), capability: new Map() }
   const feeds = new Set()
   const violations = []
 
   const undeclared = (kind, id) => {
     const declared = parsed.ids.get(id)
-    const ok = kind === 'media' || kind === 'micro' ? declared === kind : kind === 'handlers' ? declared !== undefined : kind === 'panels' ? declared === 'panels' : kind === 'notes' ? declared === 'turn.note' : declared === 'composer.strip'
+    const ok = kind === 'media' || kind === 'micro' ? declared === kind : kind === 'handlers' ? declared !== undefined : kind === 'panels' ? declared === 'panels' : kind === 'notes' ? declared === 'turn.note' : kind === 'cards' ? declared === 'message.card' : declared === 'composer.strip'
     if (!ok) {
-      const name = { panels: 'panel', strips: 'strip', notes: 'turnNote', handlers: 'on' }[kind]
+      const name = { panels: 'panel', strips: 'strip', notes: 'turnNote', cards: 'messageCard', handlers: 'on' }[kind]
       runtimeIssues.set(`undeclared:${kind}:${id}`, { path: `/runtime/${id}`, code: 'undeclared', severity: 'warn', message: `${name}("${id}") is not declared in dshGo.contributes; ignored` })
     }
   }
@@ -131,6 +131,18 @@ export function createTestHost(options = {}) {
       if (typeof data !== 'function') throw new TypeError('dshGo.turnNote: pass (scope, emit) => cancel or { data }')
       const dispose = addFeedSource(regs.notes, id, { data })
       undeclared('notes', id)
+      return dispose
+    },
+    messageCard(id, def) {
+      if (typeof id !== 'string' || !ID.test(id)) throw new TypeError(`dshGo.messageCard: id must match ${ID}`)
+      const data = typeof def === 'function' ? def : def?.data
+      if (typeof data !== 'function') throw new TypeError('dshGo.messageCard: pass (scope, emit) => cancel or { data }')
+      const view = typeof def === 'function' ? undefined : def.view
+      if (!isPlainObject(view) && typeof view !== 'function') throw new TypeError('dshGo.messageCard: { view } is required (an object or a function)')
+      const actions = typeof def === 'function' ? undefined : def.actions
+      if (actions !== undefined && (!isPlainObject(actions) || Object.values(actions).some((f) => typeof f !== 'function'))) throw new TypeError('dshGo.messageCard: actions must map names to functions')
+      const dispose = addFeedSource(regs.cards, id, { view, data, actions })
+      undeclared('cards', id)
       return dispose
     },
     strip(id, def) {
@@ -220,6 +232,7 @@ export function createTestHost(options = {}) {
       panels: new Map([...regs.panels].map(([id, r]) => [id, { data: typeof r.data === 'function' }])),
       strips: new Set(regs.strips.keys()),
       notes: new Set(regs.notes.keys()),
+      cards: new Set(regs.cards.keys()),
       handlers: new Set(regs.handlers.keys()),
       degraded: false,
       runtimeIssues: [...runtimeIssues.values()],
@@ -231,6 +244,7 @@ export function createTestHost(options = {}) {
   function findSurface(id) {
     for (const surface of ['composer.actions', 'message.actions', 'composer.strip', 'composer.tools', 'session.actions']) if (surfaceItem(surface, id)) return surface
     if (surfaceItem('panel', id)) return 'panel'
+    if (surfaceItem('message.card', id)) return 'message.card'
     return undefined
   }
 
@@ -309,6 +323,7 @@ export function createTestHost(options = {}) {
         panels: [...regs.panels.keys()],
         strips: [...regs.strips.keys()],
         notes: [...regs.notes.keys()],
+        cards: [...regs.cards.keys()],
         handlers: [...regs.handlers.keys()],
         dataPanels: [...regs.panels].filter(([, r]) => typeof r.data === 'function').map(([id]) => id),
       }
@@ -330,7 +345,9 @@ export function createTestHost(options = {}) {
       if (!(item.requires ?? []).every(x => caps.features?.includes(x))) throw new HostError(409, 'unsupported', 'action requires capabilities')
       if (item.effect !== undefined) throw new HostError(409, 'no-handler', `${id} has a static effect; the app runs it without invoke`)
       let fn
-      if (surface === 'panel' && request.action !== undefined) fn = regs.panels.get(id)?.actions?.[request.action]
+      if (surface === 'panel' || surface === 'message.card') {
+        if (request.action !== undefined) fn = regs[surface === 'panel' ? 'panels' : 'cards'].get(id)?.actions?.[request.action]
+      }
       fn ??= regs.handlers.get(id)
       if (typeof fn !== 'function') throw new HostError(409, 'no-handler', `no handler for ${id}${request.action ? `/${request.action}` : ''}`)
       const arg = { ...(request.scope ?? {}) }
@@ -349,7 +366,7 @@ export function createTestHost(options = {}) {
         throw Object.assign(new HostError(500, 'plugin-error', `handler failed: ${error?.message ?? error}`), { cause: error })
       }
       const panels = new Set(parsed.items.panels.map((p) => p.id))
-      const source = surface === 'panel' ? id : undefined
+      const source = surface === 'panel' || surface === 'message.card' ? id : undefined
       const deferred = splitPending(result)
       if (deferred !== undefined) return startPending(id, deferred, panels, source)
       const norm = normalizeEffects(result, { panels, source, userGesture: request.userGesture === true, capabilities: { declared: parsed.capabilities ?? [], features: caps.features ?? [], media: (parsed.items.media ?? []).map(x => x.id), overlays: (parsed.items.overlays ?? []).map(x => x.id) } })
@@ -388,9 +405,9 @@ export function createTestHost(options = {}) {
     pendings,
     /** GET /dsh-go/v1/views/<pkg>/<id>: the view your panel(id) returns for `scope`, with stats. */
     async view(id, scope = {}, capsOverride = {}) {
-      const item = parsed.items.panels.find((p) => p.id === id)
-      if (item === undefined) throw new HostError(404, 'not-found', `${parsed.pkg} declares no panel ${id}`)
-      const reg = regs.panels.get(id)
+      const item = parsed.items.panels.find((p) => p.id === id) ?? parsed.items['message.card']?.find((p) => p.id === id)
+      if (item === undefined) throw new HostError(404, 'not-found', `${parsed.pkg} declares no panel or message card ${id}`)
+      const reg = regs.panels.get(id) ?? regs.cards.get(id)
       let view
       if (reg !== undefined) {
         view = typeof reg.view === 'function' ? await withTimeout(reg.view({ ...scope }, { ...caps, ...capsOverride }), LIMITS.viewTimeoutMs, `view(${id})`) : reg.view
@@ -413,7 +430,7 @@ export function createTestHost(options = {}) {
     subscribe(id, scope = {}) {
       // As the bridge does: the manifest says what this id is, whatever else is registered under it.
       const kind = parsed.ids.get(id)
-      const reg = { 'composer.strip': regs.strips, 'turn.note': regs.notes, panels: regs.panels }[kind]?.get(id)
+      const reg = { 'composer.strip': regs.strips, 'turn.note': regs.notes, panels: regs.panels, 'message.card': regs.cards }[kind]?.get(id)
       const dataFn = reg?.data
       let stopped = false
       let cancel

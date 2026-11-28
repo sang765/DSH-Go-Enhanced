@@ -95,6 +95,9 @@ whenToUse: The user wants to add something of their own to the dsh-go phone app 
 | `composer.tools` | 2 | `label` 8 字 | `id` `label` `icon?` `effect?` `panel?` `requires?` | `panel` / `effect` App 直接执行（两者只写一个）；否则 `on(id)` |
 | `session.actions` | 2 | `label` 12 字 | `id` `label` `icon?` `effect?` `requires?` | 同胶囊 |
 | `turn.note` | 1 | 每段 16 字 | `id` | 不能点；`turnNote(id, (scope, emit) => …)` 里 `emit({ 回合序号: { text, tone? } })` |
+| `message.card` | 1 | 按面板视图 | `id` | `messageCard(id, { view, data, actions })`；在回复正文下、操作按钮上显示 |
+
+`message.card` 是较新 App / bridge 才有的槽位：订阅的 `scope` 带 `sessionId`、`turnId`、`messageId`，插件从已提交的 `assistant/message` 或 `scope.message` 提取内容；`view` 可为纯函数或绑定，在 `data` 中推完整视图节点，如 `{ hasCards: true, children: [{ type: "stack", children: [...] }] }`。App 没数据时不画；没有该能力时先 `typeof ctx.dshGo.messageCard === 'function'` 判断。
 
 App 另有全局上限：输入框上方胶囊合计 8 个、加号面板工具合计 8 个、回合尾注同时 2 个、note feed 8 条；超过的不显示。面板按钮 pending 状态的 label 不超过 16 字。
 

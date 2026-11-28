@@ -16,6 +16,7 @@ const ITEM_KEYS = {
   "composer.tools": new Set(["id", "label", "icon", "effect", "panel", "requires"]),
   "session.actions": new Set(["id", "label", "icon", "effect", "requires"]),
   "turn.note": new Set(["id"]),
+  "message.card": new Set(["id"]),
 };
 const LABEL_LIMIT = {
   "composer.actions": LIMITS.textChars.composerAction,
@@ -154,7 +155,7 @@ export function parseManifest(pkgJson, pkgDir) {
         if (typeof raw.icon === "string" && ICON.test(raw.icon)) item.icon = raw.icon;
         else issues.push(issue(at("icon"), "invalid-field", "error", "icon must match ^[a-z][a-z0-9-]{0,31}$"));
       }
-      if (surface === "turn.note") {
+      if (surface === "turn.note" || surface === "message.card") {
         // Nothing to show until its data function pushes.
       } else if (ACTION_SURFACES.includes(surface)) {
         item.label = parseText(raw.label);
@@ -344,6 +345,11 @@ export function renderPlugin(parsed, caps, live) {
       if (!ready) issues.push(issue(itemPtr("turn.note", it), "no-handler", "warn", `${it.id} has no turnNote("${it.id}") registration`));
       (row.contributes["turn.note"] ??= []).push({ id: it.id, ready });
     });
+    parsed.items["message.card"]?.forEach((it) => {
+      const ready = live.cards?.has(it.id) === true;
+      if (!ready) issues.push(issue(itemPtr("message.card", it), "no-handler", "warn", `${it.id} has no messageCard("${it.id}") registration`));
+      (row.contributes["message.card"] ??= []).push({ id: it.id, ready });
+    });
   }
   // v1.2 (only for plugins that declare capabilities): kept even when this app negotiated none.
   if (parsed.capabilities !== undefined) {
@@ -382,6 +388,7 @@ export function checkManifest(pkgJson, pkgDir, opts = {}) {
     panels: new Map(panelIds.map((id) => [id, { data: dataPanels.has(id) }])),
     strips: new Set(assume ? all(["composer.strip"]) : (opts.strips ?? [])),
     notes: new Set(assume ? all(["turn.note"]) : (opts.notes ?? [])),
+    cards: new Set(assume ? all(["message.card"]) : (opts.cards ?? [])),
     handlers: new Set(assume ? all([...ACTION_SURFACES, "composer.strip", "panels"]) : opts.handlers),
     degraded: false,
     runtimeIssues: [],

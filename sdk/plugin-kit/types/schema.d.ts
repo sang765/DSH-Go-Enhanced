@@ -503,6 +503,10 @@ export type View = ViewRoot
 
 // ── manifest.schema.json ──────────────────────────────────────────────────
 
+export interface ManifestFeedEntry {
+  id: ManifestId
+}
+
 export type ManifestSemver = string
 
 /** Unique across all contributions of one plugin. */
@@ -589,9 +593,8 @@ export interface Manifest {
     overlays?: Record<string, unknown>[]
     "composer.tools"?: ManifestTool[]
     "session.actions"?: ManifestAction[]
-    "turn.note"?: {
-      id: ManifestId
-    }[]
+    "turn.note"?: ManifestFeedEntry[]
+    "message.card"?: ManifestFeedEntry[]
   }
   capabilities?: Array<"audio" | "voice" | "micro" | "overlay" | "files">
 }
@@ -615,10 +618,10 @@ export interface InvokeRequest {
   v: 1
   pkg: InvokePkg
   id: InvokeId
-  surface: "composer.actions" | "message.actions" | "composer.strip" | "panel" | "composer.tools" | "session.actions"
-  /** panel only */
+  surface: "composer.actions" | "message.actions" | "composer.strip" | "panel" | "composer.tools" | "session.actions" | "message.card"
+  /** panel or message.card only */
   action?: string
-  /** panel only; any JSON, <= 4 KiB serialized */
+  /** panel or message.card only; any JSON, <= 4 KiB serialized */
   value?: unknown
   scope?: InvokeScope
   /** Only honoured when declared in dshGo.wants and allowed for the surface; each field <= 16 KiB UTF-8. */
@@ -834,13 +837,16 @@ export interface ContributionsPlugin {
     }[]
     "composer.tools"?: ContributionsAction[]
     "session.actions"?: ContributionsAction[]
-    "turn.note"?: {
-      id: ContributionsId
-      ready: boolean
-    }[]
+    "turn.note"?: ContributionsFeedEntry[]
+    "message.card"?: ContributionsFeedEntry[]
   }
   issues: ContributionsIssue[]
   capabilities?: Array<"audio" | "voice" | "micro" | "overlay" | "files">
+}
+
+export interface ContributionsFeedEntry {
+  id: ContributionsId
+  ready: boolean
 }
 
 export interface ContributionsAction {

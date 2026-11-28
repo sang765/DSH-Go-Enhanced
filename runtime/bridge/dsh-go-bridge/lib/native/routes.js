@@ -15,7 +15,7 @@ import { LOCALE, call, errorText, isPlainObject, normalizeScope, toJson, utf8Byt
 
 export const STREAM_PATH = "/dsh-go/v1/stream";
 const BASE = "/dsh-go/v1/";
-const SURFACE_KEYS = { "composer.actions": "composer.actions", "message.actions": "message.actions", "composer.strip": "composer.strip", panel: "panels", "composer.tools": "composer.tools", "session.actions": "session.actions" };
+const SURFACE_KEYS = { "composer.actions": "composer.actions", "message.actions": "message.actions", "composer.strip": "composer.strip", panel: "panels", "composer.tools": "composer.tools", "session.actions": "session.actions", "message.card": "cards" };
 const CONTEXT_FOR = { "composer.actions": ["draft", "clipboard"], "composer.tools": ["draft", "clipboard"], "message.actions": ["message"] };
 const IMAGE_TYPES = { ".png": "image/png", ".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".webp": "image/webp", ".gif": "image/gif" };
 const SUB_ID = /^.{1,32}$/su;
@@ -193,13 +193,16 @@ export function createNativeRoutes(core, { beginUsage = () => () => {} } = {}) {
     if (!ID.test(id)) fail(400, "bad-request", "path must be views/<pkg>/<panel id>");
     const scope = scopeFromQuery(url.searchParams);
     const rec = pluginOrFail(pkg, caps);
-    const item = rec.parsed.items.panels.find((p) => p.id === id);
-    if (item === undefined) fail(404, "not-found", `${pkg} declares no panel ${id}`);
-    const reg = core.registration(pkg, "panels", id);
+    const item = rec.parsed.items.panels.find((p) => p.id === id) ?? rec.parsed.items["message.card"]?.find((p) => p.id === id);
+    const declared = rec.parsed.ids.get(id);
+    if (item === undefined || (declared !== "panels" && declared !== "message.card")) fail(404, "not-found", `${pkg} declares no panel or message card ${id}`);
+    const kind = declared === "panels" ? "panels" : "cards";
+    if (kind === "message.card" && (scope.scope.sessionId === undefined || scope.scope.turnId === undefined || scope.scope.messageId === undefined)) fail(400, "bad-request", "message.card needs sessionId, turnId and messageId");
+    const reg = core.registration(pkg, kind, id);
     // Like invoke: a view or first data that finishes after a reload answers no-handler.
     const origin = { uid: rec.uid, stamp: rec.stamp, token: reg?.token };
     const requireCurrent = () => {
-      if (!isCurrent(pkg, "panels", id, origin)) fail(409, "no-handler", "panel registration was unloaded or changed");
+      if (!isCurrent(pkg, kind, id, origin)) fail(409, "no-handler", "view registration was unloaded or changed");
     };
     let viewJson;
     if (reg !== undefined) {
@@ -239,7 +242,7 @@ export function createNativeRoutes(core, { beginUsage = () => () => {} } = {}) {
     let rev = null;
     let live = false;
     if (typeof reg?.def.data === "function") {
-      const feed = core.feed(pkg, id, "panel", scope, caps.locale);
+      const feed = core.feed(pkg, id, kind === "panels" ? "panel" : "card", scope, caps.locale);
       if (feed !== undefined) {
         feed.pin();
         try {
@@ -256,7 +259,7 @@ export function createNativeRoutes(core, { beginUsage = () => () => {} } = {}) {
       }
     }
     core.success(pkg);
-    sendJson(res, 200, { v: PROTOCOL, pkg, id, title: panelTitle(item, caps.locale), view: viewJson.value, data, rev, live, stats, issues });
+    sendJson(res, 200, { v: PROTOCOL, pkg, id, title: item.title === undefined ? id : panelTitle(item, caps.locale), view: viewJson.value, data, rev, live, stats, issues });
   }
 
   // -------------------------------------------------------------- invoke
@@ -273,11 +276,12 @@ export function createNativeRoutes(core, { beginUsage = () => () => {} } = {}) {
     if (typeof body.pkg !== "string" || !PKG.test(body.pkg)) fail(400, "bad-request", "pkg is not a package name");
     if (typeof body.id !== "string" || !ID.test(body.id)) fail(400, "bad-request", "id is not an id");
     const surfaceKey = SURFACE_KEYS[body.surface];
-    if (surfaceKey === undefined) fail(400, "bad-request", "surface must be composer.actions, message.actions, composer.strip or panel");
-    const isPanel = body.surface === "panel";
-    if (body.action !== undefined && (!isPanel || typeof body.action !== "string" || body.action.length < 1 || body.action.length > 64)) fail(400, "bad-request", "action is a 1-64 character string, panel only");
+    if (surfaceKey === undefined) fail(400, "bad-request", "surface must be a supported contribution or view");
+    const isPanel = body.surface === "panel" || body.surface === "message.card";
+    const viewSurface = isPanel ? SURFACE_KEYS[body.surface] : "panels";
+    if (body.action !== undefined && (!isPanel || typeof body.action !== "string" || body.action.length < 1 || body.action.length > 64)) fail(400, "bad-request", "action is a 1-64 character string, panel or message.card only");
     if (body.value !== undefined) {
-      if (!isPanel) fail(400, "bad-request", "value is panel only");
+      if (!isPanel) fail(400, "bad-request", "value is panel or message.card only");
       const json = toJson(body.value);
       if (json === undefined || json.bytes > L.invokeValueBytes) fail(413, "too-large", `value exceeds ${L.invokeValueBytes} bytes`);
     }
@@ -293,14 +297,15 @@ export function createNativeRoutes(core, { beginUsage = () => () => {} } = {}) {
     if (body.userGesture !== undefined && typeof body.userGesture !== "boolean") fail(400, "bad-request", "userGesture must be a boolean");
 
     const rec = pluginOrFail(body.pkg);
-    const item = rec.parsed.items[surfaceKey]?.find((x) => x.id === body.id);
+    if (body.surface === "message.card" && (scope.scope.sessionId === undefined || scope.scope.turnId === undefined || scope.scope.messageId === undefined)) fail(400, "bad-request", "message.card needs sessionId, turnId and messageId");
+    const item = rec.parsed.items[body.surface]?.find((x) => x.id === body.id);
     if (item === undefined) fail(404, "not-found", `${body.pkg} declares no ${body.surface} ${body.id}`);
     const capabilityConn = connById.get(body.stream);
-    if (!(item.requires ?? []).every(x => capabilityConn?.features?.includes(x))) fail(409, "unsupported", "action requires negotiated capabilities");
+    if (surfaceKey !== "message.card" && !(item.requires ?? []).every(x => capabilityConn?.features?.includes(x))) fail(409, "unsupported", "action requires negotiated capabilities");
     if (item.effect !== undefined) fail(409, "no-handler", `${body.id} has a static effect; the app runs it without invoke`);
-    const panel = isPanel ? core.registration(body.pkg, "panels", body.id) : undefined;
+    const panel = isPanel ? core.registration(body.pkg, viewSurface, body.id) : undefined;
     const handler = core.registration(body.pkg, "handlers", body.id);
-    let kind = "panels", registration = panel;
+    let kind = viewSurface, registration = panel;
     let fn = isPanel && body.action !== undefined ? panel?.def.actions?.[body.action] : undefined;
     if (fn == null) { kind = "handlers"; registration = handler; fn = handler?.def; }
     if (typeof fn !== "function") fail(409, "no-handler", `no handler for ${body.id}${body.action ? `/${body.action}` : ""}`);
@@ -613,10 +618,12 @@ export function createNativeRoutes(core, { beginUsage = () => () => {} } = {}) {
     if (state === "degraded") return end("degraded");
     if (state !== "ok") return end("not-native");
     const declared = rec.parsed.ids.get(msg.id);
-    if (declared !== "panels" && declared !== "composer.strip" && declared !== "turn.note") return end("not-found");
-    // A turn's note belongs to a conversation.
-    if (declared === "turn.note" && scope.scope.sessionId === undefined) return end("not-found");
-    const feed = core.feed(msg.pkg, msg.id, declared === "panels" ? "panel" : declared === "turn.note" ? "note" : "strip", scope, conn.locale);
+    if (!["panels", "composer.strip", "turn.note", "message.card"].includes(declared)) return end("not-found");
+    // A turn's note or message card belongs to a conversation.
+    if ((declared === "turn.note" || declared === "message.card") && scope.scope.sessionId === undefined) return end("not-found");
+    if (declared === "message.card" && (scope.scope.turnId === undefined || scope.scope.messageId === undefined)) return end("not-found");
+    const feedKind = { panels: "panel", "turn.note": "note", "message.card": "card", "composer.strip": "strip" }[declared];
+    const feed = core.feed(msg.pkg, msg.id, feedKind, scope, conn.locale);
     if (feed === undefined) return end("limit");
     const sub = {
       id: msg.sub,

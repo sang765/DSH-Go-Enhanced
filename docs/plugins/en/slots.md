@@ -121,6 +121,9 @@ These need a newer app. Check with `hasSurface(caps, 'composer.tools')`. Where t
 | `composer.tools` | The composer's plus panel, on the attachment tiles' grid | `id`, `label`, `icon?`, `effect?`, `panel?`, `requires?` | 2 (the panel shows at most 8) | `label` 8 | `panel` or `effect` runs in the app; with neither, invoke `on(id)`. Write `panel` or `effect`, not both |
 | `session.actions` | An action row in the side panel's Info, with the plugin's name on the right | `id`, `label`, `icon?`, `effect?`, `requires?` | 2 | `label` 12 | As capsules; `scope` has `sessionId` |
 | `turn.note` | The end of each turn's footnote | `id` | 1 (a turn shows at most 2 plugins) | 16 each | Not tappable; tapping the footnote still opens the trajectory |
+| `message.card` | Below a reply, above its actions | `id` | 1 | A panel view | `messageCard(id, { view, data, actions })`; controls invoke `actions` |
+
+**Message cards** register with `messageCard(id, { view, data, actions })`. The subscription scope carries `sessionId`, `turnId` and `messageId`. Read links from committed `assistant/message` events (including replay on resume) or the optional `scope.message`; do not call an external service for every reply. `data` supplies whole view nodes to bindings, e.g. `{ hasCards: true, children: [{ type: "stack", children: [...] }] }`. The app draws nothing while there is no content; `collapsible` can keep multiple cards folded. Older bridges have no `messageCard`, so check `typeof ctx.dshGo.messageCard === 'function'` first.
 
 ```jsonc
 "contributes": {

@@ -171,16 +171,14 @@
           "type": "array",
           "maxItems": 1,
           "items": {
-            "type": "object",
-            "required": [
-              "id"
-            ],
-            "properties": {
-              "id": {
-                "$ref": "#/$defs/id"
-              }
-            },
-            "additionalProperties": false
+            "$ref": "#/$defs/feedEntry"
+          }
+        },
+        "message.card": {
+          "type": "array",
+          "maxItems": 1,
+          "items": {
+            "$ref": "#/$defs/feedEntry"
           }
         }
       }
@@ -200,6 +198,18 @@
     }
   },
   "$defs": {
+    "feedEntry": {
+      "type": "object",
+      "required": [
+        "id"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        }
+      },
+      "additionalProperties": false
+    },
     "semver": {
       "type": "string",
       "pattern": "^\\d+\\.\\d+\\.\\d+$"

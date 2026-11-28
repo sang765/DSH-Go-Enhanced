@@ -7,6 +7,8 @@ import 'package:dsh_app/plugins/native/native_state.dart';
 import 'package:dsh_app/plugins/native/native_surface.dart';
 import 'package:dsh_app/ui/chat/widgets/plus_panel.dart';
 import 'package:dsh_app/ui/chat/widgets/turn_footnote.dart';
+import 'package:dsh_app/ui/plugins/native/message_card.dart';
+import 'package:dsh_app/ui/plugins/view/plugin_view.dart' show PluginAction, PluginFrame;
 import 'package:dsh_app/ui/plugins/native/native_panel.dart';
 import 'package:dsh_app/ui/plugins/native/native_plugin_section.dart';
 import 'package:dsh_app/ui/theme/theme.dart';
@@ -18,11 +20,14 @@ import 'package:flutter_test/flutter_test.dart';
 import '../../chat/support/harness.dart';
 import 'support.dart';
 
+Future<bool> _unusedAction(PluginAction action, NativeSurfaceKey key) async => true;
+
 Map<String, Object?> _plugin({
   List<Map<String, Object?>> tools = const [],
   List<Map<String, Object?>> actions = const [],
   List<Map<String, Object?>> notes = const [],
   List<Map<String, Object?>> panels = const [],
+  List<Map<String, Object?>> cards = const [],
 }) {
   final row = plugin('p', title: '工具箱', panels: panels);
   row['contributes'] = <String, Object?>{
@@ -34,6 +39,7 @@ Map<String, Object?> _plugin({
       for (final a in actions) {'ready': true, ...a},
     ],
     'turn.note': notes,
+    'message.card': cards,
   };
   return row;
 }
@@ -54,7 +60,7 @@ void main() {
 
     test('caps ask for the new places, the first four stay', () {
       expect(DshGoSurfaces.all, containsAll(DshGoSurfaces.v1));
-      expect(DshGoSurfaces.all, containsAll(['composer.tools', 'session.actions', 'turn.note', 'plugin']));
+      expect(DshGoSurfaces.all, containsAll(['composer.tools', 'session.actions', 'turn.note', 'message.card', 'plugin']));
     });
 
     test('labels are cut, unready ones and turn notes without a registration are left out', () {
@@ -240,6 +246,42 @@ void main() {
       await tester.pump();
       expect(find.byKey(const ValueKey('plugin-page-panel|p|about')), findsOneWidget);
       expect(find.byKey(const ValueKey('plugin-page-panel|p|other')), findsNothing);
+    });
+  });
+
+  group('a message card', () {
+    test('only ready cards become a declared surface', () {
+      final p = _shape(_plugin(cards: [{'id': 'pr', 'ready': true}, {'id': 'off', 'ready': false}]));
+      expect(p.messageCards, ['pr']);
+      expect(p.declared, {NativeSurface.messageCard});
+    });
+
+    testWidgets('renders below a reply only when the plugin has a card', (tester) async {
+      final bridge = FakeBridge(contributions([_plugin(cards: [{'id': 'pr', 'ready': true}])]));
+      bridge.views['p/pr'] = DshGoView.fromJson({
+        'v': 1, 'pkg': 'p', 'id': 'pr', 'title': 'PR', 'rev': '1', 'live': true,
+        'view': {'type': 'text', 'text': 'PR title'},
+        'data': {'hasCards': true},
+      })!;
+      await tester.pumpWidget(testApp(
+        const Scaffold(body: NativeMessageCardSlot(sessionId: 's', turnId: '3', messageId: 'a9', replyText: 'reply', onAction: _unusedAction)),
+        overrides: nativeOverrides(bridge),
+      ));
+      await pumpFrames(tester);
+      expect(find.text('PR title'), findsOneWidget);
+      final sub = bridge.socket.subOf('pr')!;
+      expect(sub['scope'], {'sessionId': 's', 'turnId': '3', 'messageId': 'a9'});
+    });
+
+    testWidgets('does not draw an empty or streaming reply card', (tester) async {
+      final bridge = FakeBridge(contributions([_plugin(cards: [{'id': 'pr', 'ready': true}])]));
+      await tester.pumpWidget(testApp(
+        const Scaffold(body: NativeMessageCardSlot(sessionId: 's', turnId: null, messageId: 'draft', replyText: 'reply', onAction: _unusedAction)),
+        overrides: nativeOverrides(bridge),
+      ));
+      await pumpFrames(tester);
+      expect(find.byType(PluginFrame), findsNothing);
+      expect(bridge.views, isEmpty);
     });
   });
 
