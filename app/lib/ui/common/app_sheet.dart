@@ -162,6 +162,7 @@ class _AppSheetRoute<T> extends ModalBottomSheetRoute<T> {
   @override
   void didChangeNext(Route<dynamic>? nextRoute) {
     super.didChangeNext(nextRoute);
+    SheetRecede.onNextChanged(this, nextRoute);
     onRouteChanged?.call(this, nextRoute);
   }
 }

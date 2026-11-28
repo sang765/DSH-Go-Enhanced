@@ -58,6 +58,54 @@ abstract final class SheetRecede {
   @visibleForTesting
   static ValueListenable<double> get amount => _amount;
 
+  /// How small a sheet gets while another route sits on top of it. The page
+  /// recedes under any sheet; a sheet only under something above itself.
+  static const coveredScale = 0.95;
+
+  static final _covered = <ModalRoute<dynamic>, ValueNotifier<double>>{};
+  static final _coverSources = <ModalRoute<dynamic>, Animation<double>>{};
+  static final _coverListeners = <ModalRoute<dynamic>, void Function()>{};
+
+  /// A sheet's own recede, driven by whatever is currently pushed above it.
+  static ValueListenable<double> coveredFor(ModalRoute<dynamic> route) =>
+      _covered.putIfAbsent(route, () => ValueNotifier(0));
+
+  /// Called by an app sheet's route when the route above it changes. The lower
+  /// sheet follows the upper route's own animation so the two move together.
+  static void onNextChanged(ModalRoute<dynamic> route, Route<dynamic>? next) {
+    final notifier = coveredFor(route);
+    final previous = _coverSources.remove(route);
+    final previousListener = _coverListeners.remove(route);
+    if (previous != null && previousListener != null) previous.removeListener(previousListener);
+
+    final upper = next is ModalRoute<dynamic> ? next : null;
+    final animation = upper?.animation;
+    if (animation == null) {
+      notifier.value = 0;
+      return;
+    }
+    void sync() {
+      // On the way out the upper route stops being current before its
+      // animation unwinds; keep following it or the lower sheet jumps back.
+      if (upper!.isCurrent || animation.status == AnimationStatus.reverse) {
+        notifier.value = animation.value;
+      }
+    }
+
+    _coverSources[route] = animation;
+    _coverListeners[route] = sync;
+    animation.addListener(sync);
+    sync();
+  }
+
+  /// Drops every observation held for a sheet whose route is gone.
+  static void forget(ModalRoute<dynamic> route) {
+    final previous = _coverSources.remove(route);
+    final previousListener = _coverListeners.remove(route);
+    if (previous != null && previousListener != null) previous.removeListener(previousListener);
+    _covered.remove(route)?.dispose();
+  }
+
   static void _update() {
     var most = 0.0;
     for (final route in _routes) {
@@ -163,7 +211,10 @@ class _SheetRecedeSheetState extends State<SheetRecedeSheet> {
 
   @override
   void dispose() {
-    if (_route != null) SheetRecede._remove(_route!);
+    if (_route != null) {
+      SheetRecede._remove(_route!);
+      SheetRecede.forget(_route!);
+    }
     if (_statusBar.isShowing) _statusBar.hide();
     super.dispose();
   }
@@ -171,6 +222,30 @@ class _SheetRecedeSheetState extends State<SheetRecedeSheet> {
   @override
   Widget build(BuildContext context) {
     if (!_available || !_sitsBack(context)) return widget.child;
+    // A sheet under another one sits back too, the same way the page does.
+    // Pass the content through `child` so the glass, scroll position and
+    // gestures survive the resize instead of being rebuilt each frame.
+    Widget child = widget.child;
+    final route = _route;
+    if (route != null) {
+      child = ValueListenableBuilder<double>(
+        valueListenable: SheetRecede.coveredFor(route),
+        builder: (context, covered, child) {
+          if (covered <= 0) return child!;
+          final scale = 1 - (1 - SheetRecede.coveredScale) * covered;
+          return Transform(
+            alignment: Alignment.topCenter,
+            transform: Matrix4.diagonal3Values(scale, scale, 1),
+            child: ClipRRect(
+              borderRadius: BorderRadius.vertical(top: Radius.circular(AppShape.lg * covered)),
+              clipBehavior: Clip.antiAlias,
+              child: child,
+            ),
+          );
+        },
+        child: child,
+      );
+    }
     // The status bar reads the topmost region at its own height, which is outside the sheet's
     // clip, so this one goes on the overlay, above the sheet. It turns once the page has sat back
     // far enough to show the dark edge.
@@ -187,7 +262,7 @@ class _SheetRecedeSheetState extends State<SheetRecedeSheet> {
               )
             : const SizedBox.shrink(),
       ),
-      child: widget.child,
+      child: child,
     );
   }
 }
